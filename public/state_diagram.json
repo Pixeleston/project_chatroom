@@ -1,0 +1,165 @@
+{
+  "nodes": [
+    {
+      "id": "input1",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 150,
+        "y": 100
+      },
+      "data": {
+        "label": "初始"
+      }
+    },
+    {
+      "id": "output1",
+      "type": "condition",
+      "initialized": false,
+      "position": {
+        "x": 0,
+        "y": 300
+      },
+      "data": {
+        "label": "分組工作完成",
+        "label_if": "討論完分組工作",
+        "label_then": "引導使用者討論project日程"
+      }
+    },
+    {
+      "id": "output2",
+      "type": "condition",
+      "initialized": false,
+      "position": {
+        "x": 301.3195079107728,
+        "y": 305.27803164309154
+      },
+      "data": {
+        "label": "分組工作未完成",
+        "label_if": "未討論完分組工作",
+        "label_then": "隨機指定使用者分配剩\n下的工作"
+      }
+    },
+    {
+      "id": "node-1752480176131",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 4.768247555523516,
+        "y": 620.269711454694
+      },
+      "data": {
+        "label": "direct 節點",
+        "label_then": "no action"
+      }
+    },
+    {
+      "id": "node-1752480186543",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 298.265729412414,
+        "y": 617.2471010229742
+      },
+      "data": {
+        "label": "direct 節點",
+        "label_then": "no action"
+      }
+    },
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 143.9744271236446,
+        "y": -136.43313768077888
+      },
+      "data": {
+        "label": "Start 節點",
+        "label_then": "begin"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "input1",
+      "target": "output1",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 254,
+      "sourceY": 250.59374237060547,
+      "targetX": 104.00005696565188,
+      "targetY": 296.9999787718931,
+      "animated": true
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "input1",
+      "target": "output2",
+      "data": {},
+      "label": "",
+      "animated": false,
+      "sourceX": 254,
+      "sourceY": 250.59374237060547,
+      "targetX": 405.3195079107728,
+      "targetY": 302.27803164309154
+    },
+    {
+      "id": "e3",
+      "type": "default",
+      "source": "output1",
+      "target": "node-1752480176131",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 104.00005696565188,
+      "sourceY": 549.593823101281,
+      "targetX": 108.7683045211754,
+      "targetY": 617.2697103606874
+    },
+    {
+      "id": "e4",
+      "type": "default",
+      "source": "output2",
+      "target": "node-1752480186543",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 405.3195079107728,
+      "sourceY": 554.8718121606696,
+      "targetX": 402.26578637806585,
+      "targetY": 614.2470999289677
+    },
+    {
+      "id": "e5",
+      "type": "default",
+      "source": "start",
+      "target": "input1",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 247.97448604120137,
+      "sourceY": 14.160606759620492,
+      "targetX": 254,
+      "targetY": 97
+    }
+  ],
+  "position": [
+    230.62438709209715,
+    194.94390638150918
+  ],
+  "zoom": 0.6597539553864474,
+  "viewport": {
+    "x": 230.62438709209715,
+    "y": 194.94390638150918,
+    "zoom": 0.6597539553864474
+  }
+}

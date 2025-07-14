@@ -1,0 +1,120 @@
+<!-- Vue 3 Chatroom + Vue‑Flow 狀態圖 (讀取 state_diagram.json) -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatroom & State Diagram</title>
+  
+  <script src="src/flowchart-ce.js"></script>
+  <flow-chart style="display:block;height:80vh"></flow-chart>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Vue‑Flow IIFE 版 + 樣式 → 直接在瀏覽器使用 -->
+  <!-- 使用新版 @vue-flow/core CDN (1.x) -->
+<link rel="stylesheet" href="https://unpkg.com/@vue-flow/core@1/dist/style.css" />
+<!-- 必須先載入 IIFE，再執行下面的 Vue 代碼 -->
+<script src="https://unpkg.com/@vue-flow/core@1/dist/vue-flow-iife.js"></script>
+  <style>
+    @import "node_modules/@vue-flow/core/dist/style.css";
+    @import "node_modules/@vue-flow/core/dist/theme-default.css";
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:sans-serif;overflow:hidden;background:#f9f9f9}
+    #app,.container{display:flex;height:100%}
+
+    /* 側欄 */
+    .sidebar{width:80px;background:#333;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .sidebar button{margin:10px;padding:10px;background:#555;border:none;color:#fff;cursor:pointer}
+
+    /* 狀態圖區塊 */
+    .diagram{flex:1;display:flex;flex-direction:column;padding:20px;overflow:hidden;background:#e6fcff}
+    .diagram-box{flex:1;overflow:hidden;border:1px solid #ccc;border-radius:6px;background:#fff}
+
+    /* 聊天室 */
+    .chat-area{flex:1;display:flex;flex-direction:column;padding:20px;background:#fff}
+    .messages{flex:1;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin-bottom:10px}
+    .message{margin:8px;padding:10px;border-radius:6px;background:#f0f0f0}
+    .me{background:#d1e7dd;text-align:right}
+    .host{background:#fff3cd;border-left:5px solid #ffc107;font-style:italic}
+    .input-area{display:flex;gap:8px}
+    .input-area input{flex:1;padding:10px}
+    .input-area button{padding:10px 16px}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 登入畫面 -->
+    <div v-if="!username" style="margin:auto;text-align:center">
+      <h2>Enter your name to join</h2>
+      <input type="text" v-model="nameInput" placeholder="Your name">
+      <button @click="enterChat">Enter</button>
+    </div>
+
+    <!-- 主畫面 -->
+    <div v-else class="container">
+      <!-- 左側按鈕 -->
+      <div class="sidebar">
+        <button>👈</button>
+        <button>🔍</button>
+      </div>
+
+      <!-- 狀態圖區 -->
+      <div class="diagram">
+        <h3 style="margin-bottom:8px">State Diagram (Vue‑Flow)</h3>
+        <div class="diagram-box">
+          <!--<VueFlow :nodes="nodes" :edges="edges" fit-view pan-on-drag zoom-on-scroll /> -->
+        </div>
+      </div>
+
+      <!-- 聊天室 -->
+      <div class="chat-area">
+        <h3>Welcome, {{ username }}</h3>
+        <div class="messages">
+          <div v-for="(msg,index) in messages" :key="index" :class="['message', msg.user===username?'me':(msg.user==='Host'?'host':'')]">
+            <strong>{{ msg.user }}:</strong> {{ msg.text }}
+          </div>
+        </div>
+        <div class="input-area">
+          <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message...">
+          <button @click="sendMessage">Send</button>
+        </div>
+      </div>
+
+      <!-- 右側按鈕 -->
+      <div class="sidebar">
+        <button>⚙️</button>
+        <button>🔔</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  components:{ VueFlow },
+  setup(){
+    const messages=ref([]), newMessage=ref(''), username=ref(''), nameInput=ref('');
+    const nodes=ref([]), edges=ref([]);
+    let socket;
+
+    function enterChat(){ if(!nameInput.value.trim()) return; username.value=nameInput.value.trim(); setupWS(); }
+
+    function setupWS(){
+      socket=new WebSocket('ws://localhost:3000');
+      socket.addEventListener('message',e=>{
+        try{ const p=JSON.parse(e.data);
+          if(p.type==='history') messages.value.push(...p.data);
+          else if(p.type==='message') messages.value.push(p.data);
+        }catch(err){ console.error(err);} });
+    }
+
+    function sendMessage(){ if(!newMessage.value.trim()||!username.value) return;
+      socket.send(JSON.stringify({user:username.value,text:newMessage.value})); newMessage.value=''; }
+
+    return { messages,newMessage,username,nameInput,enterChat,sendMessage,nodes,edges };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
