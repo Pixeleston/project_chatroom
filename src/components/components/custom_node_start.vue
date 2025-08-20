@@ -6,7 +6,7 @@
     <div class="then-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">do</span>
+          <span class="prefix">The chatbot start by saying</span>
         </div>
         <div class="label">{{ data.label_then }}</div>
       </div>
@@ -28,7 +28,7 @@ const label_then = computed(() => props.data?.label_then ?? `No Action`)
 <style scoped>
 .custom-node-condition {
   max-width: 300px;
-  min-width: 200px;
+  min-width: 300px;
   padding: 10px;
   border: 1px solid #999;
   border-radius: 6px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-node-condition">
+  <div class="custom-node-condition" @mousedown.stop>
     <Handle type="target" position="top" :style="{ background: '#555' }" />
     <div class="label-background">
       <div class="label">{{ data.label }}</div>
@@ -7,7 +7,7 @@
     <div class="if-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">if</span>
+          <span class="prefix">If the users ...</span>
         </div>
         <div class="label">{{ data.label_if }}</div>
       </div>
@@ -15,7 +15,7 @@
     <div class="then-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">do</span>
+          <span class="prefix">Then, the chatbot ...</span>
         </div>
         <div class="label">{{ data.label_then }}</div>
       </div>
@@ -63,7 +63,7 @@ function resize(elRef) {
 <style scoped>
 .custom-node-condition {
   max-width: 300px;
-  min-width: 200px;
+  min-width: 300px;
   padding: 10px;
   border: 1px solid #999;
   border-radius: 6px;

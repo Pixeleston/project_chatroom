@@ -6,6 +6,10 @@
   </div>
   <div v-else class="container">
     <div class="sidebar">
+      <button @click="toggleLLM">
+      {{ LLM_TOGGLE ? '🟢 LLM 啟動中（點擊關閉）' : '🔴 LLM 已關閉（點擊開啟）' }}
+      </button>
+      <button @click="diagram_type = 'simulate'">🛠️ 模擬學生</button>
       <button @click="toggleDiagram">
         <img src="./assets/Barrier.png" style="width:20px; height:20px;" > 開關流程圖</img>
       </button>
@@ -16,6 +20,7 @@
     <div class="main-area">
       <div v-if="showDiagram" class="diagram">
         <Diagram v-if="diagram_type === 'display'" ref="diagramRef" />
+        <Simulator v-else-if="diagram_type === 'simulate'" />
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
@@ -28,16 +33,33 @@
 </template>
 
 <script setup>
-import { ref, markRaw  } from 'vue'
+import { ref, markRaw, onMounted } from 'vue'
 import Diagram from './components/Diagram.vue'
 import Chatroom from './components/Chatroom.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
+import Simulator from './components/Simulator.vue'
+import { useDiagramStore } from '@/stores/diagramStore.js'
 
 const username = ref('')
 const nameInput = ref('')
 const diagramRef = ref(null)
 const showDiagram = ref(true)
 const diagram_type = ref('display')
+
+const diagram = useDiagramStore()
+
+// 連線到 WebSocket Server（注意要使用正確 port）
+const socket = new WebSocket('ws://localhost:3001')
+
+// 接收訊息
+socket.addEventListener('message', (event) => {
+  const packet = JSON.parse(event.data)
+
+  if (packet.type === 'updateCurrentNode') {
+    diagram.currentNode = packet.data
+    console.log('🔁 前端收到新的 currentNode:', packet.data)
+  }
+})
 
 function enterChat() {
   if (nameInput.value.trim()) {
@@ -53,5 +75,46 @@ function toggleEdge() {
 function toggleDiagram() {
   showDiagram.value = !showDiagram.value
 }
+
+
+
+const LLM_TOGGLE = ref(true)
+async function fetchToggle() {
+  const res = await fetch('http://localhost:3000/api/LLM_TOGGLE')
+  const data = await res.json()
+  LLM_TOGGLE.value = data.LLM_TOGGLE
+}
+
+async function toggleLLM() {
+  const newVal = !LLM_TOGGLE.value
+  const res = await fetch('http://localhost:3000/api/LLM_TOGGLE', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ LLM_TOGGLE: newVal })
+  })
+  const data = await res.json()
+  LLM_TOGGLE.value = data.LLM_TOGGLE
+}
+
+onMounted(() => {
+  fetchToggle()
+})
+
+/*
+const res = await fetch('http://localhost:3000/api/LLM_TOGGLE', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ LLM_TOGGLE: true })
+})
+
+const text = await res.text()
+try {
+  const data = JSON.parse(text)
+  LLM_TOGGLE.value = data.LLM_TOGGLE
+} catch (e) {
+  console.error('⚠️ 回傳不是合法 JSON:', text)
+  alert('後端錯誤或回傳空白')
+}
+*/
 
 </script>

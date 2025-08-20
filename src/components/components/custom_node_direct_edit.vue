@@ -12,7 +12,7 @@
     <div class="then-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">do</span>
+          <span class="prefix">Then, the chatbot ...</span>
         </div>
         <textarea v-model="data.label_then" 
           ref="labelThenRef" rows="1" 
@@ -61,7 +61,7 @@ function resize(elRef) {
 
 <style scoped>
 .custom-node-condition {
-  max-width: 300px;
+  min-width: 300px;
   padding: 10px;
   border: 1px solid #999;
   border-radius: 6px;

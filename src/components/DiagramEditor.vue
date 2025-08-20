@@ -36,7 +36,7 @@ function addStartNode() {
     id: 'start',
     type: 'start',               // 或 'condition'，視需求
     position: { x: 50, y: 50 },   // 想放哪就改哪
-    data: { label: 'Start 節點', label_then: 'begin' },
+    data: { label: 'Root 節點', label_then: 'begin' },
   })
 }
 
@@ -62,6 +62,8 @@ function onConnect(params) {
 // ========== 匯出 JSON ==========
 function exportToJson() {
   const flowData = toObject()
+  flowData.currentNode = 'start'
+  flowData.memory = {}
   const jsonString = JSON.stringify(flowData, null, 2)
   const blob = new Blob([jsonString], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -123,6 +125,8 @@ function onFileSelected(event) {
   }
   reader.readAsText(file)
 }
+
+loadFromServer()
 
 </script>
 

@@ -1,0 +1,95 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "跟使用者說：[哈囉大家好，我是聊天室的聊天機器人，我們要討論的主題是遊戲的Final Project，請各位先提出自己想做的遊戲主題]"
+      }
+    },
+    {
+      "id": "node-1753091452193",
+      "type": "condition",
+      "initialized": false,
+      "position": {
+        "x": -121.70650301825216,
+        "y": 314.19186091305016
+      },
+      "data": {
+        "label": "有想法",
+        "label_then": "對於該主題提供使用者一些意見，並詢問他具體想怎麼實作，例如使用甚麼遊戲引擎、要設計那些角色，如果使用者不知道從哪裡下手，可以引導他",
+        "label_if": "有使用者說出了想做的主題"
+      }
+    },
+    {
+      "id": "node-1753342941701",
+      "type": "condition",
+      "initialized": false,
+      "position": {
+        "x": -120.35790059431653,
+        "y": 677.1178789031193
+      },
+      "data": {
+        "label": "討論完成",
+        "label_then": "將整個討論過程討論出的東西做總結，提供給使用者",
+        "label_if": "使用者將需要的東西都討論完了"
+      }
+    },
+    {
+      "id": "node-1753343206969",
+      "type": "condition",
+      "initialized": false,
+      "position": {
+        "x": 214.77309647765367,
+        "y": 314.78596237666596
+      },
+      "data": {
+        "label": "不確定想法",
+        "label_then": "回答該使用者的疑問，可舉出一些推薦的主題，或是提供其方向",
+        "label_if": "有使用者發話，但沒有說出想做的主題"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1753091452193",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 200.0027983431553,
+      "sourceY": 257.1506076033185,
+      "targetX": 28.29640179916683,
+      "targetY": 311.19469448641354
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "node-1753091452193",
+      "target": "node-1753342941701",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 28.29640179916683,
+      "sourceY": 621.6833813211574,
+      "targetX": 29.644964957198823,
+      "targetY": 674.1207517423863
+    }
+  ],
+  "memory": {
+    "node-1753091452193": {
+        
+    }
+  },
+  "currentNode": "node-1753342941701"
+}
