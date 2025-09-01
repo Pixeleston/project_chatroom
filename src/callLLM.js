@@ -1,15 +1,15 @@
 // callLLM.js
 import fetch from 'node-fetch'
 // npm install node-fetch
-import { encoding_for_model } from '@dqbd/tiktoken'
+//import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './config.js'
 const OPENAI_API_KEY = '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'
 
-export function countTokens(text, model = 'gpt-4') {
-  const encoder = encoding_for_model(model)
-  const tokens = encoder.encode(text)
-  return tokens.length
-}
+// export function countTokens(text, model = 'gpt-4') {
+//   const encoder = encoding_for_model(model)
+//   const tokens = encoder.encode(text)
+//   return tokens.length
+// }
 
 /* ======================================
    model:
@@ -36,8 +36,11 @@ export async function callLLM(model, prompt) {
 
 export async function callGPT(model, prompt) {
   // 1️⃣ 計算 input tokens
+
+  /*
   const encoder = encoding_for_model(model)
   const promptTokens = encoder.encode(prompt).length
+  */
 
   // 2️⃣ 發送 API 請求
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -63,7 +66,7 @@ export async function callGPT(model, prompt) {
   const data = await response.json()
   const reply = data.choices?.[0]?.message?.content?.trim() ?? '(無回應)'
   const usage = data.usage || {}
-
+/*
   const completionTokens = usage.completion_tokens ?? 0
   const totalTokens = usage.total_tokens ?? (promptTokens + completionTokens)
 
@@ -75,16 +78,17 @@ export async function callGPT(model, prompt) {
   - Total tokens: ${totalTokens}
   `)
   console.log("============================================")
+*/
 
   return reply
 }
 
 async function callOllama(model, prompt) {
-  const tokenCount = countTokens(prompt, "gpt-4o")
+  // const tokenCount = countTokens(prompt, "gpt-4o")
 
-  console.log("=============== Tokens Usage ===============")
-  console.log(`🧮 Input token count: ${tokenCount}`)
-  console.log("============================================")
+  // console.log("=============== Tokens Usage ===============")
+  // console.log(`🧮 Input token count: ${tokenCount}`)
+  // console.log("============================================")
 
   const url = "http://127.0.0.1:11434/api/generate"
   const body = {

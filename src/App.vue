@@ -24,7 +24,8 @@
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
-        <Chatroom :username="username" />
+      <ChatroomAsk v-if="diagram_type === 'edit'"/>
+        <Chatroom :username="username" v-else />
       </div>
     </div>
 
@@ -36,6 +37,7 @@
 import { ref, markRaw, onMounted } from 'vue'
 import Diagram from './components/Diagram.vue'
 import Chatroom from './components/Chatroom.vue'
+import ChatroomAsk from './components/ChatroomAsk.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
 import Simulator from './components/Simulator.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'

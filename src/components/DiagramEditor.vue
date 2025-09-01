@@ -1,14 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { VueFlow, Panel, useVueFlow } from '@vue-flow/core'
 import custom_node_condition from './components/custom_node_condition_edit.vue'
 import custom_node_direct from './components/custom_node_direct_edit.vue'
 import custom_node_start from './components/custom_node_start_edit.vue'
 
+import { useFlowStore } from '@/stores/flowStore'
+
 const nodes = ref([])
 const edges = ref([])
 const selectedNodes = ref([])
 const { toObject } = useVueFlow()
+
+const flow = useFlowStore()
+
+onUnmounted(() => {
+  flow.selectedNode = null
+})
 
 const nodeTypes = {
   condition: custom_node_condition,
@@ -17,22 +25,23 @@ const nodeTypes = {
 }
 
 function addNode(type) {
+  console.log("addNode : " + flow.nodes);
   const id = `node-${Date.now()}`
   const base = {
     id,
     type,
-    position: { x: 100 + nodes.value.length * 40, y: 100 },
-    data: { label: `${type} 節點`, label_then: 'no action' },
+    position: { x: 100 + flow.nodes.length * 40, y: 100 },
+    data: { label: `${type} 節點`, label_then: 'no action', label_detail: null },
   }
   if (type === 'condition') base.data.label_if = 'no condition'
-  nodes.value.push(base)
+  flow.nodes.push(base)
 }
 
 function addStartNode() {
-  const exists = nodes.value.some(n => n.id === 'start')
+  const exists = flow.nodes.some(n => n.id === 'start')
   if (exists) return              // 已有 start，直接忽略
 
-  nodes.value.push({
+  flow.nodes.push({
     id: 'start',
     type: 'start',               // 或 'condition'，視需求
     position: { x: 50, y: 50 },   // 想放哪就改哪
@@ -42,19 +51,21 @@ function addStartNode() {
 
 function deleteSelected() {
   const idsToDelete = selectedNodes.value.map(n => n.id)
-  nodes.value = nodes.value.filter(n => !idsToDelete.includes(n.id))
-  edges.value = edges.value.filter(e => !idsToDelete.includes(e.source) && !idsToDelete.includes(e.target))
+  flow.nodes = flow.nodes.filter(n => !idsToDelete.includes(n.id))
+  flow.edges = flow.edges.filter(e => !idsToDelete.includes(e.source) && !idsToDelete.includes(e.target))
   selectedNodes.value = []
 }
 
 function onNodeClick({ node }) {
   selectedNodes.value = [node]
+  flow.setSelectedNode(JSON.parse(JSON.stringify(node)))
+  console.log(flow.selectedNode.data)
 }
 
 function onConnect(params) {
-  edges.value.push({
+  flow.edges.value.push({
     ...params,
-    id: `e${edges.value.length + 1}`,
+    id: `e${flow.edges.value.length + 1}`,
     type: 'default',
   })
 }
@@ -63,7 +74,11 @@ function onConnect(params) {
 function exportToJson() {
   const flowData = toObject()
   flowData.currentNode = 'start'
-  flowData.memory = {}
+  flowData.currentNodeSmall = 'null'
+  flowData.memory = {
+    currentMemory: "",
+    nodesMemory: []
+  }
   const jsonString = JSON.stringify(flowData, null, 2)
   const blob = new Blob([jsonString], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -76,21 +91,24 @@ function exportToJson() {
 
 // ========== 手動讀取 ==========
 async function loadFromServer() {
+  flow.loadFromServer()
+  /*
   try {
     const res = await fetch('http://localhost:3000/api/state')
     const json = await res.json()
-    nodes.value = json.nodes ?? []
-    edges.value = json.edges ?? []
+    flow.nodes.value = json.nodes ?? []
+    flow.edges.value = json.edges ?? []
   } catch (err) {
     alert('❌ 無法讀取資料：' + err.message)
   }
+  */
 }
 
 // ========== 手動儲存 ==========
 async function saveToServer() {
   const data = {
-    nodes: nodes.value,
-    edges: edges.value,
+    nodes: flow.nodes,
+    edges: flow.edges,
   }
   try {
     await fetch('http://localhost:3000/api/state', {
@@ -113,8 +131,8 @@ function onFileSelected(event) {
     try {
       const data = JSON.parse(reader.result)
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
-        nodes.value = data.nodes
-        edges.value = data.edges
+        flow.nodes = data.nodes
+        flow.edges = data.edges
         console.log('✅ 匯入成功')
       } else {
         alert('❌ 檔案格式錯誤：需要包含 nodes 和 edges 陣列')
@@ -134,17 +152,15 @@ loadFromServer()
   <div style="display: flex; height: 100%">
     <div style="width: 200px; background: #eee; padding: 10px;">
       <button @click="addStartNode">⭐ 新增 Start</button>
-      <button @click="addNode('condition')">➕ Condition</button>
       <button @click="addNode('direct')">➕ Direct</button>
       <button @click="deleteSelected">🗑️ 刪除選取節點</button>
       <hr />
-      <button @click="loadFromServer">🔄 載入伺服器資料</button>
       <button @click="saveToServer">💾 儲存到伺服器</button>
     </div>
 
     <VueFlow
-      v-model:nodes="nodes"
-      v-model:edges="edges"
+      v-model:nodes="flow.nodes"
+      v-model:edges="flow.edges"
       @node-click="onNodeClick"
       @connect="onConnect"
       :node-types="nodeTypes"

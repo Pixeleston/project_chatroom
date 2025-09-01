@@ -12,7 +12,7 @@
     <div class="then-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">Then, the chatbot ...</span>
+          <span class="prefix">Users' target is ...</span>
         </div>
         <textarea v-model="data.label_then" 
           ref="labelThenRef" rows="1" 
@@ -21,6 +21,20 @@
           @input="resize(labelThenRef)" 
         @mousedown.stop/>
       </div>
+    </div>
+    <div class="detail-background"
+         :style="{
+           backgroundColor: (!label_detail || label_detail === 'null')
+             ? '#ff9999' // 無細節時用淡紅色
+             : '#9fff9f' // 有細節時用淡綠色
+         }"
+    >
+      <span v-if="!data.label_detail">
+        no detail yet
+      </span>
+      <span v-else>
+        detail finished
+      </span>
     </div>
     <Handle type="source" position="bottom" :style="{ background: '#555' }" />
   </div>
@@ -39,9 +53,11 @@ const inputText = ref('')
 const label = computed(() => props.data?.label ?? `Node ${props.id}`)
 const label_if = computed(() => props.data?.label_if ?? `No Condition`)
 const label_then = computed(() => props.data?.label_then ?? `No Action`)
+const label_detail = computed(() => props.data?.label_detail ?? null)
 
 onMounted(() => {
   resize(labelRef)
+  resize(labelThenRef)
 })
 watch(() => props.data.label, () => {
   resize(labelRef)
@@ -98,6 +114,15 @@ textarea.auto-resize {
 
 .if-background {
   background-color: #09ff013f;
+  border-radius: 6px;
+  width: 90%;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.detail-background {
+  background-color: #ff010167;
   border-radius: 6px;
   width: 90%;
   padding: 8px;

@@ -4,6 +4,8 @@ import { ref } from 'vue'
 export const useDiagramStore  = defineStore('diagram', () => {
   const nodes = ref([])
   const edges = ref([])
+  const memory = ref({ currentMemory: "", nodesMemory: [] })
+  const currentNodeSmall = ref(null)
   const currentNode = ref('start')
 
   async function loadFromServer() {
@@ -14,8 +16,11 @@ export const useDiagramStore  = defineStore('diagram', () => {
     edges.value = json.edges || []
     currentNode.value = json.currentNode || 'start'
 
+    memory.value = json.memory || { currentMemory: "", nodesMemory: [] }
+    currentNodeSmall.value = json.currentNodeSmall || null
+
     // 若沒有 currentNode，設定並回寫
-    if (!json.currentNode) {
+    if (!json.currentNode || !json.memory) {
       await saveToServer()
     }
 
@@ -33,6 +38,8 @@ export const useDiagramStore  = defineStore('diagram', () => {
     nodes: nodes.value,
     edges: edges.value,
     currentNode: currentNode.value,
+    memory: memory.value,
+        currentNodeSmall: currentNodeSmall.value,
   }, null, 2)
 })
       if (!res.ok) throw new Error(await res.text())
@@ -43,8 +50,12 @@ export const useDiagramStore  = defineStore('diagram', () => {
   }
 
   return {
-    nodes, edges, currentNode,
-    loadFromServer,
-    saveToServer,
-  }
+  nodes,
+  edges,
+  currentNode,
+  currentNodeSmall,
+  memory,
+  loadFromServer,
+  saveToServer,
+}
 })

@@ -1,13 +1,15 @@
 import { WebSocketServer } from 'ws'
+import WebSocket from 'ws'
 import express from 'express'
 import cors from 'cors'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { callLLM } from './callLLM.js'
-import { LLM_CONFIG } from './config.js'
+import { callLLM } from './src/callLLM.js'
+import { LLM_CONFIG } from './src/config.js'
 import { getNextNode } from './stateMachine.js'
 import { teacher_action } from './teacher.js'
+import { io } from 'socket.io-client'
 
 
 /* 取得等同於 CommonJS 的 __dirname */
@@ -108,7 +110,7 @@ function loadJson(file, targetArr, label) {
 }
 
 loadJson(HISTORY_FILE, history, 'messages')
-loadJson(MEMORY_FILE, hostMemory, 'memory')
+//loadJson(MEMORY_FILE, hostMemory, 'memory')
 
 const writeJson = (file, data) => {
   console.log(data);
@@ -123,9 +125,26 @@ const writeJson = (file, data) => {
   }
 }
 
+
+function broadcastDiagramUpdate(newDiagram) {
+  const message = JSON.stringify({
+    type: 'diagramUpdated',
+    diagram: newDiagram
+  })
+
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message)
+    }
+  })
+}
+
 function saveHistory() { writeJson(HISTORY_FILE, history) }
 function saveMemory(memory_dir) { writeJson(memory_dir, hostMemory) }
-function saveDiagram(diagram) { writeJson(STATE_DIAGRAM_FILE, diagram) }
+function saveDiagram(diagram) {
+  writeJson(STATE_DIAGRAM_FILE, diagram)
+  broadcastDiagramUpdate(diagram)
+}
 
 function updateMemory(memory_dir) {
   hostMemory = history
@@ -139,26 +158,18 @@ const broadcast = packet =>
   wss.clients.forEach(c =>
     c.readyState === c.OPEN && c.send(JSON.stringify(packet)))
 
-let memory_string = ""
-if(LLM_CONFIG.custom_memory) 
-  memory_string = `\n以下是歷史對話：${hostMemory.join('\n')}\n歷史對話結束，請根據以下使用者的最新訊息回覆：\n`
-
 function sendMessage(replyMsg){
   messageCount ++;
   //const replyMsg = { user: 'Host', text: replyText };
   history.push(replyMsg);
   saveHistory();
 
-  if(messageCount >= MESSAGES_COUNT_PER_UPDATE_MEMORY){
+  //if(messageCount >= MESSAGES_COUNT_PER_UPDATE_MEMORY){
     updateMemory(MEMORY_FILE);
     messageCount = 0;
-  }
+  //}
   
   broadcast({ type: 'message', data: replyMsg });
-}
-
-async function decide_small_part(){
-
 }
 
 async function tick_chatroom() {
@@ -166,13 +177,15 @@ async function tick_chatroom() {
   if(LLM_TOGGLE){
     try {
       const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(stateDiagram, history.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
 
-      const { replyMsg, stateDiagram: newStateDiagram, broadcastPayload } = await teacher_action(stateDiagram, hostMemory)
-
-      if(replyMsg) sendMessage(replyMsg);
+      if(replyMsg && replyMsg !== 'null') sendMessage(replyMsg);
+      if(moveNode) {
+        // move node
+        if(moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+        else if(moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+      }
       saveDiagram(newStateDiagram)
-      if(broadcastPayload) broadcast(broadcastPayload);
-
     } catch (err) {
       console.error('tick() failed:', err)
     }
@@ -193,7 +206,7 @@ wss.on('connection', ws => {
   ws.on('message', async raw => {
     try {
       const data = JSON.parse(raw)
-      if (data.user !== 'Host') {
+      if (data.role !== 'host') {
         sendMessage(data)
       }
     } catch (err) {

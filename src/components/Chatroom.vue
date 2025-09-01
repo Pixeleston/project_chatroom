@@ -3,7 +3,7 @@
     <h3>Welcome, {{ username }}</h3>
     <div class="messages">
       <div v-for="(msg, index) in messages" :key="index"
-        :class="['message', msg.user === username ? 'me' : (msg.user === 'Host' ? 'host' : '')]">
+        :class="['message', msg.user === username ? 'me' : (msg.role === 'host' ? 'host' : '')]">
         <strong>{{ msg.user }}:</strong> {{ msg.text }}
       </div>
     </div>
@@ -50,7 +50,7 @@ onMounted(() => {
 
 function sendMessage() {
   if (newMessage.value.trim()) {
-    socket.send(JSON.stringify({ user: props.username, text: newMessage.value }))
+    socket.send(JSON.stringify({ role: 'user', user: props.username, text: newMessage.value }))
     newMessage.value = ''
   }
 }

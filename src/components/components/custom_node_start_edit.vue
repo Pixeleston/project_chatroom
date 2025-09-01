@@ -42,6 +42,7 @@ const label_then = computed(() => props.data?.label_then ?? `No Action`)
 
 onMounted(() => {
   resize(labelRef)
+  resize(labelThenRef)
 })
 watch(() => props.data.label, () => {
   resize(labelRef)

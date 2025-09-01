@@ -5,7 +5,7 @@
       "type": "start",
       "dimensions": {
         "width": 300,
-        "height": 148
+        "height": 224
       },
       "computedPosition": {
         "x": 50,
@@ -20,7 +20,7 @@
             "nodeId": "start",
             "position": "bottom",
             "x": 147,
-            "y": 144.59375,
+            "y": 221,
             "width": 6,
             "height": 6
           }
@@ -49,7 +49,8 @@
       },
       "data": {
         "label": "start",
-        "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。"
+        "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+        "label_detail": null
       },
       "events": {}
     },
@@ -58,117 +59,11 @@
       "type": "direct",
       "dimensions": {
         "width": 300,
-        "height": 148
+        "height": 209
       },
       "computedPosition": {
-        "x": -141.35724800362,
-        "y": 258.85423237326177,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "node-1755506597825",
-            "position": "bottom",
-            "x": 147.00001525878906,
-            "y": 144.59371948242188,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "node-1755506597825",
-            "position": "top",
-            "x": 147.00001525878906,
-            "y": -3,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
-      "initialized": false,
-      "isParent": false,
-      "position": {
-        "x": -141.35724800362,
-        "y": 258.85423237326177
-      },
-      "data": {
-        "label": "主題",
-        "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。"
-      },
-      "events": {}
-    },
-    {
-      "id": "node-1755506609238",
-      "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 148
-      },
-      "computedPosition": {
-        "x": 250.20420212444225,
-        "y": 262.48208780533776,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "node-1755506609238",
-            "position": "bottom",
-            "x": 147,
-            "y": 144.59371948242188,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "node-1755506609238",
-            "position": "top",
-            "x": 147,
-            "y": -3,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
-      "initialized": false,
-      "isParent": false,
-      "position": {
-        "x": 250.20420212444225,
-        "y": 262.48208780533776
-      },
-      "data": {
-        "label": "細項討論",
-        "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。"
-      },
-      "events": {}
-    },
-    {
-      "id": "node-1755506616094",
-      "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 148
-      },
-      "computedPosition": {
-        "x": 50.565312912789125,
-        "y": 486.4433775794141,
+        "x": -161.1498666652134,
+        "y": 360.45634150277465,
         "z": 1000
       },
       "handleBounds": {
@@ -176,10 +71,10 @@
           {
             "id": null,
             "type": "source",
-            "nodeId": "node-1755506616094",
+            "nodeId": "node-1755506597825",
             "position": "bottom",
             "x": 147,
-            "y": 144.59375,
+            "y": 205.99996948242188,
             "width": 6,
             "height": 6
           }
@@ -188,7 +83,7 @@
           {
             "id": null,
             "type": "target",
-            "nodeId": "node-1755506616094",
+            "nodeId": "node-1755506597825",
             "position": "top",
             "x": 147,
             "y": -3,
@@ -203,12 +98,175 @@
       "initialized": false,
       "isParent": false,
       "position": {
-        "x": 50.565312912789125,
-        "y": 486.4433775794141
+        "x": -161.1498666652134,
+        "y": 360.45634150277465
+      },
+      "data": {
+        "label": "主題",
+        "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+        "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
+      },
+      "events": {}
+    },
+    {
+      "id": "node-1755506609238",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 209
+      },
+      "computedPosition": {
+        "x": 249.8743251467489,
+        "y": 361.44518111330484,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "node-1755506609238",
+            "position": "bottom",
+            "x": 147,
+            "y": 206,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "node-1755506609238",
+            "position": "top",
+            "x": 147,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 249.8743251467489,
+        "y": 361.44518111330484
+      },
+      "data": {
+        "label": "細項討論",
+        "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "node-1755506616094",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 229
+      },
+      "computedPosition": {
+        "x": 46.60678918047046,
+        "y": 589.3649946196999,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "node-1755506616094",
+            "position": "bottom",
+            "x": 147.00003051757812,
+            "y": 226,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "node-1755506616094",
+            "position": "top",
+            "x": 147.00003051757812,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 46.60678918047046,
+        "y": 589.3649946196999
       },
       "data": {
         "label": "分工討論",
-        "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。"
+        "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "node-1756633493265",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 190
+      },
+      "computedPosition": {
+        "x": 434.1101126592248,
+        "y": 122.63431464569922,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "node-1756633493265",
+            "position": "bottom",
+            "x": 147,
+            "y": 187,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "node-1756633493265",
+            "position": "top",
+            "x": 147,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 434.1101126592248,
+        "y": 122.63431464569922
+      },
+      "data": {
+        "label": "1111111111111111111111111",
+        "label_then": "no action",
+        "label_detail": null
       },
       "events": {}
     }
@@ -224,12 +282,16 @@
       "data": {},
       "events": {},
       "label": "",
+      "sourceX": 200,
+      "sourceY": 277,
+      "targetX": -11.149866665213409,
+      "targetY": 357.45634150277465,
       "sourceNode": {
         "id": "start",
         "type": "start",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 224
         },
         "computedPosition": {
           "x": 50,
@@ -244,7 +306,7 @@
               "nodeId": "start",
               "position": "bottom",
               "x": 147,
-              "y": 144.59375,
+              "y": 221,
               "width": 6,
               "height": 6
             }
@@ -273,7 +335,8 @@
         },
         "data": {
           "label": "start",
-          "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。"
+          "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+          "label_detail": null
         },
         "events": {}
       },
@@ -282,12 +345,12 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 209
         },
         "computedPosition": {
-          "x": -141.35724800362,
-          "y": 258.85423237326177,
-          "z": 0
+          "x": -161.1498666652134,
+          "y": 360.45634150277465,
+          "z": 1000
         },
         "handleBounds": {
           "source": [
@@ -296,8 +359,8 @@
               "type": "source",
               "nodeId": "node-1755506597825",
               "position": "bottom",
-              "x": 147.00001525878906,
-              "y": 144.59371948242188,
+              "x": 147,
+              "y": 205.99996948242188,
               "width": 6,
               "height": 6
             }
@@ -308,32 +371,29 @@
               "type": "target",
               "nodeId": "node-1755506597825",
               "position": "top",
-              "x": 147.00001525878906,
+              "x": 147,
               "y": -3,
               "width": 6,
               "height": 6
             }
           ]
         },
-        "selected": false,
+        "selected": true,
         "dragging": false,
         "resizing": false,
         "initialized": false,
         "isParent": false,
         "position": {
-          "x": -141.35724800362,
-          "y": 258.85423237326177
+          "x": -161.1498666652134,
+          "y": 360.45634150277465
         },
         "data": {
           "label": "主題",
-          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。"
+          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+          "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
         },
         "events": {}
-      },
-      "sourceX": 200,
-      "sourceY": 200.59375,
-      "targetX": 8.642767255169076,
-      "targetY": 255.85423237326177
+      }
     },
     {
       "id": "e2",
@@ -345,17 +405,21 @@
       "data": {},
       "events": {},
       "label": "",
+      "sourceX": -11.149866665213409,
+      "sourceY": 572.4563109851965,
+      "targetX": 399.8743251467489,
+      "targetY": 358.44518111330484,
       "sourceNode": {
         "id": "node-1755506597825",
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 209
         },
         "computedPosition": {
-          "x": -141.35724800362,
-          "y": 258.85423237326177,
-          "z": 0
+          "x": -161.1498666652134,
+          "y": 360.45634150277465,
+          "z": 1000
         },
         "handleBounds": {
           "source": [
@@ -364,8 +428,8 @@
               "type": "source",
               "nodeId": "node-1755506597825",
               "position": "bottom",
-              "x": 147.00001525878906,
-              "y": 144.59371948242188,
+              "x": 147,
+              "y": 205.99996948242188,
               "width": 6,
               "height": 6
             }
@@ -376,25 +440,26 @@
               "type": "target",
               "nodeId": "node-1755506597825",
               "position": "top",
-              "x": 147.00001525878906,
+              "x": 147,
               "y": -3,
               "width": 6,
               "height": 6
             }
           ]
         },
-        "selected": false,
+        "selected": true,
         "dragging": false,
         "resizing": false,
         "initialized": false,
         "isParent": false,
         "position": {
-          "x": -141.35724800362,
-          "y": 258.85423237326177
+          "x": -161.1498666652134,
+          "y": 360.45634150277465
         },
         "data": {
           "label": "主題",
-          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。"
+          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+          "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
         },
         "events": {}
       },
@@ -403,11 +468,11 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 209
         },
         "computedPosition": {
-          "x": 250.20420212444225,
-          "y": 262.48208780533776,
+          "x": 249.8743251467489,
+          "y": 361.44518111330484,
           "z": 0
         },
         "handleBounds": {
@@ -418,7 +483,7 @@
               "nodeId": "node-1755506609238",
               "position": "bottom",
               "x": 147,
-              "y": 144.59371948242188,
+              "y": 206,
               "width": 6,
               "height": 6
             }
@@ -442,19 +507,16 @@
         "initialized": false,
         "isParent": false,
         "position": {
-          "x": 250.20420212444225,
-          "y": 262.48208780533776
+          "x": 249.8743251467489,
+          "y": 361.44518111330484
         },
         "data": {
           "label": "細項討論",
-          "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。"
+          "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。",
+          "label_detail": ""
         },
         "events": {}
-      },
-      "sourceX": 8.642767255169076,
-      "sourceY": 409.44795185568364,
-      "targetX": 400.20420212444225,
-      "targetY": 259.48208780533776
+      }
     },
     {
       "id": "e3",
@@ -471,11 +533,11 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 209
         },
         "computedPosition": {
-          "x": 250.20420212444225,
-          "y": 262.48208780533776,
+          "x": 249.8743251467489,
+          "y": 361.44518111330484,
           "z": 0
         },
         "handleBounds": {
@@ -486,7 +548,7 @@
               "nodeId": "node-1755506609238",
               "position": "bottom",
               "x": 147,
-              "y": 144.59371948242188,
+              "y": 206,
               "width": 6,
               "height": 6
             }
@@ -510,12 +572,13 @@
         "initialized": false,
         "isParent": false,
         "position": {
-          "x": 250.20420212444225,
-          "y": 262.48208780533776
+          "x": 249.8743251467489,
+          "y": 361.44518111330484
         },
         "data": {
           "label": "細項討論",
-          "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。"
+          "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。",
+          "label_detail": ""
         },
         "events": {}
       },
@@ -524,12 +587,12 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 148
+          "height": 229
         },
         "computedPosition": {
-          "x": 50.565312912789125,
-          "y": 486.4433775794141,
-          "z": 1000
+          "x": 46.60678918047046,
+          "y": 589.3649946196999,
+          "z": 0
         },
         "handleBounds": {
           "source": [
@@ -538,8 +601,8 @@
               "type": "source",
               "nodeId": "node-1755506616094",
               "position": "bottom",
-              "x": 147,
-              "y": 144.59375,
+              "x": 147.00003051757812,
+              "y": 226,
               "width": 6,
               "height": 6
             }
@@ -550,32 +613,33 @@
               "type": "target",
               "nodeId": "node-1755506616094",
               "position": "top",
-              "x": 147,
+              "x": 147.00003051757812,
               "y": -3,
               "width": 6,
               "height": 6
             }
           ]
         },
-        "selected": true,
+        "selected": false,
         "dragging": false,
         "resizing": false,
         "initialized": false,
         "isParent": false,
         "position": {
-          "x": 50.565312912789125,
-          "y": 486.4433775794141
+          "x": 46.60678918047046,
+          "y": 589.3649946196999
         },
         "data": {
           "label": "分工討論",
-          "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。"
+          "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。",
+          "label_detail": ""
         },
         "events": {}
       },
-      "sourceX": 400.20420212444225,
-      "sourceY": 413.07580728775963,
-      "targetX": 200.56531291278912,
-      "targetY": 483.4433775794141
+      "sourceX": 399.8743251467489,
+      "sourceY": 573.4451811133049,
+      "targetX": 196.60681969804858,
+      "targetY": 586.3649946196999
     }
   ]
 }

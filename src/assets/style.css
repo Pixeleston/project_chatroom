@@ -18,3 +18,15 @@ html,body{height:100%;font-family:sans-serif;overflow:hidden;background:#f9f9f9}
   flex: 1;
   height: 100%;
 }
+.flow-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* 或你要的高度 */
+}
+.flow-top {
+  flex: 7;
+  border-bottom: 1px solid #ccc;
+}
+.flow-bottom {
+  flex: 3;
+}

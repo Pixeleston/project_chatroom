@@ -6,7 +6,7 @@
     <div class="then-background">
       <div class="input-group">
         <div class="left-group">
-          <span class="prefix">Then, the chatbot ...</span>
+          <span class="prefix">Users' target is ...</span>
         </div>
         <div class="label">{{ data.label_then }}</div>
       </div>
