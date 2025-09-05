@@ -61,18 +61,31 @@ decision —— "<SUBMIT>" 或 "<PASS>"。若 target = ...，一律 "<SUBMIT>"�
 ... 不會主動開啟新對話，也不會自行宣布結束對話。當新對話開始時，不會保留前一段的任何細節。
 */
 
+function findMatchingNode(nodes, targetId, targetSmallId) {
+  return nodes.find(n => n.id === targetId && n.small_id === targetSmallId)
+}
+
+export function filterHistory(diagram, history){
+  let id = diagram.currentNode
+  let small_id = diagram.currentNodeSmall
+  const node = history.find(n => n.id === id && n.small_id === small_id)
+  if(node){
+    return node.history
+  }
+  else return null
+}
+
 function getNodeById(diagram, id) {
   return diagram.nodes.find(n => n.id === id);
 }
 
-export function prompt_double_check(diagram, replyText, hostMemory){
-    console.log(hostMemory)
+export function prompt_double_check(diagram, replyText, history){
     let history_string = ''
     try {
-      if(hostMemory){
-        if(hostMemory.length <= 0) history_string = '(目前聊天室無任何訊息)'
+      if(history){
+        if(history.length <= 0) history_string = '(目前聊天室無任何訊息)'
         else {
-          hostMemory.forEach(msg => {
+          history.forEach(msg => {
             history_string += `- ${msg}\n`
           })
         }
@@ -160,7 +173,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     return prompt
 }
 
-export function prompt_teacher(stateDiagram, targets, hostMemory){
+export function prompt_teacher(stateDiagram, targets, history){
   let currentNode = stateDiagram.currentNode;
   let currentSmallNode = stateDiagram.currentNodeSmall;
   let diagram_edge_prompt = "以下是狀態圖中目前節點連出去的所有大節點："
@@ -173,7 +186,7 @@ export function prompt_teacher(stateDiagram, targets, hostMemory){
 
     let memory_string = ""
     if (LLM_CONFIG.custom_memory) {
-      memory_string = `\n以下是歷史對話：${hostMemory.join('\n')}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
+      memory_string = `\n以下是歷史對話：${history.join('\n')}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
     }
 
     const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
@@ -241,7 +254,7 @@ export function prompt_teacher(stateDiagram, targets, hostMemory){
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
-
+    console.log('prompt : ' + prompt)
     // ===== TODO =====
     // 在prompt中新增 "nextSmall": "<string>"
     // ===== TOTO =====
@@ -272,21 +285,18 @@ export function prompt_spawn_example(selectedNode, latest_msg){
     以下為教師提供的學生目前討論情況：
     ${latest_msg}
 
+    你需要根據教師提供的學生目前討論情境，根據該情境以及目前的某個大節點內部目標、細節，生成一個範例的「議題節點清單」
+
     以下為當前設計的節點名稱、目標、以及目前設計的細節：
       - 名稱： ${selectedNode.data.label}
-      - 目標： ${selectedNode.data.target}
-      - 細節： ${selectedNode.data.detail}
+      - 目標（此大節點的討論大方向）： ${selectedNode.data.label_then}
+      - 細節（請仔細依照此細節生成議題節點）： ${selectedNode.data.label_detail}
 
-    你需要根據教師提供的學生目前討論情境，根據該情境以及目前的某個大節點內部資訊，生成一個範例的「建議討論清單（list）」
-
-    請使用以下 JSON 格式回應（不需其他說明），例如：
-    {
-      "topics": [
-        { "theme": "網頁開發框架", "target": "使用者必須針對開發網頁討論出欲使用的框架" },
-        { "theme": "開發日程", "target": "使用者需討論完成各階段開發所需的時間與排程" }
-      ],
-      "why": "這些主題能讓學生從『確定開發方向』邁向『具體分工與時程管理』，也呼應教師希望學生做出具體開發規劃的需求。"
-    }`
+    請使用以下 格式回應（不需其他說明），例如：
+    小節點1： 網頁開發框架， 目標： 使用者必須針對開發網頁討論出欲使用的框架\\n
+    小節點2： 開發日程， 目標： 使用者需討論完成各階段開發所需的時間與排程\\n
+    原因： 這些主題能讓學生從『確定開發方向』邁向『具體分工與時程管理』，也呼應教師希望學生做出具體開發規劃的需求。\\n
+    `
   return prompt
 }
 

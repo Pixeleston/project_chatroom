@@ -32,16 +32,16 @@ function getNodeById(diagram, id) {
 
 async function double_check(diagram, replyText, hostMemory){
   let prompt = prompt_double_check(diagram, replyText, hostMemory)
-  console.log(prompt);
+//  console.log(prompt);
   let llmReply = await callLLM("gpt-4o", prompt);
   if(llmReply.includes("true")) {
-    console.log("進入true")
-    console.log(llmReply)
+//    console.log("進入true")
+//    console.log(llmReply)
     return "true";
   }
   else {
-    console.log("進入false")
-    console.log(llmReply)
+//    console.log("進入false")
+//    console.log(llmReply)
     return "false";
   }
 }
@@ -140,7 +140,7 @@ try {
   }
 }
 
-console.log("✅ 成功解析為物件：", result)
+//console.log("✅ 成功解析為物件：", result)
     //console.log(" ========== llmReply ==========");
 
     // 抓出下一個節點
@@ -165,11 +165,11 @@ console.log("✅ 成功解析為物件：", result)
       let check = await double_check(stateDiagram, replyText, hostMemory)
 
       if(check === "true") {
-        console.log("check === true")
+    //    console.log("check === true")
         replyMsg = { role: 'host', user: 'Host', text: replyText };
         }
         else {
-          console.log("check === false")
+    //      console.log("check === false")
         }
     }
 
@@ -185,6 +185,7 @@ console.log("✅ 成功解析為物件：", result)
       if(nextNode == "big"){
         const result = await decide_small_part(stateDiagram, nextNodeID);
         stateDiagram = result.diagram;
+        stateDiagram = await summarize(stateDiagram, summary);
         stateDiagram.currentNodeSmall = "null"
         moveNodeSuccess = result.success;
       }

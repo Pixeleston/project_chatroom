@@ -20,11 +20,12 @@
     <div class="main-area">
       <div v-if="showDiagram" class="diagram">
         <Diagram v-if="diagram_type === 'display'" ref="diagramRef" />
-        <Simulator v-else-if="diagram_type === 'simulate'" />
+        <DiagramSimulator v-else-if="diagram_type === 'simulate'" />
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
-      <ChatroomAsk v-if="diagram_type === 'edit'"/>
+        <ChatroomAsk v-if="diagram_type === 'edit'"/>
+        <ChatroomSimulator v-else-if="diagram_type === 'simulate'"/>
         <Chatroom :username="username" v-else />
       </div>
     </div>
@@ -39,7 +40,8 @@ import Diagram from './components/Diagram.vue'
 import Chatroom from './components/Chatroom.vue'
 import ChatroomAsk from './components/ChatroomAsk.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
-import Simulator from './components/Simulator.vue'
+import ChatroomSimulator from './components/ChatroomSimulator.vue'
+import DiagramSimulator from './components/DiagramSimulator.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'
 
 const username = ref('')

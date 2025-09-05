@@ -23,8 +23,8 @@
       </div>
     </div>
     <div class="input-area">
-      <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
-      <button @click="sendMessage">Send</button>
+      <input v-model="newMessage" @keyup.enter="teacher_sendMessage" placeholder="Type a message..." />
+      <button @click="teacher_sendMessage">Send</button>
       <button @click="spawnExample">Spawn Examples</button>
     </div>
   </div>
@@ -74,7 +74,7 @@ onMounted(() => {
     socket.addEventListener('error', (err) => {
       console.error('❌ WebSocket error', err)
     })
-
+    /*
     socket.addEventListener('message', (e) => {
       try {
         const p = JSON.parse(e.data)
@@ -84,30 +84,37 @@ onMounted(() => {
         console.error('⚠️ JSON parsing failed', err)
       }
     })
+    */
+
   } catch (err) {
     console.error('❌ WebSocket connection failed:', err)
   }
 })
 
-async function sendMessage() {
+function teacher_sendMessage(){
+  sendMessage('user', 'teacher', newMessage.value)
+}
+
+// 'user' , 'teacher', newMessage.value
+function sendMessage(role, user, msg) {
   if (newMessage.value.trim()) {
     //socket.send(JSON.stringify({ role: 'user', user: props.username, text: newMessage.value }))
     history.value.push({ 
-      role: 'user', 
-      user: 'teacher', 
-      text: newMessage.value 
+      role: role, 
+      user: user, 
+      text: msg
     })
     latest_msg = JSON.stringify({ 
-      role: 'user', 
-      user: 'teacher', 
-      text: newMessage.value 
+      role: role, 
+      user: user, 
+      text: msg
     })
     newMessage.value = '';
   }
 }
 
 async function spawnExample(){
-  /*
+  
   if (newMessage.value.trim()) {
     //socket.send(JSON.stringify({ role: 'user', user: props.username, text: newMessage.value }))
     history.value.push({ 
@@ -120,11 +127,15 @@ async function spawnExample(){
       user: 'teacher', 
       text: newMessage.value 
     })
-    let prompt = prompt_spawn_example(flow.selectedNode, newMessage.value )
-    let llmReply = callLLM()
-    newMessage.value = '';
+    const res = await fetch('http://localhost:3000/api/chatroom_ask_spawn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedNode: flow.selectedNode, newMessage: newMessage.value})
+    })
+    const data = await res.json()
+    sendMessage('host', 'AI assistant', data.result)
   }
-  */
+  
 }
 
 </script>

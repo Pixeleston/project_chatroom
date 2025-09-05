@@ -2,7 +2,7 @@
   {
     "id": "node-1755506609238",
     "small_id": "node-1756735438826-0",
-    "history": [
+    "history":[
       {
         "role": "host",
         "user": "Host",
@@ -48,7 +48,7 @@
   {
     "id": "node-1755506609238",
     "small_id": "node-1756735438826-1",
-    "history": [
+    "history":[
       {
         "role": "host",
         "user": "Host",
@@ -58,58 +58,6 @@
         "role": "host",
         "user": "Host",
         "text": "目前我們需要確定專案的最終目標，並討論它將解決的問題或需求。可以先分享一下大家對專案方向的看法嗎？"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "node-1756735438826-2",
-    "history": [
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "aaa",
-        "timestamp": "2025-09-04T11:41:37.472Z"
-      },
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "aaa",
-        "timestamp": "2025-09-04T11:43:07.670Z"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "目前我們需要評估開發這個軟體所需的資源與成本，並制定場所計畫。大家有沒有什麼想法？"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "我們目前正在進行資源配置與預算的評估和制定，有關這個部分大家有什麼進一步要討論或確認的嗎？"
-      },
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "aaabbb",
-        "timestamp": "2025-09-04T11:46:20.949Z"
-      },
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "?",
-        "timestamp": "2025-09-04T15:17:25.599Z"
-      },
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "aaa",
-        "timestamp": "2025-09-05T16:13:17.566Z"
-      },
-      {
-        "role": "user",
-        "user": "abc",
-        "text": "hi",
-        "timestamp": "2025-09-05T16:41:05.094Z"
       }
     ]
   }

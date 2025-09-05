@@ -10,49 +10,36 @@
       },
       "data": {
         "label": "start",
-        "label_then": "跟使用者說：[哈囉大家好，我是聊天室的聊天機器人，我們要討論的主題是遊戲的Final Project，請各位先提出自己想做的遊戲主題]"
+        "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+        "label_detail": null
       }
     },
     {
-      "id": "node-1753091452193",
-      "type": "condition",
+      "id": "node-1755506597825",
+      "type": "direct",
       "initialized": false,
       "position": {
-        "x": -121.70650301825216,
-        "y": 314.19186091305016
+        "x": -161.1498666652134,
+        "y": 360.45634150277465
       },
       "data": {
-        "label": "有想法",
-        "label_then": "對於該主題提供使用者一些意見，並詢問他具體想怎麼實作，例如使用甚麼遊戲引擎、要設計那些角色，如果使用者不知道從哪裡下手，可以引導他",
-        "label_if": "有使用者說出了想做的主題"
+        "label": "訂定主題",
+        "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致，例如：只需要「訂定主題」這個議題來讓使用者討論出具體要做甚麼專案就好了。",
+        "label_detail": null
       }
     },
     {
-      "id": "node-1753342941701",
-      "type": "condition",
+      "id": "node-1755506609238",
+      "type": "direct",
       "initialized": false,
       "position": {
-        "x": -120.35790059431653,
-        "y": 677.1178789031193
+        "x": 249.8743251467489,
+        "y": 361.44518111330484
       },
       "data": {
-        "label": "討論完成",
-        "label_then": "將整個討論過程討論出的東西做總結，提供給使用者",
-        "label_if": "使用者將需要的東西都討論完了"
-      }
-    },
-    {
-      "id": "node-1753343206969",
-      "type": "condition",
-      "initialized": false,
-      "position": {
-        "x": 214.77309647765367,
-        "y": 314.78596237666596
-      },
-      "data": {
-        "label": "不確定想法",
-        "label_then": "回答該使用者的疑問，可舉出一些推薦的主題，或是提供其方向",
-        "label_if": "有使用者發話，但沒有說出想做的主題"
+        "label": "細項討論",
+        "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目，例如：若使用者決定要製作網頁，那就會需要「開發網頁框架」、「上架網站的雲服務」等議題，",
+        "label_detail": "asfasfas"
       }
     }
   ],
@@ -61,58 +48,104 @@
       "id": "e1",
       "type": "default",
       "source": "start",
-      "target": "node-1753091452193",
+      "target": "node-1755506597825",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
       "label": "",
-      "sourceX": 200.0027983431553,
-      "sourceY": 257.1506076033185,
-      "targetX": 28.29640179916683,
-      "targetY": 311.19469448641354
+      "sourceX": 199.99994287023392,
+      "sourceY": 276.99989300620564,
+      "targetX": -11.14983907739753,
+      "targetY": 357.4563163957603
     },
     {
       "id": "e2",
       "type": "default",
-      "source": "node-1753091452193",
-      "target": "node-1753342941701",
+      "source": "node-1755506597825",
+      "target": "node-1755506609238",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
       "label": "",
-      "sourceX": 28.29640179916683,
-      "sourceY": 621.6833813211574,
-      "targetX": 29.644964957198823,
-      "targetY": 674.1207517423863
+      "sourceX": -11.14983907739753,
+      "sourceY": 567.4563122008966,
+      "targetX": 399.8741979060344,
+      "targetY": 358.4452037417537
     },
     {
       "id": "e3",
       "type": "default",
-      "source": "start",
-      "target": "node-1753343206969",
+      "source": "node-1755506609238",
+      "target": "node-1755506616094",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
       "label": "",
-      "sourceX": 200.0027983431553,
-      "sourceY": 257.1506076033185,
-      "targetX": 364.7760932599538,
-      "targetY": 311.78878812601835
-    },
-    {
-      "id": "e4",
-      "type": "default",
-      "source": "node-1753343206969",
-      "target": "node-1753091452193",
-      "sourceHandle": null,
-      "targetHandle": null,
-      "data": {},
-      "label": "",
-      "sourceX": 364.7760932599538,
-      "sourceY": 582.2634044848637,
-      "targetX": 28.29640179916683,
-      "targetY": 311.19469448641354
+      "sourceX": 399.8741979060344,
+      "sourceY": 588.4450916472476,
+      "targetX": 196.60677051229075,
+      "targetY": 586.3650157686812
     }
   ],
-  "currentNode": "node-1753342941701"
+  "currentNode": "node-1755506609238",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": [
+      {
+        "id": "node-1755506597825",
+        "label": "訂定主題",
+        "smallNodes": [
+          {
+            "id": "node-1756735390946-0",
+            "theme": "專案目標明確化",
+            "target": "使用者必須就專案的最終目標達成共識，並具體討論專案將解決的問題或需求",
+            "summary": "",
+            "finish": true
+          }
+        ]
+      },
+      {
+        "id": "node-1755506609238",
+        "label": "細項討論",
+        "smallNodes": [
+          {
+            "id": "node-1756735438826-0",
+            "theme": "軟體規格分析",
+            "target": "使用者需討論並決定軟體所需的功能與需求規格",
+            "summary": "使用者已確定要開發遊戲，考慮使用Unity作為開發平台，功能需求的討論已結束。",
+            "finish": true
+          },
+          {
+            "id": "node-1756735438826-1",
+            "theme": "技術選型",
+            "target": "使用者需討論並選擇適合的技術、工具和開發語言",
+            "summary": "在技術選型的階段，大家決定采用Unity來開發遊戲。",
+            "finish": true
+          },
+          {
+            "id": "node-1756735438826-2",
+            "theme": "資源配置與預算",
+            "target": "使用者需評估開發所需的資源與成本，並制定預算",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1756735438826-3",
+            "theme": "風險管理策略",
+            "target": "使用者需辨識潛在風險並制定應對策略",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1756735438826-4",
+            "theme": "測試計劃",
+            "target": "使用者需決定測試流程和標準，確保軟體品質",
+            "summary": "",
+            "finish": false
+          }
+        ]
+      }
+    ]
+  },
+  "currentNodeSmall": "node-1756735438826-2"
 }

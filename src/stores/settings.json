@@ -1,3 +1,4 @@
 {
-  "LLM_TOGGLE": true
+  "LLM_TOGGLE": false,
+  "RUN_TOGGLE_SIMULATOR": false
 }

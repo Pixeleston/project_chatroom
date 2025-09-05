@@ -43,7 +43,7 @@ onMounted(() => {
         const p = JSON.parse(e.data)
         if (p.type === 'history') {
           //messages.value.push(...p.data)
-          if(p.chatroom_type === 'chatroom'){
+          if(p.chatroom_type === 'simulator'){
             allHistory.value = p.data
             allMessages.value = p.data.flatMap(node => node.history)
             allMessages.value.sort((a, b) => a.timestamp - b.timestamp)
@@ -51,7 +51,7 @@ onMounted(() => {
         }
         else if (p.type === 'message') {
           //messages.value.push(p.data)
-          if(p.chatroom_type === 'chatroom'){
+          if(p.chatroom_type === 'simulator'){
             allMessages.value.push(p.data)
           }
         }
@@ -68,7 +68,7 @@ function sendMessage() {
   if (newMessage.value.trim()) {
     const timestamp = new Date().toISOString()
     const payload = {
-      chatroom_type: "chatroom",
+      chatroom_type: "simulator",
       msg_data: {
         role: 'user',
         user: props.username,

@@ -5,11 +5,11 @@ import cors from 'cors'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { callLLM } from './src/callLLM.js'
-import { LLM_CONFIG } from './src/config.js'
-import { getNextNode } from './stateMachine.js'
 import { teacher_action } from './teacher.js'
-import { io } from 'socket.io-client'
+import { prompt_spawn_example, filterHistory } from './src/prompt.js'
+import { callLLM } from './src/callLLM.js'
+
+// TODO diagram 每次使用都直接拿currentDiagram，儲存時存入currentDiagram，可以檢查看看讀取時是否會讀到舊的資料
 
 
 /* 取得等同於 CommonJS 的 __dirname */
@@ -25,6 +25,10 @@ const FLOW_FILE = path.join(__dirname, 'src/stores/flow.json')
 const SETTINGS_FILE = path.join(__dirname, 'src/stores/settings.json')
 const STATE_DIAGRAM_FILE = path.join(__dirname, 'src/stores/state_diagram.json')
 const MEMORY_MODE = 'last_10'
+
+const HISTORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/history.json')
+const MEMORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/memory.json')
+const STATE_DIAGRAM_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/state_diagram.json')
 
 const MESSAGES_COUNT_PER_UPDATE_MEMORY = 10;
 
@@ -52,6 +56,7 @@ app.post('/api/state', (req, res) => {
 app.get('/api/diagram', (req, res) => {
   fs.readFile(STATE_DIAGRAM_FILE, 'utf8', (err, data) => {
     if (err) return res.status(500).json({ error: 'state_diagram 讀取失敗' })
+    console.log("state_diagram 讀取成功")
     res.json(JSON.parse(data || '{}'))
   })
 })
@@ -61,6 +66,21 @@ app.post('/api/diagram', (req, res) => {
   fs.writeFile(STATE_DIAGRAM_FILE, JSON.stringify(req.body, null, 2), err => {
     if (err) return res.status(500).json({ error: 'state_diagram 寫入失敗' })
     res.json({ message: 'state_diagram 已儲存' })
+  })
+})
+
+app.get('/api/diagramSimulator', (req, res) => {
+  fs.readFile(STATE_DIAGRAM_SIMULATOR_FILE, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'state_diagram_simulator 讀取失敗' })
+    console.log("state_diagram_simulator 讀取成功")
+    res.json(JSON.parse(data || '{}'))
+  })
+})
+
+app.post('/api/diagramSimulator', (req, res) => {
+  fs.writeFile(STATE_DIAGRAM_SIMULATOR_FILE, JSON.stringify(req.body, null, 2), err => {
+    if (err) return res.status(500).json({ error: 'state_diagram_simulator 寫入失敗' })
+    res.json({ message: 'state_diagram_simulator 已儲存' })
   })
 })
 
@@ -85,6 +105,19 @@ app.post('/api/LLM_TOGGLE', (req, res) => {
   }
 })
 
+app.post('/api/chatroom_ask_spawn', async (req, res) => {
+  try {
+    const { selectedNode, newMessage } = req.body
+    const prompt = prompt_spawn_example(selectedNode, newMessage)
+    console.log(`prompt: ${prompt}`)
+    const response = await callLLM('gpt-4o', prompt)
+    console.log(`get result: ${response}`)
+    res.json({ result: response })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`HTTP API listening on http://localhost:${PORT}`)
 })
@@ -96,6 +129,12 @@ const wss = new WebSocketServer({ port: PORT + 1 })
 let history = []
 let hostMemory = []
 let messageCount = 0
+let currentDiagram
+
+let historySimulator = []
+let hostMemorySimulator = []
+let messageCountSimulator = 0
+let currentDiagramSimulator
 
 function loadJson(file, targetArr, label) {
   if (fs.existsSync(file)) {
@@ -111,6 +150,7 @@ function loadJson(file, targetArr, label) {
 
 loadJson(HISTORY_FILE, history, 'messages')
 //loadJson(MEMORY_FILE, hostMemory, 'memory')
+currentDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
 
 const writeJson = (file, data) => {
   console.log(data);
@@ -139,10 +179,14 @@ function broadcastDiagramUpdate(newDiagram) {
   })
 }
 
-function saveHistory() { writeJson(HISTORY_FILE, history) }
+function saveHistory(chatroom_type) {
+  if (chatroom_type === "chatroom") writeJson(HISTORY_FILE, history)
+  else writeJson(HISTORY_SIMULATOR_FILE, historySimulator)
+}
 function saveMemory(memory_dir) { writeJson(memory_dir, hostMemory) }
 function saveDiagram(diagram) {
   writeJson(STATE_DIAGRAM_FILE, diagram)
+  currentDiagram = diagram
   broadcastDiagramUpdate(diagram)
 }
 
@@ -158,32 +202,61 @@ const broadcast = packet =>
   wss.clients.forEach(c =>
     c.readyState === c.OPEN && c.send(JSON.stringify(packet)))
 
-function sendMessage(replyMsg){
-  messageCount ++;
+function sendMessage(diagram, replyMsg, chatroom_type) {  // chatroom_type = "chatroom" or "simulator"
+  //  messageCount ++;
   //const replyMsg = { user: 'Host', text: replyText };
-  history.push(replyMsg);
-  saveHistory();
+  let id = (chatroom_type === 'chatroom') ? diagram.currentNode : currentDiagramSimulator.currentNode
+  let small_id = (chatroom_type === 'chatroom') ? diagram.currentNodeSmall : currentDiagramSimulator.currentNodeSmall
+
+  let _ = (chatroom_type === 'chatroom') ? history : historySimulator
+  const node = _.find(n => n.id === id && n.small_id === small_id)
+
+  if (node) {
+    node.history.push(replyMsg);
+  }
+  else {
+    if (chatroom_type === 'chatroom') {
+      history.push(
+        {
+          id: id,
+          small_id: small_id,
+          history: [replyMsg]
+        }
+      )
+    }
+    else {
+      historySimulator.push(
+        {
+          id: id,
+          small_id: small_id,
+          history: [replyMsg]
+        }
+      )
+    }
+  }
+  saveHistory(chatroom_type);
 
   //if(messageCount >= MESSAGES_COUNT_PER_UPDATE_MEMORY){
-    updateMemory(MEMORY_FILE);
-    messageCount = 0;
+  //  updateMemory(MEMORY_FILE);
+  //  messageCount = 0;
   //}
-  
-  broadcast({ type: 'message', data: replyMsg });
+
+  broadcast({ chatroom_type:chatroom_type, type: 'message', data: replyMsg });
 }
 
 async function tick_chatroom() {
-  const { LLM_TOGGLE } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
-  if(LLM_TOGGLE){
+  const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))).LLM_TOGGLE
+  if (LLM_TOGGLE) {
     try {
-      const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
-      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(stateDiagram, history.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
+      //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+      let currentHistory = filterHistory(currentDiagram, history)
+      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
 
-      if(replyMsg && replyMsg !== 'null') sendMessage(replyMsg);
-      if(moveNode) {
+      if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "chatroom");  // TODO 可能需要改，因為會有轉移節點前或後發話的問題
+      if (moveNode) {
         // move node
-        if(moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-        else if(moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+        if (moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+        else if (moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
       }
       saveDiagram(newStateDiagram)
     } catch (err) {
@@ -193,21 +266,47 @@ async function tick_chatroom() {
 }
 setInterval(tick_chatroom, 10000)  // 每 10 秒執行一次
 
+
+
+loadJson(HISTORY_SIMULATOR_FILE, historySimulator, 'messages')
+currentDiagramSimulator = JSON.parse(fs.readFileSync(STATE_DIAGRAM_SIMULATOR_FILE, 'utf8') || '{}')
+
+
 async function tick_simulator() {
-    
+  const { RUN_TOGGLE_SIMULATOR } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))).RUN_TOGGLE_SIMULATOR
+  if (RUN_TOGGLE_SIMULATOR) {
+    try {
+      //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+      let currentHistory = filterHistory(currentDiagramSimulator, historySimulator)
+      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
+
+      if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "simulator");
+      if (moveNode) {
+        // move node
+        if (moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+        else if (moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+      }
+      saveDiagram(newStateDiagram)
+    } catch (err) {
+      console.error('tick() failed:', err)
+    }
+  }
 }
 
-setInterval(tick_simulator, 5000)  // 每 10 秒執行一次
+setInterval(tick_simulator, 5000)
 
 // 有新訊息
-wss.on('connection', ws => {
-  ws.send(JSON.stringify({ type: 'history', data: history }))
+wss.on('connection', ws => {  // TODO 剛寫到這
+  ws.send(JSON.stringify({ chatroom_type: 'chatroom', type: 'history', data: history }))
+  ws.send(JSON.stringify({ chatroom_type: 'simulator', type: 'history', data: historySimulator }))
 
   ws.on('message', async raw => {
     try {
+      //const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
       const data = JSON.parse(raw)
-      if (data.role !== 'host') {
-        sendMessage(data)
+      const { chatroom_type, msg_data } = data
+      if (msg_data.role !== 'host') {
+        sendMessage(currentDiagram, msg_data, chatroom_type)
       }
     } catch (err) {
       console.error('Invalid message or LLM error:', err)
