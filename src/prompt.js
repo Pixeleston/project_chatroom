@@ -41,6 +41,14 @@ const headerPrompt = [
 `
 ]
 
+const headerPromptStudent = [
+  `
+  你目前正在參與某個議題的討論，你是其中一位參與者，你要和其他參與者一起合力完成討論
+  聊天室中有一位主持人，名字為：Host，他主要的工作是引導參與者進行討論，他不會干涉太多
+  嘗試聽從他的引導進行討論，並且和其他參與者溝通
+  `
+]
+
 /*
 每次使用者發言後，... 會生成一個 JSON 回應，包含：
 
@@ -72,7 +80,7 @@ export function filterHistory(diagram, history){
   if(node){
     return node.history
   }
-  else return null
+  else return []
 }
 
 function getNodeById(diagram, id) {
@@ -129,6 +137,7 @@ export function prompt_double_check(diagram, replyText, history){
 }
 
 export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
+  console.log(diagram)
   let nextNode = getNodeById(diagram, nextNodeID)
   let promptSummary = ``
 
@@ -169,7 +178,13 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
         { "theme": "開發日程", "target": "使用者需討論完成各階段開發所需的時間與排程" }
       ],
       "why": "這些主題能讓學生從『確定開發方向』邁向『具體分工與時程管理』，也呼應教師希望學生做出具體開發規劃的需求。"
-    }`
+    }
+
+    該大節點的詳細描述，裡面可能含有範例，要生成哪些小節點請仔細查看細節：
+    - ${nextNode.data.label_detail ? nextNode.data.label_detail:"(目前大節點無細節)"}
+
+    `
+    console.log(prompt)
     return prompt
 }
 
@@ -254,7 +269,7 @@ export function prompt_teacher(stateDiagram, targets, history){
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
-    console.log('prompt : ' + prompt)
+  //  console.log('prompt : ' + prompt)
     // ===== TODO =====
     // 在prompt中新增 "nextSmall": "<string>"
     // ===== TOTO =====
@@ -300,6 +315,67 @@ export function prompt_spawn_example(selectedNode, latest_msg){
   return prompt
 }
 
-export function prompt_student(){
-  
+export function prompt_spawn_student(metricsJson) {
+  const metrics = JSON.parse(metricsJson)
+
+  let prompt = `你現在要扮演一位模擬學生生成器，根據給定的能力指標，生成這位學生的完整個性描述。\n`
+  prompt += `每項指標的範圍是 0 到 100，數值愈高表示能力愈強。\n\n`
+
+  prompt += `以下是該學生的能力指標：\n`
+  for (const [key, value] of Object.entries(metrics)) {
+    prompt += `- ${key}：${value}\n`
+  }
+
+  prompt += `\n請針對每項指標分別描述這位學生在課堂上的表現或行為特徵，內容請具體、自然、生動，能幫助人理解這位學生在團隊討論與專題合作時的樣貌。\n`
+
+  prompt += `你可以參考以下範例格式（僅供參考，請根據實際指標數值靈活生成）：\n\n`
+
+  prompt += `***** 範例輸入 *****\n`
+  prompt += `- Participation：10\n`
+  prompt += `- Collaboration：85\n`
+  prompt += `- Creativity：90\n\n`
+
+  prompt += `***** 範例輸出 *****\n`
+  prompt += `「\n`
+  prompt += `參與度方面，這位學生較為內向，不常主動發言，需要引導才能參與討論。\n`
+  prompt += `在合作方面，他非常積極，擅長與人協調，也會主動幫助團隊解決問題。\n`
+  prompt += `創意力上，他經常提出獨特又具啟發性的想法，讓團隊激發出更多可能性。\n`
+  prompt += `」\n\n`
+
+  prompt += `請依照上述格式，根據實際指標，生成一段新的學生描述：\n`
+
+  return prompt
+}
+
+export function prompt_student(stateDiagram, history, student_profile){
+
+    let memory_string = ""
+    if (LLM_CONFIG.custom_memory) {
+      memory_string = `\n以下是歷史對話：${history.join('\n')}\n歷史對話結束，請根據目前狀態圖及其他人的對話給出回應與判斷：`
+    }
+
+
+    const prompt = `
+    ${headerPromptStudent}
+
+    以下是你所扮演的學生角色的各項指標，請根據指標來判斷是否發話，以及發話的內容為何：
+    ${student_profile}
+
+    ${memory_string}
+
+    請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
+    JSON 結構如下：
+
+    {
+      "reply": "<string 或 null>",   // 要回給聊天室的文字，若不需發話請用 null
+      "why":   "<string>"             // 轉移或不轉移的理由，簡短說明
+    }
+
+    請確保 key 都存在，不要多 key，不要少 key。
+    `
+    //console.log('prompt : ' + prompt)
+    // ===== TODO =====
+    // 在prompt中新增 "nextSmall": "<string>"
+    // ===== TOTO =====
+  return prompt
 }

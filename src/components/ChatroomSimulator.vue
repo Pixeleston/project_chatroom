@@ -1,6 +1,6 @@
 <template>
   <div class="chat-area">
-    <h3>Welcome, {{ username }}</h3>
+    <h3>模擬學生聊天室</h3>
     <div class="messages">
       <div v-for="(msg, index) in allMessages" :key="index"
         :class="['message', msg.user === username ? 'me' : (msg.role === 'host' ? 'host' : '')]">
@@ -65,6 +65,7 @@ onMounted(() => {
 })
 
 function sendMessage() {
+  /*
   if (newMessage.value.trim()) {
     const timestamp = new Date().toISOString()
     const payload = {
@@ -80,5 +81,6 @@ function sendMessage() {
     socket.send(JSON.stringify(payload))
     newMessage.value = ''
   }
+  */
 }
 </script>

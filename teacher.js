@@ -47,6 +47,7 @@ async function double_check(diagram, replyText, hostMemory){
 }
 
 export async function decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
+    console.log("diagram111 " + diagram)
     let prompt = prompt_decide_small_part(diagram, nextNodeID)
     let llmReply = await callLLM("gpt-4o", prompt);
     console.log("========== llmReply ==========");

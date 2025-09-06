@@ -50,7 +50,7 @@
       "data": {
         "label": "start",
         "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
-        "label_detail": null
+        "label_detail": ""
       },
       "events": {}
     },
@@ -59,7 +59,7 @@
       "type": "direct",
       "dimensions": {
         "width": 300,
-        "height": 209
+        "height": 229
       },
       "computedPosition": {
         "x": -161.1498666652134,
@@ -74,7 +74,7 @@
             "nodeId": "node-1755506597825",
             "position": "bottom",
             "x": 147,
-            "y": 205.99996948242188,
+            "y": 225.99996948242188,
             "width": 6,
             "height": 6
           }
@@ -103,7 +103,7 @@
       },
       "data": {
         "label": "主題",
-        "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+        "label_then": "使用者必須有一個明確想做的主題，形式是軟體或應用程式，所有人想法需一致。",
         "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
       },
       "events": {}
@@ -215,60 +215,6 @@
         "label_detail": ""
       },
       "events": {}
-    },
-    {
-      "id": "node-1756633493265",
-      "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 190
-      },
-      "computedPosition": {
-        "x": 434.1101126592248,
-        "y": 122.63431464569922,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "node-1756633493265",
-            "position": "bottom",
-            "x": 147,
-            "y": 187,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "node-1756633493265",
-            "position": "top",
-            "x": 147,
-            "y": -3,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
-      "initialized": false,
-      "isParent": false,
-      "position": {
-        "x": 434.1101126592248,
-        "y": 122.63431464569922
-      },
-      "data": {
-        "label": "1111111111111111111111111",
-        "label_then": "no action",
-        "label_detail": null
-      },
-      "events": {}
     }
   ],
   "edges": [
@@ -336,7 +282,7 @@
         "data": {
           "label": "start",
           "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
-          "label_detail": null
+          "label_detail": ""
         },
         "events": {}
       },
@@ -345,7 +291,7 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 209
+          "height": 229
         },
         "computedPosition": {
           "x": -161.1498666652134,
@@ -360,7 +306,7 @@
               "nodeId": "node-1755506597825",
               "position": "bottom",
               "x": 147,
-              "y": 205.99996948242188,
+              "y": 225.99996948242188,
               "width": 6,
               "height": 6
             }
@@ -389,7 +335,7 @@
         },
         "data": {
           "label": "主題",
-          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+          "label_then": "使用者必須有一個明確想做的主題，形式是軟體或應用程式，所有人想法需一致。",
           "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
         },
         "events": {}
@@ -406,7 +352,7 @@
       "events": {},
       "label": "",
       "sourceX": -11.149866665213409,
-      "sourceY": 572.4563109851965,
+      "sourceY": 592.4563109851965,
       "targetX": 399.8743251467489,
       "targetY": 358.44518111330484,
       "sourceNode": {
@@ -414,7 +360,7 @@
         "type": "direct",
         "dimensions": {
           "width": 300,
-          "height": 209
+          "height": 229
         },
         "computedPosition": {
           "x": -161.1498666652134,
@@ -429,7 +375,7 @@
               "nodeId": "node-1755506597825",
               "position": "bottom",
               "x": 147,
-              "y": 205.99996948242188,
+              "y": 225.99996948242188,
               "width": 6,
               "height": 6
             }
@@ -458,7 +404,7 @@
         },
         "data": {
           "label": "主題",
-          "label_then": "使用者必須有一個明確想做的主題，所有人想法需一致。",
+          "label_then": "使用者必須有一個明確想做的主題，形式是軟體或應用程式，所有人想法需一致。",
           "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成「討論主題」這個議題節點就好，不須各種奇怪的主題。"
         },
         "events": {}

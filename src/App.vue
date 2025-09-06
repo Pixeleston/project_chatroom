@@ -24,6 +24,7 @@
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
+        <StudentSimulator v-if="diagram_type === 'simulate'"/>
         <ChatroomAsk v-if="diagram_type === 'edit'"/>
         <ChatroomSimulator v-else-if="diagram_type === 'simulate'"/>
         <Chatroom :username="username" v-else />
@@ -42,6 +43,7 @@ import ChatroomAsk from './components/ChatroomAsk.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
 import ChatroomSimulator from './components/ChatroomSimulator.vue'
 import DiagramSimulator from './components/DiagramSimulator.vue'
+import StudentSimulator from './components/StudentSimulator.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'
 
 const username = ref('')

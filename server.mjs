@@ -6,7 +6,8 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { teacher_action } from './teacher.js'
-import { prompt_spawn_example, filterHistory } from './src/prompt.js'
+import { student_action } from './student.js'
+import { prompt_spawn_example, filterHistory, prompt_spawn_student } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
 // TODO diagram 每次使用都直接拿currentDiagram，儲存時存入currentDiagram，可以檢查看看讀取時是否會讀到舊的資料
@@ -29,6 +30,7 @@ const MEMORY_MODE = 'last_10'
 const HISTORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/history.json')
 const MEMORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/memory.json')
 const STATE_DIAGRAM_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/state_diagram.json')
+const STUDENT_PROFILE_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/student_profile.json')
 
 const MESSAGES_COUNT_PER_UPDATE_MEMORY = 10;
 
@@ -97,9 +99,44 @@ app.get('/api/LLM_TOGGLE', (req, res) => {
 app.post('/api/LLM_TOGGLE', (req, res) => {
   try {
     const { LLM_TOGGLE } = req.body
-    const settings = { LLM_TOGGLE: Boolean(LLM_TOGGLE) }
+    let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+    settings.LLM_TOGGLE = Boolean(LLM_TOGGLE) 
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
     res.json({ success: true, LLM_TOGGLE: settings.LLM_TOGGLE })
+  } catch (err) {
+    res.status(500).json({ error: '寫入設定檔失敗' })
+  }
+})
+
+app.get('/api/SIMULATOR_TOGGLE', (req, res) => {
+  try {
+    const settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+    console.log("settings.:RUN_TOGGLE_SIMULATOR is " + settings.RUN_TOGGLE_SIMULATOR)
+    res.json({ RUN_TOGGLE_SIMULATOR: settings.RUN_TOGGLE_SIMULATOR })
+  } catch (err) {
+    res.status(500).json({ error: '讀取設定檔失敗' })
+  }
+})
+
+app.post('/api/SIMULATOR_TOGGLE_OPEN', (req, res) => {
+  try {
+    const { RUN_TOGGLE_SIMULATOR } = req.body
+    let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+    settings.RUN_TOGGLE_SIMULATOR = true
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+    res.json({ success: true, RUN_TOGGLE_SIMULATOR: settings.RUN_TOGGLE_SIMULATOR })
+  } catch (err) {
+    res.status(500).json({ error: '寫入設定檔失敗' })
+  }
+})
+
+app.post('/api/SIMULATOR_TOGGLE_CLOSE', (req, res) => {
+  try {
+    const { RUN_TOGGLE_SIMULATOR } = req.body
+    let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+    settings.RUN_TOGGLE_SIMULATOR = false
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+    res.json({ success: true, RUN_TOGGLE_SIMULATOR: settings.RUN_TOGGLE_SIMULATOR })
   } catch (err) {
     res.status(500).json({ error: '寫入設定檔失敗' })
   }
@@ -113,6 +150,68 @@ app.post('/api/chatroom_ask_spawn', async (req, res) => {
     const response = await callLLM('gpt-4o', prompt)
     console.log(`get result: ${response}`)
     res.json({ result: response })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// spawn student's description
+app.post('/api/spawnStudent', async (req, res) => {
+  try {
+    const { metrics } = req.body
+    const prompt = prompt_spawn_student(JSON.stringify(metrics))
+    const llmReply = await callLLM('gpt-4o', prompt)
+    res.json({ reply: llmReply })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// add spawned student to simulator
+app.post('/api/addStudent', async (req, res) => {
+  try {
+    const { name, profile } = req.body
+    if (!name || !profile) {
+      return res.status(400).json({ success: false, error: '缺少 name 或 profile' })
+    }
+
+    const data = fs.existsSync(STUDENT_PROFILE_SIMULATOR_FILE)
+      ? JSON.parse(fs.readFileSync(STUDENT_PROFILE_SIMULATOR_FILE, 'utf8') || '[]')
+      : []
+
+    const alreadyExists = data.some(student => student.name === name)
+    if (alreadyExists) {
+      return res.status(200).json({ success: false, error: `學生名稱 "${name}" 已存在` })
+    }
+
+    data.push({ name, profile })
+
+    fs.writeFileSync(STUDENT_PROFILE_SIMULATOR_FILE, JSON.stringify(data, null, 2))
+
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
+
+app.get('/api/getStudent', async (req, res) => {
+  fs.readFile(STUDENT_PROFILE_SIMULATOR_FILE, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'student_profile_simulator 讀取失敗' })
+    console.log("student_profile_simulator 讀取成功")
+    res.json(JSON.parse(data || '{}'))
+  })
+})
+
+app.post('/api/restartSimulator', async (req, res) => {
+  try {
+    historySimulator = []
+    saveHistory("Simulator")
+    currentDiagramSimulator.currentNodeSmall = "null"
+    currentDiagramSimulator.currentNode = "start"
+    currentDiagramSimulator.memory.nodesMemory = []
+    saveDiagram(currentDiagramSimulator, "simulator")
+    
+    res.json({ success: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -135,6 +234,7 @@ let historySimulator = []
 let hostMemorySimulator = []
 let messageCountSimulator = 0
 let currentDiagramSimulator
+let student_profile
 
 function loadJson(file, targetArr, label) {
   if (fs.existsSync(file)) {
@@ -151,9 +251,9 @@ function loadJson(file, targetArr, label) {
 loadJson(HISTORY_FILE, history, 'messages')
 //loadJson(MEMORY_FILE, hostMemory, 'memory')
 currentDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+student_profile = JSON.parse(fs.readFileSync(STUDENT_PROFILE_SIMULATOR_FILE, 'utf8') || '{}')
 
 const writeJson = (file, data) => {
-  console.log(data);
   try {
     const json = JSON.stringify(data, null, 2)
     fs.writeFile(file, json, err => {
@@ -166,9 +266,10 @@ const writeJson = (file, data) => {
 }
 
 
-function broadcastDiagramUpdate(newDiagram) {
+function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   const message = JSON.stringify({
     type: 'diagramUpdated',
+    chatroom_type: chatroom_type,
     diagram: newDiagram
   })
 
@@ -184,10 +285,16 @@ function saveHistory(chatroom_type) {
   else writeJson(HISTORY_SIMULATOR_FILE, historySimulator)
 }
 function saveMemory(memory_dir) { writeJson(memory_dir, hostMemory) }
-function saveDiagram(diagram) {
-  writeJson(STATE_DIAGRAM_FILE, diagram)
-  currentDiagram = diagram
-  broadcastDiagramUpdate(diagram)
+function saveDiagram(diagram, chatroom_type) {
+  if(chatroom_type === "chatroom"){
+    writeJson(STATE_DIAGRAM_FILE, diagram)
+    currentDiagram = diagram
+  }
+  else {
+    writeJson(STATE_DIAGRAM_SIMULATOR_FILE, diagram)
+    currentDiagramSimulator = diagram
+  }
+  broadcastDiagramUpdate(diagram, chatroom_type)
 }
 
 function updateMemory(memory_dir) {
@@ -245,7 +352,7 @@ function sendMessage(diagram, replyMsg, chatroom_type) {  // chatroom_type = "ch
 }
 
 async function tick_chatroom() {
-  const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))).LLM_TOGGLE
+  const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')))
   if (LLM_TOGGLE) {
     try {
       //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
@@ -255,10 +362,10 @@ async function tick_chatroom() {
       if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "chatroom");  // TODO 可能需要改，因為會有轉移節點前或後發話的問題
       if (moveNode) {
         // move node
-        if (moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-        else if (moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+        if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+        else if (moveNode.nextNode === "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
       }
-      saveDiagram(newStateDiagram)
+      saveDiagram(newStateDiagram, "chatroom")
     } catch (err) {
       console.error('tick() failed:', err)
     }
@@ -273,30 +380,40 @@ currentDiagramSimulator = JSON.parse(fs.readFileSync(STATE_DIAGRAM_SIMULATOR_FIL
 
 
 async function tick_simulator() {
-  const { RUN_TOGGLE_SIMULATOR } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))).RUN_TOGGLE_SIMULATOR
+  const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
   if (RUN_TOGGLE_SIMULATOR) {
+    let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
+    console.log(currentHistory)
+    // For students
+    const tasks = student_profile.map(student =>
+      student_action(currentDiagramSimulator, currentHistory, student.profile)
+    )
+
+    const results = await Promise.all(tasks)
+
+    // For host
     try {
       //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
-      let currentHistory = filterHistory(currentDiagramSimulator, historySimulator)
+      console.log(currentHistory)
       const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
 
       if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "simulator");
       if (moveNode) {
         // move node
-        if (moveNode.nextNode == "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-        else if (moveNode.nextNode == "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+        if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+        else if (moveNode.nextNode === "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
       }
-      saveDiagram(newStateDiagram)
+      saveDiagram(newStateDiagram, "simulator")
     } catch (err) {
       console.error('tick() failed:', err)
     }
   }
 }
 
-setInterval(tick_simulator, 5000)
+setInterval(tick_simulator, 15000)
 
 // 有新訊息
-wss.on('connection', ws => {  // TODO 剛寫到這
+wss.on('connection', ws => {
   ws.send(JSON.stringify({ chatroom_type: 'chatroom', type: 'history', data: history }))
   ws.send(JSON.stringify({ chatroom_type: 'simulator', type: 'history', data: historySimulator }))
 
