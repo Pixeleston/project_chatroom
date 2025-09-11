@@ -34,7 +34,7 @@ async function double_check(diagram, replyText, hostMemory){
   let prompt = prompt_double_check(diagram, replyText, hostMemory)
 //  console.log(prompt);
   let llmReply = await callLLM("gpt-4o", prompt);
-  if(llmReply.includes("true")) {
+  if(!llmReply || llmReply.includes("true")) {
 //    console.log("進入true")
 //    console.log(llmReply)
     return "true";
@@ -47,7 +47,6 @@ async function double_check(diagram, replyText, hostMemory){
 }
 
 export async function decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
-    console.log("diagram111 " + diagram)
     let prompt = prompt_decide_small_part(diagram, nextNodeID)
     let llmReply = await callLLM("gpt-4o", prompt);
     console.log("========== llmReply ==========");
@@ -62,6 +61,20 @@ export async function decide_small_part(diagram, nextNodeID){  // 依照nextNode
 
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     let nextNode = getNodeById(diagram, nextNodeID)
+
+  //   // 嘗試用正則抽取 JSON 區塊
+  // const match = fixedReply.match(/\{[\s\S]*?"topics"\s*:\s*\[([\s\S]*?)\](.*?)\}/)
+  // if (match) {
+  //   try {
+  //     result = JSON.parse(`{"topics":[${match[1]}]}`)
+  //   } catch (err2) {
+  //     actionSuccess = false
+  //     throw new Error("❌ 修復後仍解析失敗：" + err2.message)
+  //   }
+  // } else {
+  //   actionSuccess = false
+  //   throw new Error("❌ 無法找出 topics 區塊")
+  // }
 
     let result;
     try {
@@ -106,23 +119,19 @@ async function summarize(stateDiagram, summary){
 
 export async function teacher_action(stateDiagram, hostMemory){
 
+  console.log('teachers history : ')
+  console.log(hostMemory)
+
   const currentNode = stateDiagram.currentNode || 'start'
   const targets = getOutgoingTargets(currentNode, stateDiagram)
+  let actionSuccess = true
 
-  // console.log(stateDiagram)
-  // console.log(currentNode)
-  // console.log(targets)
-  // console.log(hostMemory)
   let prompt = prompt_teacher(stateDiagram, targets, hostMemory)
-  //console.log(`LLM Prompt： ${prompt}`)
-    //.............................................
-
+  //const stop = ["}"]
     let llmReply = await callLLM("gpt-4o", prompt);
+    console.log("teachers reply : " + llmReply)
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
-    // console.log(" ========== llmReply ==========");
-    // console.log(llmReply)
-    // console.log(" ========== llmReply ==========");
 let result
 try {
   // 嘗試完整解析
@@ -130,73 +139,103 @@ try {
 } catch (err) {
   console.warn("❗ JSON.parse 失敗，試圖抽取物件")
 
-  // 嘗試用正則抽取 JSON 區塊
-  const match = cleanedReply.match(/\{[\s\S]*?\}/)
-  if (!match) throw new Error('❌ 無法解析 JSON：找不到大括號區塊')
+  // let fixedReply = cleanedReply
+  // if (!fixedReply.trim().endsWith("}")) {
+  //   fixedReply += "}"
+  // }
+
+  // // 嘗試用正則抽取 JSON 區塊
+  // const match = fixedReply.match(/\{[\s\S]*?"topics"\s*:\s*\[([\s\S]*?)\](.*?)\}/)
+  // if (match) {
+  //   try {
+  //     result = JSON.parse(`{"topics":[${match[1]}]}`)
+  //   } catch (err2) {
+  //     actionSuccess = false
+  //     throw new Error("❌ 修復後仍解析失敗：" + err2.message)
+  //   }
+  // } else {
+  //   actionSuccess = false
+  //   throw new Error("❌ 無法找出 topics 區塊")
+  // }
+  // if (!match) {
+  //   actionSuccess = false
+  //   throw new Error('❌ 無法解析 JSON：找不到大括號區塊')
+  // }
   
-  try {
-    result = JSON.parse(match[0])
-  } catch (err2) {
-    throw new Error('❌ 解析 JSON 區塊失敗：' + err2.message)
-  }
+  // try {
+  //   result = JSON.parse(match[0])
+  // } catch (err2) {
+  //   actionSuccess = false
+  //   throw new Error('❌ 解析 JSON 區塊失敗：' + err2.message)
+  // }
 }
 
-//console.log("✅ 成功解析為物件：", result)
-    //console.log(" ========== llmReply ==========");
 
     // 抓出下一個節點
 
-    // ===== TODO ===== //
     const replyText = result.reply ?? null;
+    
     const nextNode = result.next;   // small big stay
     const nextNodeID = result.nextNode;
+    const nextReply = result.nextReply ?? null;
     const summary = result.summary;
     const why       = result.why   ?? '';
+    
+    // const replyText = null;
+    // const nextNode = "small";   // small big stay
+    // const nextNodeID = "node-1757473413405-0";
+    // const nextReply = "現在，我們可以開始討論並確認期末專案的主題。請大家分享自己的想法，並達成一致。";
+    // const summary = null;
+    // const why       = "目前不在任何小節點，且需要進行大節點中的具體討論和確認主題，因此轉移到新的小節點進行專案主題的討論。";
 
-    let replyMsg = null;
-    // ===== TODO ===== //
-
-    // stateDiagram = await decide_small_part(stateDiagram, "node-1755506609238");
-    // console.log("stateDiagram !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    // console.log(stateDiagram);
+    let replyMsg = { role: 'host', user: 'Host', text: replyText };
+    let nextreplyMsg = null;
 
     let moveNode = null;
     
-    if (replyText && replyText !== 'null') {
-      let check = await double_check(stateDiagram, replyText, hostMemory)
+    if (replyText && replyText !== 'null' && nextNode === 'stay') {
+      let check = await double_check(stateDiagram, replyText, hostMemory)  // errorable
+      if(check === "false") {
+        replyMsg = null;
+      }
+    }
 
-      if(check === "true") {
-    //    console.log("check === true")
-        replyMsg = { role: 'host', user: 'Host', text: replyText };
-        }
-        else {
-    //      console.log("check === false")
-        }
+    if (nextReply && nextReply !== 'null'){
+      nextreplyMsg = { role: 'host', user: 'Host', text: nextReply };
     }
 
 
 
     if (nextNode && nextNode !== 'stay') {
-      // ===== TODO ===== //
 
     //  update_Memory();  // 
 
       let moveNodeSuccess = true;
 
-      if(nextNode == "big"){
-        const result = await decide_small_part(stateDiagram, nextNodeID);
+      if(nextNode === "big"){
+        const result = await decide_small_part(stateDiagram, nextNodeID);  // errorable
+        if(!result.success) {
+      //    console.log("========== result.success === false ==========")
+          actionSuccess = false
+        }
+        const shouldSummarize = (stateDiagram.currentNode === 'start' ? false : true)
         stateDiagram = result.diagram;
-        stateDiagram = await summarize(stateDiagram, summary);
+        if(shouldSummarize){
+          console.log(" ===== summarizing =====")
+          console.log(stateDiagram.currentNode)
+          stateDiagram = await summarize(stateDiagram, summary);
+        }
         stateDiagram.currentNodeSmall = "null"
         moveNodeSuccess = result.success;
       }
-      else if(nextNode == "small"){
+      else if(nextNode === "small"){
         stateDiagram = await summarize(stateDiagram, summary);
       }
-    //  ===== TODO ===== //
       console.log(`➡️ 狀態轉移至: ${nextNodeID}（原因：${why}）`);
       if(moveNodeSuccess) moveNode = { nextNode: nextNode, nextNodeID: nextNodeID };
     }
-    // TODO -> needs to be updated here
-    return {replyMsg, stateDiagram, moveNode}
+    // console.log("teachers reply : " + llmReply)
+    // console.log(" ========== nextReplyMsg ==========");
+    // console.log(nextreplyMsg);
+    return {replyMsg, stateDiagram, moveNode, nextreplyMsg, actionSuccess}
 }

@@ -25,6 +25,10 @@
     <button @click="restartSimulator">
       ➕ 重新模擬
     </button>
+    
+    <button @click="report">
+      ➕ 匯出報告
+    </button>
 
     <!-- 新增面板 -->
     <div v-if="showNewStudentPanel" class="new-student-panel">
@@ -33,6 +37,7 @@
     </div>
     <div v-if="showStudentPanel" class="student-panel">
       <StudentCreate v-if="showCreateStudent"/>
+      <StudentManage v-else />
     </div>
 
     <!-- 顯示所有學生 -->
@@ -54,6 +59,8 @@ const newStudentName = ref('')
 const students = ref([])
 const showStudentPanel = ref(false)
 const showCreateStudent = ref(true)
+const loadingReport = ref(false)
+
 
 function addNewStudent() {
   if (newStudentName.value.trim()) {
@@ -92,6 +99,39 @@ async function pauseSimulator(){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ LLM_TOGGLE: false })
   })
+}
+
+function downloadJSON(data, filename = 'report.json') {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function report() {
+  loadingReport.value = true
+  try {
+    const res = await fetch('http://localhost:3000/api/spawnReport', {
+      method: 'POST'
+    })
+    const json = await res.json()
+
+    if (res.ok) {
+    //  reportText.value = json.report.trim()
+      downloadJSON(json, 'report.json')
+    } else {
+      console.error('❌ 產生報告失敗：', json.error)
+    }
+  } catch (err) {
+    console.error('❌ API 錯誤：', err)
+  } finally {
+    loadingReport.value = false
+  }
 }
 
 async function restartSimulator(){  // set state_diagram to initial state

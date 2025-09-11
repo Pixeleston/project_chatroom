@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 // npm install node-fetch
 //import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './config.js'
-const OPENAI_API_KEY = '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'
+const OPENAI_API_KEY = ''
 
 // export function countTokens(text, model = 'gpt-4') {
 //   const encoder = encoding_for_model(model)
@@ -25,16 +25,16 @@ const MODEL_MAP = {
 }
 
 
-export async function callLLM(model, prompt) {
+export async function callLLM(model, prompt, stop=null) {
   const handler = MODEL_MAP[model]
   if (!handler) {
     console.error(`no model : ${model}.\n Available models : ${OllamaList}\n, ${GPTList}\n`)
     return null
   }
-  return handler(model, prompt)
+  return handler(model, prompt, stop)
 }
 
-export async function callGPT(model, prompt) {
+export async function callGPT(model, prompt, stop=null) {
   // 1️⃣ 計算 input tokens
 
   /*
@@ -43,19 +43,26 @@ export async function callGPT(model, prompt) {
   */
 
   // 2️⃣ 發送 API 請求
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  let response
+  const body = {
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: LLM_CONFIG.maxOutputTokens,
+    stream: false,
+    store: true,
+  }
+
+  if (stop) {
+    body.stop = stop
+  }
+
+  response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: LLM_CONFIG.maxOutputTokens,
-      stream: false,
-      "store": true
-    }),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
@@ -83,7 +90,7 @@ export async function callGPT(model, prompt) {
   return reply
 }
 
-async function callOllama(model, prompt) {
+async function callOllama(model, prompt, stop=null) {
   // const tokenCount = countTokens(prompt, "gpt-4o")
 
   // console.log("=============== Tokens Usage ===============")

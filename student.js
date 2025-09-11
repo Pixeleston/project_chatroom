@@ -30,9 +30,13 @@ function getNodeById(diagram, id) {
 
 // for single student
 export async function student_action(stateDiagram, history, student_profile){
-  console.log(`student: ${student_profile.name}`)
+  if(student_profile.name === 'Edison'){
+    console.log("======== history ========")
+    console.log(history)
+  }
 
   let prompt = prompt_student(stateDiagram, history, student_profile)
+  let actionSuccess = true
 
   let llmReply = await callLLM("gpt-4o", prompt);
   if(!llmReply) return null  // [Bug] 已知此處有可能回傳null
@@ -45,11 +49,15 @@ export async function student_action(stateDiagram, history, student_profile){
     console.warn("❗ JSON.parse 失敗，試圖抽取物件")
 
     const match = cleanedReply.match(/\{[\s\S]*?\}/)
-    if (!match) throw new Error('❌ 無法解析 JSON：找不到大括號區塊')
+    if (!match) {
+      actionSuccess = false
+      throw new Error('❌ 無法解析 JSON：找不到大括號區塊')
+    }
   
     try {
       result = JSON.parse(match[0])
     } catch (err2) {
+      actionSuccess = false
       throw new Error('❌ 解析 JSON 區塊失敗：' + err2.message)
     }
   }
@@ -67,8 +75,7 @@ export async function student_action(stateDiagram, history, student_profile){
         timestamp: new Date().toISOString()
       }
     }
-
-    if (socket.readyState === WebSocket.OPEN) {
+    if (socket.readyState === WebSocket.OPEN && actionSuccess) {
       socket.send(JSON.stringify(payload))
     } else {
       console.warn('⚠️ socket 尚未連線，無法發送')

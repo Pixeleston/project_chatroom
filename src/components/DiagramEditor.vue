@@ -63,9 +63,9 @@ function onNodeClick({ node }) {
 }
 
 function onConnect(params) {
-  flow.edges.value.push({
+  flow.edges.push({
     ...params,
-    id: `e${flow.edges.value.length + 1}`,
+    id: `e${flow.edges.length + 1}`,
     type: 'default',
   })
 }

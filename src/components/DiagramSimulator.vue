@@ -85,6 +85,9 @@ async function onFileSelected (event) {
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
         diagramSimulator.nodes = data.nodes
         diagramSimulator.edges = data.edges
+        diagram.currentNode = data.currentNode
+        diagram.memory = data.memory;
+        diagram.currentNodeSmall = data.currentNodeSmall;
         console.log('✅ 匯入成功')
         await diagramSimulator.saveToServer()
         alert('✅ 已儲存到伺服器')

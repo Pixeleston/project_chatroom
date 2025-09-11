@@ -13,7 +13,6 @@ export const useDiagramStore  = defineStore('diagramSimulator', () => {
     console.log('================== json start await ==================')
     const json = await fetch('http://localhost:3000/api/diagramSimulator').then(r => r.json())
     console.log('================== json ==================')
-    console.log(json)
     nodes.value = json.nodes || []
     edges.value = json.edges || []
     currentNode.value = json.currentNode || 'start'

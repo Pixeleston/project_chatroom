@@ -1,0 +1,168 @@
+{
+  "report_text": "```\n會議統整報告\n\n在本次小組討論中，成員們達成了一項共識，即開發一款音樂遊戲作為他們的期末專案。這意味著所有成員同意專注於這一主題，並將這個想法作為他們共同的工作重心。\n\n=== END ===\n```",
+  "state_diagram": {
+    "nodes": [
+      {
+        "id": "start",
+        "type": "start",
+        "initialized": false,
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "label": "start",
+          "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+          "label_detail": ""
+        }
+      },
+      {
+        "id": "node-1755506597825",
+        "type": "direct",
+        "initialized": false,
+        "position": {
+          "x": -161.1498666652134,
+          "y": 360.45634150277465
+        },
+        "data": {
+          "label": "主題",
+          "label_then": "使用者必須有一個明確想做的主題，形式是軟體或應用程式，所有人想法需一致。",
+          "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成一個「討論主題」這個議題小節點就好，不須生成其他議題節點。"
+        }
+      },
+      {
+        "id": "node-1755506609238",
+        "type": "direct",
+        "initialized": false,
+        "position": {
+          "x": 249.8743251467489,
+          "y": 361.44518111330484
+        },
+        "data": {
+          "label": "細項討論",
+          "label_then": "使用者要根據決定好的軟體主題，集中討論實現該軟體核心功能的細項。",
+          "label_detail": "使用者應聚焦於討論與確定核心功能的設計與實現，無論選擇的主題是遊戲、網站或應用程式，核心功能的設計、技術需求和用戶體驗應作為這一階段討論的重點，避免將資源分散於目前不太需要的市場和運營分析。"
+        }
+      },
+      {
+        "id": "node-1755506616094",
+        "type": "direct",
+        "initialized": false,
+        "position": {
+          "x": 46.60678918047046,
+          "y": 589.3649946196999
+        },
+        "data": {
+          "label": "分工討論",
+          "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。",
+          "label_detail": "使用者必須在這邊討論哪些成員該分配到哪些工作，主要請讓使用者討論如何分配工作，而不要再次討論細項內容"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "type": "default",
+        "source": "start",
+        "target": "node-1755506597825",
+        "sourceHandle": null,
+        "targetHandle": null,
+        "data": {},
+        "label": "",
+        "sourceX": 200,
+        "sourceY": 277,
+        "targetX": -11.14979292479552,
+        "targetY": 357.4563605428686
+      },
+      {
+        "id": "e2",
+        "type": "default",
+        "source": "node-1755506597825",
+        "target": "node-1755506609238",
+        "sourceHandle": null,
+        "targetHandle": null,
+        "data": {},
+        "label": "",
+        "sourceX": -11.14979292479552,
+        "sourceY": 592.4563836497287,
+        "targetX": 399.8743251467489,
+        "targetY": 358.44518111330484
+      },
+      {
+        "id": "e3",
+        "type": "default",
+        "source": "node-1755506609238",
+        "target": "node-1755506616094",
+        "sourceHandle": null,
+        "targetHandle": null,
+        "data": {},
+        "label": "",
+        "sourceX": 399.8743251467489,
+        "sourceY": 573.4451811133049,
+        "targetX": 196.60681969804858,
+        "targetY": 586.3649946196999
+      }
+    ],
+    "currentNode": "node-1755506609238",
+    "memory": {
+      "currentMemory": "",
+      "nodesMemory": [
+        {
+          "id": "node-1755506597825",
+          "label": "主題",
+          "smallNodes": [
+            {
+              "id": "node-1757501523096-0",
+              "theme": "討論主題",
+              "target": "使用者必須一致決定開發的專案主題，如遊戲、網頁或應用程式",
+              "summary": "小組成員一致同意開發一款音樂遊戲作為期末專案。",
+              "finish": true
+            }
+          ]
+        },
+        {
+          "id": "node-1755506609238",
+          "label": "細項討論",
+          "smallNodes": [
+            {
+              "id": "node-1757501893316-0",
+              "theme": "軟體功能規格",
+              "target": "使用者需要確定軟體的核心功能與附加功能，以及對應的技術需求",
+              "summary": "",
+              "finish": false
+            },
+            {
+              "id": "node-1757501893316-1",
+              "theme": "用戶體驗設計",
+              "target": "使用者需討論目標客戶群的需求，並規劃相應的設計方案",
+              "summary": "",
+              "finish": false
+            },
+            {
+              "id": "node-1757501893316-2",
+              "theme": "技術基礎架構",
+              "target": "使用者需選擇合適的技術架構，並決定後端、前端和數據庫的搭配",
+              "summary": "",
+              "finish": false
+            },
+            {
+              "id": "node-1757501893316-3",
+              "theme": "市場競爭分析",
+              "target": "使用者需研究潛在競爭對手，並分析市場空缺與優勢",
+              "summary": "",
+              "finish": false
+            },
+            {
+              "id": "node-1757501893316-4",
+              "theme": "運營與維護計劃",
+              "target": "使用者需制定長期運營、更新與維護的策略，以確保軟體持續高效運行",
+              "summary": "",
+              "finish": false
+            }
+          ]
+        }
+      ]
+    },
+    "currentNodeSmall": "node-1757501893316-0"
+  }
+}

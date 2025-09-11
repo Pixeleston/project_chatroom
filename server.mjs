@@ -7,7 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { teacher_action } from './teacher.js'
 import { student_action } from './student.js'
-import { prompt_spawn_example, filterHistory, prompt_spawn_student } from './src/prompt.js'
+import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
 // TODO diagram 每次使用都直接拿currentDiagram，儲存時存入currentDiagram，可以檢查看看讀取時是否會讀到舊的資料
@@ -30,7 +30,9 @@ const MEMORY_MODE = 'last_10'
 const HISTORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/history.json')
 const MEMORY_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/memory.json')
 const STATE_DIAGRAM_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/state_diagram.json')
+const STATE_DIAGRAM_IMPROVE_FILE = path.join(__dirname, 'src/stores/improve/state_diagram.json')
 const STUDENT_PROFILE_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/student_profile.json')
+const REPORT_IMPROVE_FILE = path.join(__dirname, 'src/stores/improve/report.json')
 
 const MESSAGES_COUNT_PER_UPDATE_MEMORY = 10;
 
@@ -65,6 +67,9 @@ app.get('/api/diagram', (req, res) => {
 
 /* save diagram */
 app.post('/api/diagram', (req, res) => {
+  currentDiagram = req.body
+  history = []
+  saveHistory("chatroom")
   fs.writeFile(STATE_DIAGRAM_FILE, JSON.stringify(req.body, null, 2), err => {
     if (err) return res.status(500).json({ error: 'state_diagram 寫入失敗' })
     res.json({ message: 'state_diagram 已儲存' })
@@ -83,6 +88,21 @@ app.post('/api/diagramSimulator', (req, res) => {
   fs.writeFile(STATE_DIAGRAM_SIMULATOR_FILE, JSON.stringify(req.body, null, 2), err => {
     if (err) return res.status(500).json({ error: 'state_diagram_simulator 寫入失敗' })
     res.json({ message: 'state_diagram_simulator 已儲存' })
+  })
+})
+
+app.get('/api/diagramImprove', (req, res) => {
+  fs.readFile(STATE_DIAGRAM_IMPROVE_FILE, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'state_diagram_improve 讀取失敗' })
+    console.log("state_diagram_improve 讀取成功")
+    res.json(JSON.parse(data || '{}'))
+  })
+})
+
+app.post('/api/diagramImprove', (req, res) => {
+  fs.writeFile(STATE_DIAGRAM_IMPROVE_FILE, JSON.stringify(req.body, null, 2), err => {
+    if (err) return res.status(500).json({ error: 'state_diagram_improve 寫入失敗' })
+    res.json({ message: 'state_diagram_improve 已儲存' })
   })
 })
 
@@ -200,6 +220,101 @@ app.get('/api/getStudent', async (req, res) => {
     console.log("student_profile_simulator 讀取成功")
     res.json(JSON.parse(data || '{}'))
   })
+})
+
+app.post('/api/setStudent', async (req, res) => {
+  try {
+    const newStudent = req.body
+    fs.writeFileSync(STUDENT_PROFILE_SIMULATOR_FILE, JSON.stringify(newStudent, null, 2))
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: '刪除失敗' })
+  }
+})
+
+app.post('/api/spawnReport', async (req, res) => {
+  try {
+    const prompt = prompt_spawn_report(currentDiagramSimulator)
+    const llmReply = await callLLM('gpt-4o', prompt)
+
+    const reportData = {
+      report_text: llmReply,
+      state_diagram: currentDiagramSimulator
+    }
+
+    // 寫入 JSON 檔案
+    fs.writeFileSync(REPORT_IMPROVE_FILE, JSON.stringify(reportData, null, 2), 'utf-8')
+
+    // 回傳整個 JSON 給前端
+    res.json(reportData)
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+function extractCleanJson(rawString) {
+  const jsonStart = rawString.indexOf('{')
+  const jsonEnd = rawString.lastIndexOf('}')
+  if (jsonStart === -1 || jsonEnd === -1) throw new Error('無法找到 JSON 區塊')
+
+  const jsonSubstring = rawString.substring(jsonStart, jsonEnd + 1)
+  return JSON.parse(jsonSubstring)
+}
+
+app.post('/api/chatroom_ask_improve', async (req, res) => {
+  try {
+    const { state_diagram, history } = req.body
+    const prompt = prompt_ask_improve(state_diagram, history)
+    const rawResponse = await callLLM('gpt-4o', prompt)
+  //  const cleanResponse = rawResponse.replace(/<END>/g, '').trim()
+    // const _result = rawResponse.replace(/^```json\s*|\s*```$/g, "");
+    // const result = _result.replace(/<END>/g, "")
+    const result = rawResponse.slice(rawResponse.indexOf('{'), rawResponse.lastIndexOf('}') + 1)
+    console.log(rawResponse)
+  
+    //const cleanResponse = rawResponse.replace(/<END>/g, '').trim()
+
+    console.log(result)
+
+    const parsed = JSON.parse(result)
+    console.log("✅ Parsed:", parsed)
+
+    res.json({ result: parsed })
+  } catch (err) {
+    console.error('❌ JSON 解析失敗:', err)
+    res.status(500).json({ error: 'LLM 回傳格式錯誤：' + err.message })
+  }
+})
+
+// app.post('/api/chatroom_apply_improve', async (req, res) => {
+//   try {
+//     const { state_diagram } = req.body
+//     fs.writeFileSync(STUDENT_PROFILE_SIMULATOR_FILE, JSON.stringify(newStudent, null, 2))
+//     res.json({ success : true })
+//   } catch (err) {
+//     res.status(500).json({ error: err.message })
+//   }
+// })
+
+app.get('/api/getReport', async (req, res) => {
+  fs.readFile(REPORT_IMPROVE_FILE, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'report 讀取失敗' })
+    console.log("report 讀取成功")
+    res.json(JSON.parse(data || '{}'))
+  })
+})
+
+app.post('/api/setReport', async (req, res) => {
+  try {
+    const reportData = req.body
+    console.log("寫入: ")
+    console.log(JSON.stringify(reportData, null, 2))
+    fs.writeFileSync(REPORT_IMPROVE_FILE, JSON.stringify(reportData, null, 2), 'utf-8')
+    res.json(reportData)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 app.post('/api/restartSimulator', async (req, res) => {
@@ -332,13 +447,21 @@ function sendMessage(diagram, replyMsg, chatroom_type) {  // chatroom_type = "ch
       )
     }
     else {
-      historySimulator.push(
-        {
-          id: id,
-          small_id: small_id,
-          history: [replyMsg]
+      if(replyMsg.role === 'host' || !simulateStudentSpeakCool){
+        historySimulator.push(
+          {
+            id: id,
+            small_id: small_id,
+            history: [replyMsg]
+          }
+        )
+        if(replyMsg.role !== 'host'){
+          simulateStudentSpeakCool = true
+          setTimeout(() => {
+            simulateStudentSpeakCool = false
+          }, 2000)
         }
-      )
+      }
     }
   }
   saveHistory(chatroom_type);
@@ -355,17 +478,33 @@ async function tick_chatroom() {
   const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')))
   if (LLM_TOGGLE) {
     try {
-      //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+      const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
       let currentHistory = filterHistory(currentDiagram, history)
-      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
-
-      if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "chatroom");  // TODO 可能需要改，因為會有轉移節點前或後發話的問題
-      if (moveNode) {
-        // move node
-        if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-        else if (moveNode.nextNode === "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+      // console.log(currentDiagram)
+      // console.log(currentHistory)
+      const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg, actionSuccess } = await teacher_action(stateDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
+      // console.log("===============================")
+      // console.log(replyMsg)
+      // console.log(moveNode)
+      // console.log(nextreplyMsg)
+      // console.log(actionSuccess)
+      // console.log("===============================")
+      if(actionSuccess){
+        if (replyMsg && replyMsg.text !== 'null' && replyMsg.text !== null) sendMessage(currentDiagram, replyMsg, "chatroom");  // TODO 可能需要改，因為會有轉移節點前或後發話的問題
+        if (moveNode) {
+          // move node
+          if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
+          else if (moveNode.nextNode === "small") {
+            newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+            if(nextreplyMsg && nextreplyMsg !== 'null'){
+            //  console.log(" ========== send nextReplyMsg ==========")
+            //  console.log(nextreplyMsg)
+              sendMessage(currentDiagram, nextreplyMsg, "chatroom");
+            }
+          }
+        }
+        saveDiagram(newStateDiagram, "chatroom")
       }
-      saveDiagram(newStateDiagram, "chatroom")
     } catch (err) {
       console.error('tick() failed:', err)
     }
@@ -377,16 +516,18 @@ setInterval(tick_chatroom, 10000)  // 每 10 秒執行一次
 
 loadJson(HISTORY_SIMULATOR_FILE, historySimulator, 'messages')
 currentDiagramSimulator = JSON.parse(fs.readFileSync(STATE_DIAGRAM_SIMULATOR_FILE, 'utf8') || '{}')
+let simulateStudentSpeakCool = false
 
 
 async function tick_simulator() {
   const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
   if (RUN_TOGGLE_SIMULATOR) {
     let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
-    console.log(currentHistory)
-    // For students
+    // console.log(currentDiagramSimulator)
+    // console.log(historySimulator)
+    // // For students
     const tasks = student_profile.map(student =>
-      student_action(currentDiagramSimulator, currentHistory, student.profile)
+      student_action(currentDiagramSimulator, currentHistory, student)
     )
 
     const results = await Promise.all(tasks)
@@ -394,14 +535,20 @@ async function tick_simulator() {
     // For host
     try {
       //  const stateDiagram = JSON.parse(fs.readFileSync(STATE_DIAGRAM_FILE, 'utf8') || '{}')
+      console.log(' ========= currentHistory =========')
       console.log(currentHistory)
-      const { replyMsg, stateDiagram: newStateDiagram, moveNode } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
+      const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReply } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15))
 
       if (replyMsg && replyMsg !== 'null') sendMessage(currentDiagram, replyMsg, "simulator");
       if (moveNode) {
         // move node
         if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-        else if (moveNode.nextNode === "small") newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+        else if (moveNode.nextNode === "small") {
+          newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+          if(nextReply && nextReply !== 'null'){
+            sendMessage(currentDiagram, nextReply, "simulator");
+          }
+        }
       }
       saveDiagram(newStateDiagram, "simulator")
     } catch (err) {

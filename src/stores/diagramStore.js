@@ -32,16 +32,16 @@ export const useDiagramStore  = defineStore('diagram', () => {
   async function saveToServer() {
     try {
       const res = await fetch('http://localhost:3000/api/diagram', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    nodes: nodes.value,
-    edges: edges.value,
-    currentNode: currentNode.value,
-    memory: memory.value,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        nodes: nodes.value,
+        edges: edges.value,
+        currentNode: currentNode.value,
+        memory: memory.value,
         currentNodeSmall: currentNodeSmall.value,
-  }, null, 2)
-})
+        }, null, 2)
+      })
       if (!res.ok) throw new Error(await res.text())
       console.log('✅ 已儲存到伺服器')
     } catch (err) {

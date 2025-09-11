@@ -14,6 +14,7 @@
         <img src="./assets/Barrier.png" style="width:20px; height:20px;" > 開關流程圖</img>
       </button>
       <button @click="diagram_type = 'edit'">🛠️ 編輯流程圖</button>
+      <button @click="diagram_type = 'improve'">🛠️ LLM輔助修改流程圖</button>
       <button @click="diagram_type = 'display'">📄 檢視狀態圖</button>
     </div>
 
@@ -21,13 +22,15 @@
       <div v-if="showDiagram" class="diagram">
         <Diagram v-if="diagram_type === 'display'" ref="diagramRef" />
         <DiagramSimulator v-else-if="diagram_type === 'simulate'" />
+        <DiagramImprove v-else-if="diagram_type === 'improve'"/>
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
         <StudentSimulator v-if="diagram_type === 'simulate'"/>
-        <ChatroomAsk v-if="diagram_type === 'edit'"/>
-        <ChatroomSimulator v-else-if="diagram_type === 'simulate'"/>
-        <Chatroom :username="username" v-else />
+        <ChatroomAsk v-else-if="diagram_type === 'edit'"/>
+        <ChatroomImprove v-else-if="diagram_type === 'improve'"/>
+        <Chatroom :username="username" v-else-if="diagram_type === 'display'"/>
+        <ChatroomSimulator v-if="diagram_type === 'simulate'"/>
       </div>
     </div>
 
@@ -41,7 +44,9 @@ import Diagram from './components/Diagram.vue'
 import Chatroom from './components/Chatroom.vue'
 import ChatroomAsk from './components/ChatroomAsk.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
+import DiagramImprove from './components/DiagramImprove.vue'
 import ChatroomSimulator from './components/ChatroomSimulator.vue'
+import ChatroomImprove from './components/ChatroomImprove.vue'
 import DiagramSimulator from './components/DiagramSimulator.vue'
 import StudentSimulator from './components/StudentSimulator.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'

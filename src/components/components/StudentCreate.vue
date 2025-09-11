@@ -28,6 +28,7 @@
         ➕ 新增模擬學生描述
       </button>
       <div v-if="addStudentErrorMessage" class="errorMessage">{{addStudentErrorMessage}}</div>
+      <div v-if="addStudentFinishMessage" class="finishMessage">{{addStudentFinishMessage}}</div>
     </div>
 
     <div class="student-description">
@@ -48,6 +49,7 @@ const spawn_cool = ref(false)
 const studentDescription = ref('') // 存放LLM回覆
 const studentName = ref('')
 const addStudentErrorMessage = ref('')
+const addStudentFinishMessage = ref('')
 const addStudentMessage = ref('')
 
 async function spawnStudent() {
@@ -74,14 +76,17 @@ async function spawnStudent() {
       console.log('✅ LLM 回覆：', json.reply)
       studentDescription.value = json.reply
       addStudentErrorMessage.value = ''
+      addStudentFinishMessage.value = ''
     } else {
       console.error('❌ 錯誤：', json.error)
       addStudentErrorMessage.value = json.error
+      addStudentFinishMessage.value = ''
     }
   } catch (err) {
     console.error('❌ 發送失敗：', err)
     spawn_cool.value = false
     addStudentErrorMessage.value = err
+    addStudentFinishMessage.value = ''
   }
 }
 
@@ -108,14 +113,17 @@ async function addStudent() {
       if(json.success) {
         console.log('✅ 學生已加入模擬器')
         addStudentErrorMessage.value = ''
+        addStudentFinishMessage.value = '學生加入成功'
       }
       else {
         console.error('❌ 加入學生失敗：', json.error)
         addStudentErrorMessage.value = json.error
+        addStudentFinishMessage.value = ''
       }
     } else {
       console.error('❌ 加入學生失敗：', json.error)
       addStudentErrorMessage.value = json.error
+      addStudentFinishMessage.value = ''
     }
   } catch (err) {
     console.error('❌ 發送失敗：', err)
@@ -176,6 +184,10 @@ async function loadStudent(){
 
 .errorMessage {
   color: #ff0303ff;
+}
+
+.finishMessage {
+  color: #09ff00ff;
 }
 
 .student-description textarea {

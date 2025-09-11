@@ -73,14 +73,13 @@ function findMatchingNode(nodes, targetId, targetSmallId) {
   return nodes.find(n => n.id === targetId && n.small_id === targetSmallId)
 }
 
-export function filterHistory(diagram, history){
-  let id = diagram.currentNode
-  let small_id = diagram.currentNodeSmall
-  const node = history.find(n => n.id === id && n.small_id === small_id)
-  if(node){
-    return node.history
-  }
-  else return []
+export function filterHistory(diagram, history) {
+  const id = diagram.currentNode
+  const small_id = diagram.currentNodeSmall
+  const matchedNodes = history.filter(
+    n => (n.id === id && n.small_id === small_id) || n.id === 'start'
+  )
+  return matchedNodes.flatMap(n => n.history)
 }
 
 function getNodeById(diagram, id) {
@@ -137,7 +136,6 @@ export function prompt_double_check(diagram, replyText, history){
 }
 
 export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
-  console.log(diagram)
   let nextNode = getNodeById(diagram, nextNodeID)
   let promptSummary = ``
 
@@ -171,7 +169,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
 
     請根據這些情況及教師對於新主題的需求，來決定學生在新主題中具體要討論的「主題」與「討論目標」。
 
-    請使用以下 JSON 格式回應（不需其他說明），例如：
+    請用以下格式輸出，並完整輸出，不要省略、不用加註解、不用加說明：
     {
       "topics": [
         { "theme": "網頁開發框架", "target": "使用者必須針對開發網頁討論出欲使用的框架" },
@@ -179,6 +177,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
       ],
       "why": "這些主題能讓學生從『確定開發方向』邁向『具體分工與時程管理』，也呼應教師希望學生做出具體開發規劃的需求。"
     }
+    （請確保是有效 JSON，不要遺漏逗號或結尾大括號，內容不要中斷）
 
     該大節點的詳細描述，裡面可能含有範例，要生成哪些小節點請仔細查看細節：
     - ${nextNode.data.label_detail ? nextNode.data.label_detail:"(目前大節點無細節)"}
@@ -192,17 +191,29 @@ export function prompt_teacher(stateDiagram, targets, history){
   let currentNode = stateDiagram.currentNode;
   let currentSmallNode = stateDiagram.currentNodeSmall;
   let diagram_edge_prompt = "以下是狀態圖中目前節點連出去的所有大節點："
+  let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
+  let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  if(history) history_string = history.join('\n')
     for (const node of targets){
       diagram_edge_prompt += `\n    - id : ${node.id}`
     }
     if (targets.length === 0){
       diagram_edge_prompt += '目前沒有可轉移出去的節點'
     }
-
-    let memory_string = ""
-    if (LLM_CONFIG.custom_memory) {
-      memory_string = `\n以下是歷史對話：${history.join('\n')}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
+    
+    let len = 0
+    for (const memoryNode of stateDiagram.memory.nodesMemory) {
+      for (const smallNode of memoryNode.smallNodes) {
+        pre_summary += `      -${smallNode.summary} \n`
+        len += 1
+      }
     }
+
+    if(len === 0) pre_summary += '      -（目前學生沒有討論完任何議題）\n'
+
+    let memory_string = pre_summary
+
+    memory_string += `\n以下是使用者在新議題節點中的歷史對話：${history_string}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
 
     const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
 
@@ -260,16 +271,17 @@ export function prompt_teacher(stateDiagram, targets, history){
     JSON 結構如下：
 
     {
-      "reply": "<string 或 null>",   // 要回給聊天室的文字，若不需發話請用 null
+      "reply": "<string 或 null>",   // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
       "next": "<small 或 big 或 stay>"
       "nextNode":  "<string 或 \"stay\">", // 若next為small，則給出下一個小節點ID，若next為big，則給出下一個大節點ID，若next為stay，則給stay"
+      "nextReply": "<string 或 null>" //若next為small，則給出進入下個小節點時的開場話，若next為stay或是big，則給null
       "summary": "<string>", // 若next為small，請給出學生在目前完成的小節點所得出的總結，若next為其他字串則此處給null
       "why":   "<string>"             // 轉移或不轉移的理由，簡短說明
     }
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
-  //  console.log('prompt : ' + prompt)
+    console.log('prompt : ' + prompt)
     // ===== TODO =====
     // 在prompt中新增 "nextSmall": "<string>"
     // ===== TOTO =====
@@ -336,11 +348,10 @@ export function prompt_spawn_student(metricsJson) {
   prompt += `- Creativity：90\n\n`
 
   prompt += `***** 範例輸出 *****\n`
-  prompt += `「\n`
   prompt += `參與度方面，這位學生較為內向，不常主動發言，需要引導才能參與討論。\n`
   prompt += `在合作方面，他非常積極，擅長與人協調，也會主動幫助團隊解決問題。\n`
-  prompt += `創意力上，他經常提出獨特又具啟發性的想法，讓團隊激發出更多可能性。\n`
-  prompt += `」\n\n`
+  prompt += `創意力上，他經常提出獨特又具啟發性的想法，讓團隊激發出更多可能性。\n\n`
+  prompt += `***** 範例輸出結束 *****\n`
 
   prompt += `請依照上述格式，根據實際指標，生成一段新的學生描述：\n`
 
@@ -350,8 +361,11 @@ export function prompt_spawn_student(metricsJson) {
 export function prompt_student(stateDiagram, history, student_profile){
 
     let memory_string = ""
+    let history_string = "(目前聊天室沒有任何歷史紀錄)"
+    if(history) history_string = history.join('\n')
+
     if (LLM_CONFIG.custom_memory) {
-      memory_string = `\n以下是歷史對話：${history.join('\n')}\n歷史對話結束，請根據目前狀態圖及其他人的對話給出回應與判斷：`
+      memory_string = `\n以下是歷史對話：${history_string}\n歷史對話結束，請根據目前狀態圖及其他人的對話給出回應與判斷：`
     }
 
 
@@ -359,11 +373,12 @@ export function prompt_student(stateDiagram, history, student_profile){
     ${headerPromptStudent}
 
     以下是你所扮演的學生角色的各項指標，請根據指標來判斷是否發話，以及發話的內容為何：
-    ${student_profile}
+    ${student_profile.profile}
 
     ${memory_string}
 
     請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
+    **請使用中文回答**
     JSON 結構如下：
 
     {
@@ -378,4 +393,91 @@ export function prompt_student(stateDiagram, history, student_profile){
     // 在prompt中新增 "nextSmall": "<string>"
     // ===== TOTO =====
   return prompt
+}
+
+export function prompt_spawn_report(stateDiagram) {
+  const summaries = []
+
+  for (const memoryNode of stateDiagram.memory.nodesMemory || []) {
+    for (const smallNode of memoryNode.smallNodes || []) {
+      if (smallNode.summary?.trim()) {
+        summaries.push({
+          theme: smallNode.theme,
+          summary: smallNode.summary
+        })
+      }
+    }
+  }
+
+  const prompt = `
+  你是一位小組討論觀察者，以下是每個討論節點中所產出的「討論摘要」：
+
+  ${summaries.map((s, i) => `【${i + 1}. ${s.theme}】\n${s.summary}`).join('\n\n')}
+
+  請你根據上述摘要，撰寫一份完整的會議統整報告，請務必涵蓋所有摘要資訊。
+  只需要輸出學生在各個議題上討論出了甚麼總結，不須輸出日期、名稱等無關的資訊。
+  請以 "=== END ===" 結尾
+  `
+
+  return prompt
+}
+
+export function prompt_ask_improve(state_diagram, history) {
+  let prompt_state_diagram = ''
+
+  // 遍歷主節點
+  for (const node of state_diagram.nodes ?? []) {
+    prompt_state_diagram += `\n[主節點 ID: ${node.id}  主節點名稱: ${node.data.label} ]\n`
+    prompt_state_diagram += `label_then: ${node.data.label_then}\n`
+    prompt_state_diagram += `label_detail: ${node.data.label_detail}\n`
+  }
+
+  // 遍歷記憶體中的子節點
+  for (const memoryNode of state_diagram.memory?.nodesMemory ?? []) {
+    prompt_state_diagram += `\n[記憶體節點 ID: ${memoryNode.id}]\n`
+    for (const sn of memoryNode.smallNodes ?? []) {
+      prompt_state_diagram += `  - 小節點 Theme: ${sn.theme}\n`
+      prompt_state_diagram += `    Target: ${sn.target}\n`
+    }
+  }
+  
+  const prompt_history = history
+  ? history
+  : '(無歷史紀錄)'
+
+  //const prompt_history = history ?? ''
+
+  const prompt = `
+你是一個狀態圖改善者，以下是剛討論完某個議題的學生完成的狀態圖，每個 nodes 中有 label_then, label_detail，
+代表使用者在這個 node 中要討論的目標，以及要討論時具體可能發生的細節：
+${prompt_state_diagram}
+
+以下是教師的要求訊息：
+${history}
+
+狀態圖中的 nodesMemory 裡面含有 LLM 在討論過程中根據 label_then, label_detail 生出的實際討論議題小節點。
+教師在觀察完這些小節點後，希望你能夠透過修改某些 nodes 中的 label_then, label_detail 幫助 LLM 在下次討論過程中能生出更好的討論議題小節點。
+
+⛔ 請注意：
+- 一次最多僅修改一個主節點
+- 請輸出該主節點的 id、新的 label_then、新的 label_detail
+- 並額外輸出 reply：你要回應給教師的文字，用來說明你為什麼建議這樣修改，以及是否要徵詢教師是否同意
+
+(**非常重要**)請注意：雖然目前的對話中使用者可能提及使用者實際討論出的情況作為一個例子（例如遊戲），但實際上他們仍有可能選擇設計其他類型的軟體（例如網站、應用程式等）。
+因此，在你提出節點修改建議時，請避免針對特定主題（如遊戲）做出過度假設，而是給出能適用於多數軟體開發情境的更通用的建議方向。
+
+請你回傳純 JSON 結構，內容如下，請以<END>結束：
+請使用中文回答所有訊息
+
+{
+  "id": "要修改的主節點 id", // 如果沒有要修改的節點可以直接回傳null
+  "label": "預修改的大節點名稱 label"
+  "label_then": "修改後的新 label_then",
+  "label_detail": "修改後的新 label_detail",
+  "reply": "你回覆給教師的建議與詢問"
+}
+<END>
+`
+
+  return prompt.trim()
 }
