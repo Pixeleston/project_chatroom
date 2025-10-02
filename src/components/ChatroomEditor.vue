@@ -16,11 +16,18 @@
           style="width: 100%; height: 200px; resize: vertical; box-sizing: border-box;"
           class="message"
         />
+    <h3>請輸入大綱</h3>
+      <textarea v-model="outlineText" 
+          placeholder=""
+          style="width: 100%; height: 200px; resize: vertical; box-sizing: border-box;"
+          class="message"
+        />
+      <button @click="spawnDiagram">Spawn Diagram</button>
     <div class="messages">
       <div v-for="(msg, index) in history" :key="index"
         :class="['message', msg.user === username ? 'me' : (msg.role === 'host' ? 'host' : '')]">
         <strong>{{ msg.user }}:</strong> {{ msg.text }}
-      </div>
+      </div> 
     </div>
     <div class="input-area">
       <input v-model="newMessage" @keyup.enter="teacher_sendMessage" placeholder="Type a message..." />
@@ -48,6 +55,7 @@ const history = ref([{
 let latest_msg
 
 const detailText = ref('')
+const outlineText = ref('')
 watch(() => flow.selectedNode, (newNode) => {
   if (newNode && newNode.data) {
     history.value = []
@@ -97,7 +105,7 @@ function teacher_sendMessage(){
 
 // 'user' , 'teacher', newMessage.value
 function sendMessage(role, user, msg) {
-  if (newMessage.value.trim()) {
+  //if (msg.trim()) {
     //socket.send(JSON.stringify({ role: 'user', user: props.username, text: newMessage.value }))
     history.value.push({ 
       role: role, 
@@ -110,7 +118,7 @@ function sendMessage(role, user, msg) {
       text: msg
     })
     newMessage.value = '';
-  }
+ // }
 }
 
 async function spawnExample(){
@@ -136,6 +144,21 @@ async function spawnExample(){
     sendMessage('host', 'AI assistant', data.result)
   }
   
+}
+
+async function spawnDiagram(){
+  if (outlineText.value.trim()) {
+    const res = await fetch('http://localhost:3000/api/spawn_diagram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outline: outlineText.value})
+    })
+    console.log("wait111111")
+    const data = await res.json()
+    console.log("send!!!!!!")
+    sendMessage('host', 'AI assistant', data.nodeArray)
+    sendMessage('host', 'AI assistant', data.detailArray)
+  }
 }
 
 </script>

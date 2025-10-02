@@ -16,6 +16,7 @@
       <button @click="diagram_type = 'edit'">🛠️ 編輯流程圖</button>
       <button @click="diagram_type = 'improve'">🛠️ LLM輔助修改流程圖</button>
       <button @click="diagram_type = 'display'">📄 檢視狀態圖</button>
+      <button @click="diagram_type = 'test'">📄 測試prompt</button>
     </div>
 
     <div class="main-area">
@@ -27,10 +28,11 @@
       </div>
       <div class="chat-area">
         <StudentSimulator v-if="diagram_type === 'simulate'"/>
-        <ChatroomAsk v-else-if="diagram_type === 'edit'"/>
+        <ChatroomEditor v-else-if="diagram_type === 'edit'"/>
         <ChatroomImprove v-else-if="diagram_type === 'improve'"/>
         <Chatroom :username="username" v-else-if="diagram_type === 'display'"/>
         <ChatroomSimulator v-if="diagram_type === 'simulate'"/>
+        <TestPrompt v-if="diagram_type === 'test'"/>
       </div>
     </div>
 
@@ -42,13 +44,14 @@
 import { ref, markRaw, onMounted } from 'vue'
 import Diagram from './components/Diagram.vue'
 import Chatroom from './components/Chatroom.vue'
-import ChatroomAsk from './components/ChatroomAsk.vue'
+import ChatroomEditor from './components/ChatroomEditor.vue'
 import DiagramEditor from './components/DiagramEditor.vue'
 import DiagramImprove from './components/DiagramImprove.vue'
 import ChatroomSimulator from './components/ChatroomSimulator.vue'
 import ChatroomImprove from './components/ChatroomImprove.vue'
 import DiagramSimulator from './components/DiagramSimulator.vue'
 import StudentSimulator from './components/StudentSimulator.vue'
+import TestPrompt from './components/TestPrompt.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'
 
 const username = ref('')

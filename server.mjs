@@ -9,6 +9,7 @@ import { teacher_action } from './teacher.js'
 import { student_action } from './student.js'
 import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
+import { spawnDiagram } from './spawnDiagram.js'
 
 // TODO diagram 每次使用都直接拿currentDiagram，儲存時存入currentDiagram，可以檢查看看讀取時是否會讀到舊的資料
 
@@ -281,6 +282,33 @@ app.post('/api/chatroom_ask_improve', async (req, res) => {
     console.log("✅ Parsed:", parsed)
 
     res.json({ result: parsed })
+  } catch (err) {
+    console.error('❌ JSON 解析失敗:', err)
+    res.status(500).json({ error: 'LLM 回傳格式錯誤：' + err.message })
+  }
+})
+
+app.post('/api/spawn_diagram', async (req, res) => {
+  try {
+    const { outline } = req.body
+    const { nodeArray, detailArray } = await spawnDiagram(outline)
+
+    res.json({ nodeArray: nodeArray, detailArray: detailArray })
+
+  } catch (err) {
+    console.error('❌ JSON 解析失敗:', err)
+    res.status(500).json({ error: 'LLM 回傳格式錯誤：' + err.message })
+  }
+})
+
+app.post('/api/callLLM', async (req, res) => {
+  try {
+    const { prompt } = req.body
+    console.log(`prompt is ${prompt}`)
+    const rawResponse = await callLLM('gpt-4o', prompt)
+    
+
+    res.json({ result: rawResponse })
   } catch (err) {
     console.error('❌ JSON 解析失敗:', err)
     res.status(500).json({ error: 'LLM 回傳格式錯誤：' + err.message })

@@ -7,7 +7,7 @@ import { prompt_teacher, prompt_decide_small_part, prompt_double_check } from '.
 import { callLLM } from './src/callLLM.js'
 
 
-const OPENAI_API_KEY = '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'
+const OPENAI_API_KEY = ''
 
 const headerPrompt = [
   `你是這個聊天室的主持人，要用繁體中文與使用者互動。
