@@ -6,9 +6,6 @@ import { LLM_CONFIG } from './src/config.js'
 import { prompt_teacher, prompt_decide_small_part, prompt_double_check } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
-
-const OPENAI_API_KEY = ''
-
 const headerPrompt = [
   `你是這個聊天室的主持人，要用繁體中文與使用者互動。
   - 回應要友善、親切、有鼓勵性

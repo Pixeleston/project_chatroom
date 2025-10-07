@@ -1,6 +1,7 @@
 // npm install node-fetch
 import { LLM_CONFIG } from './config.js'
-const OPENAI_API_KEY = ''
+import { callLLM } from './callLLM.js'
+import fs from 'fs'
 
 const headerPrompt = [
   `這是一個與 ... 的對話。... 是由 [組織名稱隱去] 研究團隊建立的協作型 AI 助手，基於 OpenAI 開發的 ChatGPT 5-mini 大型語言模型。
@@ -134,6 +135,126 @@ export function prompt_double_check(diagram, replyText, history){
 
     return prompt
 }
+
+
+// === Relationship-Belief 生成/更新（純資料，不做 I/O） ===
+
+// 亂數（可選 seed；不傳就用 Math.random）
+export function _makePRNG(seed = null) {
+  if (seed == null) return Math.random;
+  let t = seed >>> 0;
+  return function rand() {
+    t ^= t << 13; t ^= t >>> 17; t ^= t << 5;
+    return ((t >>> 0) / 4294967296);
+  };
+}
+export function _randRange(rand, min, max) {
+  return min + (max - min) * rand();
+}
+
+/**
+ * 由學生名稱重建整份 relationship_belief 結構
+ * @param {string[]} names
+ * @param {object}   opts { seed?:number, symmetric?:boolean, relMin?:number, relMax?:number }
+ * @returns {{members: Array<{name:string, belief:Object, relationship:Object}>}}
+ */
+export function rebuildRelationshipBeliefFromNames(names, opts = {}) {
+  const {
+    seed = Date.now(),
+    symmetric = false,
+    relMin = -1.0,
+    relMax = 1.0
+  } = opts;
+
+  const rand = _makePRNG(seed);
+  const members = names.map(n => ({ name: n, belief: {}, relationship: {} }));
+
+  for (let i = 0; i < names.length; i++) {
+    for (let j = 0; j < names.length; j++) {
+      if (i === j) continue;
+      if (symmetric && j < i) {
+        // 鏡像
+        members[i].relationship[names[j]] = members[j].relationship[names[i]];
+      } else {
+        members[i].relationship[names[j]] = Number(_randRange(rand, relMin, relMax).toFixed(3));
+      }
+    }
+  }
+  return { members };
+}
+
+/**
+ * 在既有資料上，增量加入「新學生」，並補齊雙方關係
+ * @param {{members:Array}} relData  既有 relationship_belief 資料（若無可傳 {members: []}）
+ * @param {string[]} names           目前所有學生名稱（含新學生）
+ * @param {string} newName           新學生名稱
+ * @param {object} opts              { seed?:number, symmetric?:boolean, relMin?:number, relMax?:number }
+ * @returns {{members:Array}}
+ */
+export function updateRelationshipBeliefOnNewStudentData(relData, names, newName, opts = {}) {
+  const {
+    seed = Date.now(),
+    symmetric = false,
+    relMin = -1.0,
+    relMax = 1.0
+  } = opts;
+
+  const rand = _makePRNG(seed);
+  const data = relData && Array.isArray(relData.members) ? relData : { members: [] };
+
+  // 已存在就直接回傳
+  if (data.members.some(m => m.name === newName)) return data;
+
+  // 若完全沒有成員，退化成重建
+  if (data.members.length === 0) {
+    return rebuildRelationshipBeliefFromNames(names, { seed, symmetric, relMin, relMax });
+  }
+
+  // 先確保結構健全
+  for (const m of data.members) {
+    if (!m.belief || typeof m.belief !== 'object') m.belief = {};
+    if (!m.relationship || typeof m.relationship !== 'object') m.relationship = {};
+  }
+
+  // 舊成員 -> 新同學（非對稱時這裡就隨機填；對稱等會鏡像）
+  for (const m of data.members) {
+    if (!symmetric) {
+      m.relationship[newName] = Number(_randRange(rand, relMin, relMax).toFixed(3));
+    }
+  }
+
+  // 新同學 -> 舊成員
+  const newRel = {};
+  for (const oldName of data.members.map(x => x.name)) {
+    newRel[oldName] = Number(_randRange(rand, relMin, relMax).toFixed(3));
+  }
+
+  data.members.push({
+    name: newName,
+    belief: {},          // 一開始為空
+    relationship: newRel
+  });
+
+  // 若對稱，做鏡像
+  if (symmetric) {
+    const map = new Map(data.members.map(m => [m.name, m]));
+    for (const a of data.members) {
+      for (const bName of Object.keys(a.relationship)) {
+        const b = map.get(bName);
+        if (!b) continue;
+        const ab = a.relationship[bName];
+        const ba = b.relationship?.[a.name];
+        const val = (typeof ba === 'number') ? (ab + ba) / 2 : ab;
+        a.relationship[bName] = Number(val.toFixed(3));
+        b.relationship[a.name] = Number(val.toFixed(3));
+      }
+    }
+  }
+
+  return data;
+}
+
+
 
 export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
   let nextNode = getNodeById(diagram, nextNodeID)
@@ -330,8 +451,9 @@ export function prompt_spawn_example(selectedNode, latest_msg){
 export function prompt_spawn_student(metricsJson) {
   const metrics = JSON.parse(metricsJson)
 
-  let prompt = `你現在要扮演一位模擬學生生成器，根據給定的能力指標，生成這位學生的完整個性描述。\n`
-  prompt += `每項指標的範圍是 0 到 100，數值愈高表示能力愈強。\n\n`
+  let prompt = `你現在要扮演一位模擬學生生成器，根據給定的能力指標和MBTI，生成這位學生的完整個性描述。\n`
+  prompt += `MBTI以外的每項指標的範圍是 0 到 100，數值愈高表示能力愈強。\n`
+  prompt += `MBTI指標有四個指標，每個指標分成兩項例如E人或I人，又分成強和弱，例如E強、I弱\n\n`
 
   prompt += `以下是該學生的能力指標：\n`
   for (const [key, value] of Object.entries(metrics)) {
@@ -345,18 +467,29 @@ export function prompt_spawn_student(metricsJson) {
   prompt += `***** 範例輸入 *****\n`
   prompt += `- Participation：10\n`
   prompt += `- Collaboration：85\n`
-  prompt += `- Creativity：90\n\n`
+  prompt += `- Creativity：90\n`
+  prompt += `- Communication：60\n`
+  prompt += `- Leadership：30\n\n`
 
+  prompt += `以下為範例輸出，輸出JSON***僅需要***輸出文字敘述，***不需要***有任何輸入內容，例如MBTI和各個指標等，不需要有任何標題(學生自述)或標籤\n`
+  prompt += `輸入完成請以<END>作結尾\n`
   prompt += `***** 範例輸出 *****\n`
-  prompt += `參與度方面，這位學生較為內向，不常主動發言，需要引導才能參與討論。\n`
-  prompt += `在合作方面，他非常積極，擅長與人協調，也會主動幫助團隊解決問題。\n`
-  prompt += `創意力上，他經常提出獨特又具啟發性的想法，讓團隊激發出更多可能性。\n\n`
+  prompt += `他在團隊中多半保持安靜觀察的姿態，傾向在想法成熟後再發言，發言時往往能切中問題重點並引起他人共鳴。\n`
+  prompt += `在合作上，他擅長傾聽與統整，能敏銳察覺團隊氛圍的變化，並在成員之間建立信任與共識，讓討論更流暢且有方向。\n`
+  prompt += `他的創意豐富，善於從抽象構想中提煉具體可行的方案，特別能把理想與實務結合成具體步驟。\n`
+  prompt += `在溝通上，表達清晰而有條理，能將複雜的想法轉化為團隊能理解的語言，偶爾在表達立場時略顯保守。\n`
+  prompt += `雖然不常主導討論，但當團隊需要整合方向或陷入混亂時，他會主動站出來協調，幫助大家聚焦於共同目標。\n`
+  prompt += `整體而言，他是一位兼具創造力與責任感的協作型成員，重視和諧與結構，擅長在冷靜與理想間找到平衡，推動團隊穩健前進。\n`
+  prompt += `【人格傾向】他的人格特質接近 INFJ 型——內向、洞察力強、富有同理心且具結構思維，擅長在安靜思考中找出整體脈絡，並以溫和而堅定的方式帶領團隊向前。\n`
+  prompt += `<END>\n` 
   prompt += `***** 範例輸出結束 *****\n`
 
-  prompt += `請依照上述格式，根據實際指標，生成一段新的學生描述：\n`
+  prompt += `請依照上述格式，根據實際指標，生成一段新的學生描述，並務必以<END>結尾：\n`
 
   return prompt
 }
+
+
 
 export function prompt_student(stateDiagram, history, student_profile){
 
@@ -371,7 +504,8 @@ export function prompt_student(stateDiagram, history, student_profile){
 
     const prompt = `
     ${headerPromptStudent}
-
+    
+    你的名字是： ${student_profile.name} ， 請注意不要和自己對話。
     以下是你所扮演的學生角色的各項指標，請根據指標來判斷是否發話，以及發話的內容為何：
     ${student_profile.profile}
 
@@ -480,4 +614,182 @@ ${history}
 `
 
   return prompt.trim()
+}
+
+// ===== LLM 驅動 belief 更新（僅 belief，不處理 relationship） =====
+
+/**
+ * 使用 LLM 依據最近對話更新「belief.ideas」(每想法 -1~+1)。
+ * - 會抽取/規範化 ideas（主題/想法）
+ * - 新 idea 會加入每個成員的 belief.ideas（初始 0），再套用增量
+ * - 僅改 belief，不改 relationship
+ *
+ * relationship_belief.json 格式：
+ * {
+ *   "members": [
+ *     { "name": "Alice", "belief": { "ideas": { "AI": 0.6 } }, "relationship": {...} },
+ *     ...
+ *   ]
+ * }
+ *
+ * @param {{user:string, text:string}} latestMsg         最新訊息（送出者 + 內容）
+ * @param {Array<{user:string,text:string}>} history     平坦化後的歷史訊息陣列（較舊在前）
+ * @param {string} REL_FILE                              路徑：src/stores/simulator/relationship_belief.json
+ * @param {object} opts                                  { nHistory?: number, model?: string }
+ */
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)) }
+
+// 把 LLM 回覆清成可 parse 的 JSON
+function safeParseLLMJson(raw) {
+  if (!raw || typeof raw !== 'string') throw new Error('empty LLM reply')
+
+  // 去掉 ```json ... ``` 的 code fence
+  let s = raw.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim()
+
+  // 只截取最外層的大括號
+  const start = s.indexOf('{')
+  const end   = s.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('no json braces')
+  }
+  s = s.slice(start, end + 1)
+
+  // 把 ": +0.2" 這種非法 JSON 修正為 ": 0.2"
+  s = s.replace(/:\s*\+([0-9.]+)/g, ': $1')
+
+  // 可選：把全形冒號等常見全形符號轉半形（若你常餵中文標點）
+  s = s.replace(/\uFF1A/g, ':')  // ： -> :
+
+  return JSON.parse(s)
+}
+
+// 後台 debug：把 prompt / 原始回覆 / 解析結果存檔方便看
+function appendBeliefDebugLog({ prompt, raw, parsed, file='src/stores/simulator/belief_debug.log' }) {
+  try {
+    const line = [
+      `\n===== ${new Date().toISOString()} =====`,
+      `PROMPT:\n${prompt}`,
+      `RAW:\n${raw}`,
+      `PARSED:\n${JSON.stringify(parsed, null, 2)}`
+    ].join('\n')
+    fs.appendFileSync(file, line + '\n', 'utf8')
+  } catch (e) {
+    console.warn('[belief debug log] append fail:', e.message)
+  }
+}
+
+export async function updateBeliefWithLLM(latestMsg, history, REL_FILE, opts = {}) {
+  const nHistory = opts.nHistory ?? 12
+  const model = opts.model ?? 'gpt-4o'
+
+  if (!fs.existsSync(REL_FILE)) {
+    console.warn('[updateBeliefWithLLM] file not found:', REL_FILE)
+    return
+  }
+
+  // 讀現有資料
+  const raw = fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'
+  const data = JSON.parse(raw)
+  if (!data || !Array.isArray(data.members) || data.members.length === 0) {
+    console.warn('[updateBeliefWithLLM] no members to update')
+    return
+  }
+
+  // 確保每人有 belief.ideas
+  for (const m of data.members) {
+    if (!m.belief || typeof m.belief !== 'object') m.belief = {}
+    if (!m.belief.ideas || typeof m.belief.ideas !== 'object') m.belief.ideas = {}
+  }
+
+  // 準備最近對話
+  const recent = history.slice(-nHistory)
+  const transcript = [
+    ...recent.map(m => `${m.user}: ${m.text}`),
+    `(最新) ${latestMsg.user}: ${latestMsg.text}`
+  ].join('\n')
+
+  const allNames = data.members.map(m => m.name)
+
+  // 強化版 prompt（明確禁止 + 以及 code fence）
+  const prompt = `
+你是一位小組互動觀察者。請閱讀以下多人討論片段，執行兩件事：
+1) 規範化並列出本輪出現或被聚焦的「想法/主題」(ideas) —— 要短詞、具可追蹤性（如「AI」、「資料清理」、「效能優化」）。
+2) 針對每位成員，評估他在每個 idea 上的評分變化量 delta（-1 到 +1，通常不超過 0.3 的絕對值）。
+   - 若某成員沒有對某 idea 的可觀察變化，可省略該 idea。
+   - 若出現全新的 idea，仍要列進 ideas（我們會為每個人自動建立初值 0）。
+
+=== 參與者名單（鍵名必須只用這些）===
+${JSON.stringify(allNames)}
+
+=== 對話（較新在下） ===
+${transcript}
+=== 結束 ===
+
+請輸出**純 JSON**（不要使用 \`\`\` 圍欄、不要註解、不要字首「+」），例如：
+{
+  "ideas": ["AI", "資料清理"],
+  "delta_by_user": {
+    "${allNames[0] || 'Alice'}": { "AI": 0.2, "資料清理": -0.1 }
+  },
+  "notes": "可簡述判斷依據（可略）"
+}
+注意：
+- delta 必須為合法 JSON 數字（不可出現 "+0.2"；要寫 0.2）。
+- 只輸出 JSON。`;
+
+  // 呼叫 LLM
+  let llmReply = ''
+  try {
+    llmReply = await callLLM(model, prompt)
+  } catch (e) {
+    console.error('[updateBeliefWithLLM] callLLM failed:', e)
+    return
+  }
+
+  // 解析 JSON（含矯正）
+  let parsed
+  try {
+    parsed = safeParseLLMJson(llmReply)
+  } catch (e) {
+    console.error('[updateBeliefWithLLM] parse LLM JSON failed. raw:', llmReply)
+    return
+  }
+
+  // 後台 debug 留存
+  appendBeliefDebugLog({ prompt, raw: llmReply, parsed })
+
+  const ideas = Array.isArray(parsed?.ideas) ? parsed.ideas : []
+  const deltaByUser = parsed?.delta_by_user && typeof parsed.delta_by_user === 'object'
+    ? parsed.delta_by_user : {}
+
+  if (ideas.length === 0 && Object.keys(deltaByUser).length === 0) {
+    console.log('[updateBeliefWithLLM] nothing to update (empty ideas/deltas)')
+    return
+  }
+
+  // 1) 新 idea 加入每個人（初始 0）
+  if (ideas.length > 0) {
+    for (const m of data.members) {
+      for (const idea of ideas) {
+        if (!(idea in m.belief.ideas)) m.belief.ideas[idea] = 0
+      }
+    }
+  }
+
+  // 2) 套用增量並夾在 [-1, +1]
+  for (const [user, deltas] of Object.entries(deltaByUser)) {
+    const member = data.members.find(m => m.name === user)
+    if (!member || !deltas || typeof deltas !== 'object') continue
+
+    for (const [idea, deltaVal] of Object.entries(deltas)) {
+      const d = Number(deltaVal) // "0.2" 或 0.2 都 OK
+      if (!Number.isFinite(d)) continue
+      if (!(idea in member.belief.ideas)) member.belief.ideas[idea] = 0
+      const next = clamp(member.belief.ideas[idea] + d, -1, 1)
+      member.belief.ideas[idea] = Number(next.toFixed(3))
+    }
+  }
+
+  fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8')
+  console.log('[updateBeliefWithLLM] belief updated ->', REL_FILE)
 }

@@ -21,6 +21,19 @@
         <span>{{ creativity }}</span>
       </div>
 
+      <div class="metric">
+        <label for="communication">Communication: </label>
+        <input type="range" id="communication" v-model="communication" min="0" max="100" />
+        <span>{{ communication }}</span>
+      </div>
+
+      <div class="metric">
+        <label for="leadership">Leadership: </label>
+        <input type="range" id="leadership" v-model="leadership" min="0" max="100" />
+        <span>{{ leadership }}</span>
+      </div>
+
+
       <button @click="spawnStudent" :disabled="spawn_cool">
         ➕ 生成模擬學生描述
       </button>
@@ -44,6 +57,8 @@ import { ref } from 'vue'
 const participation = ref(50)
 const collaboration = ref(50)
 const creativity = ref(50)
+const communication = ref(50)
+const leadership = ref(50)
 
 const spawn_cool = ref(false)
 const studentDescription = ref('') // 存放LLM回覆
@@ -60,6 +75,8 @@ async function spawnStudent() {
       Participation: participation.value,
       Collaboration: collaboration.value,
       Creativity: creativity.value,
+      Communication: communication.value,
+      Leadership: leadership.value,
     }
 
     spawn_cool.value = true

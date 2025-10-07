@@ -1,6 +1,5 @@
 // npm install node-fetch
 import { LLM_CONFIG } from './config.js'
-const OPENAI_API_KEY = ''
 
 export function extractOutlinePrompt(outline){
   let prompt = `教師正在製作學生群組討論的大鋼，裡面包含學生在討論時所需的各項流程以及詳細事項，請將具體的操作流程按照順序條列出來，並且回傳一個陣列以<END>結尾

@@ -9,13 +9,14 @@
     <div v-else>
       <p>尚未選取節點</p>
     </div>
-
+    <!--
     <h3>Welcome, designer</h3>
       <textarea v-model="detailText" 
           placeholder=""
           style="width: 100%; height: 200px; resize: vertical; box-sizing: border-box;"
           class="message"
         />
+    -->
     <h3>請輸入大綱</h3>
       <textarea v-model="outlineText" 
           placeholder=""
@@ -146,6 +147,23 @@ async function spawnExample(){
   
 }
 
+async function saveToServer() {
+  const data = {
+    nodes: flow.nodes,
+    edges: flow.edges,
+  }
+  try {
+    await fetch('http://localhost:3000/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    alert('✅ 已儲存到伺服器')
+  } catch (err) {
+    alert('❌ 儲存失敗：' + err.message)
+  }
+}
+
 async function spawnDiagram(){
   if (outlineText.value.trim()) {
     const res = await fetch('http://localhost:3000/api/spawn_diagram', {
@@ -158,6 +176,62 @@ async function spawnDiagram(){
     console.log("send!!!!!!")
     sendMessage('host', 'AI assistant', data.nodeArray)
     sendMessage('host', 'AI assistant', data.detailArray)
+
+    const titles = data.nodeArray || [];
+  const replies = data.detailArray || [];
+
+  const nodes = [];
+  const edges = [];
+
+  // 1. 加入 start 節點
+  const startNode = {
+    id: "start",
+    type: "start",
+    initialized: false,
+    position: { x: 50, y: 50 },
+    data: {
+      label: "start",
+      label_then: "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+      label_detail: "",
+    }
+  };
+  nodes.push(startNode);
+
+  for (let i = 0; i < titles.length; i++) {
+    const node = {
+      id: `node-${Date.now()}-${i}`,
+      type: "direct",
+      initialized: false,
+      position: {
+        x: 50 + (i % 2 === 0 ? -200 : 200),
+        y: 360 + (i % 2 == 0 ? i / 2 * 300 : (i - 1) / 2 * 300)
+      },
+      data: {
+        label: titles[i],
+        label_then: replies[i],
+        label_detail: "",
+      }
+    };
+    nodes.push(node);
+    const sourceId = i === 0 ? "start" : nodes[nodes.length - 2].id;
+    const edge = {
+      id: `e-${i + 1}`,
+      type: "default",
+      source: sourceId,
+      target: node.id,
+      sourceHandle: null,
+      targetHandle: null,
+      data: {},
+      label: ""
+    };
+    edges.push(edge);
+  }
+
+    flow.nodes = nodes;
+    flow.edges = edges;
+    flow.currentNode = "start";
+
+    saveToServer();
   }
 }
 

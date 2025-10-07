@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 // npm install node-fetch
 //import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './config.js'
-const OPENAI_API_KEY = ''
+import { OPENAI_API_KEY } from './config.js'
 
 // export function countTokens(text, model = 'gpt-4') {
 //   const encoder = encoding_for_model(model)
