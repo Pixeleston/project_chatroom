@@ -101,7 +101,7 @@
       "targetY": 586.3649946196999
     }
   ],
-  "currentNode": "node-1755506597825",
+  "currentNode": "node-1755506609238",
   "memory": {
     "currentMemory": "",
     "nodesMemory": [
@@ -110,9 +110,57 @@
         "label": "主題",
         "smallNodes": [
           {
-            "id": "node-1759826589438-0",
-            "theme": "專案主題確定",
-            "target": "使用者必須在這一階段討論並確定最終欲開發的專案主題，例如遊戲、網頁應用等",
+            "id": "node-1759847435078-0",
+            "theme": "專案主題",
+            "target": "使用者必須討論並確定專案的具體主題，例如遊戲或網頁應用等",
+            "summary": "使用者決定創建一個具有教育功能的網頁應用，結合學習和互動特性。",
+            "finish": true
+          }
+        ]
+      },
+      {
+        "id": "node-1755506609238",
+        "label": "細項討論",
+        "smallNodes": [
+          {
+            "id": "node-1759847526733-0",
+            "theme": "開發平台",
+            "target": "使用者應討論並選擇適合的開發平台，如Web、移動應用或桌面應用",
+            "summary": "使用者決定創建一個具有教育功能的網頁應用，結合學習和互動特性。",
+            "finish": true
+          },
+          {
+            "id": "node-1759847526733-1",
+            "theme": "美術風格",
+            "target": "確定軟體的視覺設計風格，以建立統一的用戶界面",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1759847526733-2",
+            "theme": "數據存儲解決方案",
+            "target": "討論並決定適合的數據庫或數據儲存工具",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1759847526733-3",
+            "theme": "雲服務提供商",
+            "target": "選擇合適的雲服務進行應用部署，如AWS、Google Cloud或Azure",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1759847526733-4",
+            "theme": "安全性措施",
+            "target": "規劃系統的安全性，包括資料加密、使用者驗證等",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1759847526733-5",
+            "theme": "使用者體驗設計",
+            "target": "制定友好的用戶體驗設計，提升產品可用性",
             "summary": "",
             "finish": false
           }
@@ -120,5 +168,5 @@
       }
     ]
   },
-  "currentNodeSmall": "null"
+  "currentNodeSmall": "node-1759847526733-1"
 }

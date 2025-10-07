@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url'
 import { teacher_action } from './teacher.js'
 import { student_action } from './student.js'
 import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve, rebuildRelationshipBeliefFromNames,
-  updateRelationshipBeliefOnNewStudentData, updateBeliefWithLLM} from './src/prompt.js'
+  updateRelationshipBeliefOnNewStudentData, updateBeliefWithLLM, updateRelationshipWithLLM} from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 import { spawnDiagram } from './spawnDiagram.js'
 import { SIMULATOR_CONFIG } from './src/config.js'
@@ -565,6 +565,21 @@ function sendMessage(diagram, replyMsg, chatroom_type) {  // chatroom_type = "ch
   broadcast({ chatroom_type:chatroom_type, type: 'message', data: replyMsg });
 }
 
+async function runBeliefAndRelationship(latestMsg, flatHistory, relFile) {
+  // 兩個互不影響，分開 try/catch 才不會一個掛掉另一個不跑
+  try {
+    await updateBeliefWithLLM(latestMsg, flatHistory, relFile)
+  } catch (e) {
+    console.error('[runBR] belief update failed:', e)
+  }
+  try {
+    await updateRelationshipWithLLM(latestMsg, flatHistory, relFile)
+  } catch (e) {
+    console.error('[runBR] relationship update failed:', e)
+  }
+}
+
+
 async function tick_chatroom() {
   const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')))
   if (LLM_TOGGLE) {
@@ -582,12 +597,14 @@ async function tick_chatroom() {
       // console.log("===============================")
       if(actionSuccess){
         if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
-          sendMessage(currentDiagram, replyMsg, "chatroom"); 
+          sendMessage(currentDiagram, replyMsg, "chatroom");
           try {
-            const historyForLLM = history.flatMap(n => n.history) // 若 history 是分節點儲存，取展平的訊息卡
-            await updateBeliefWithLLM(replyMsg, historyForLLM, RELATIONSHIP_BELIEF_FILE)
-          } catch (e) { console.error('belief update (chatroom) failed:', e) }
-         // TODO 可能需要改，因為會有轉移節點前或後發話的問題
+            // ✅ 扁平化最近 N 則訊息
+            const historyFlat = history.flatMap(n => n.history).slice(-50);
+            await runBeliefAndRelationship(replyMsg, historyFlat, RELATIONSHIP_BELIEF_FILE);
+          } catch (e) {
+            console.error('belief/relationship update (chatroom) failed:', e);
+          }
         }
         if (moveNode) {
           // move node
@@ -667,20 +684,20 @@ async function tick_simulator() {
       if(actionSuccess){
         if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
           simulatorMessageQueue.push({
-            diagram: currentDiagram,
+            diagram: currentDiagramSimulator,   // ← 修：原本是 currentDiagram（錯）
             msg: replyMsg,
             chatroom_type: "simulator",
             time: new Date()
           });
-          //sendMessage(currentDiagram, replyMsg, "simulator");
           console.log("send reply : " + replyMsg.text)
           try {
-            const flatHist = historySimulator.flatMap(n => n.history)
-            await updateBeliefWithLLM(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
+            const flatHist = historySimulator.flatMap(n => n.history).slice(-50)
+            await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
           } catch (e) {
-            console.error('belief update (sim host) failed:', e)
+            console.error('belief/relationship update (sim host) failed:', e)
           }
         }
+
 
         if (moveNode) {
           // move node
@@ -689,15 +706,14 @@ async function tick_simulator() {
            newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
             if(nextReply && nextReply.text && nextReply.text !== 'null'){
               simulatorMessageQueue.push({
-                diagram: currentDiagram,
+                diagram: currentDiagramSimulator,   // ← 修：原本是 currentDiagram（錯）
                 msg: nextReply,
                 chatroom_type: "simulator",
                 time: new Date()
               });
-            //  simulatorMessageQueue.push([ currentDiagram, nextReply, "simulator" ]);
-            //  sendMessage(currentDiagram, nextReply, "simulator");
               console.log("send nextReply : " + nextReply.text)
             }
+
           }
         }
         saveDiagram(newStateDiagram, "simulator")
@@ -721,15 +737,18 @@ wss.on('connection', ws => {
       const data = JSON.parse(raw)
       const { chatroom_type, msg_data } = data
       if (msg_data.role !== 'host') {
-        sendMessage(currentDiagram, msg_data, chatroom_type)
+        sendMessage(currentDiagram, msg_data, chatroom_type);
+
         try {
-          const rawHist = (chatroom_type === 'chatroom') ? history : historySimulator
-          const flatHist = rawHist.flatMap(n => n.history)       // 攤平成 [{user,text},...]
-          await updateBeliefWithLLM(msg_data, flatHist, RELATIONSHIP_BELIEF_FILE)
+          const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
+          const historyFlat = rawH.flatMap(n => n.history).slice(-50);
+          await runBeliefAndRelationship(msg_data, historyFlat, RELATIONSHIP_BELIEF_FILE);
+
         } catch (e) {
-          console.error('belief update (ws user msg) failed:', e)
+          console.error('belief update (socket) failed:', e);
         }
       }
+
 
     } catch (err) {
       console.error('Invalid message or LLM error:', err)
