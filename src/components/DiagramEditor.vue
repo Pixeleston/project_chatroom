@@ -149,16 +149,37 @@ loadFromServer()
 </script>
 
 <template>
-  <div style="display: flex; height: 100%">
-    <div style="width: 200px; background: #eee; padding: 10px;">
-      <button @click="addStartNode">⭐ 新增 Start</button>
-      <button @click="addNode('direct')">➕ Direct</button>
-      <button @click="deleteSelected">🗑️ 刪除選取節點</button>
-      <hr />
-      <button @click="saveToServer">💾 儲存到伺服器</button>
-    </div>
+  <div style="display: flex; height: 100%" class="wrapper-flow">
 
+    <div class="flow-toolbar">
+      <button @click="addStartNode">⭐新增Start</button>
+      <button @click="addNode('direct')">➕ 新增節點</button>
+      <button @click="deleteSelected">🗑️ 刪除節點</button>
+      <button @click="saveToServer">💾儲存到伺服器</button>
+      <button @click="exportToJson">📄 匯出JSON</button>
+      <label class="import-btn">
+        📂匯入JSON
+        <input
+          type="file"
+          accept=".json"
+          @change="onFileSelected"
+          style="display: none;"
+        />
+      </label>
+      <button @click="exportToJson">1️⃣</button>
+      <button @click="exportToJson">2️⃣</button>
+      <button @click="exportToJson">3️⃣</button>
+      <button @click="exportToJson">4️⃣</button>
+      <button @click="exportToJson">5️⃣</button>
+      <button @click="exportToJson">6️⃣</button>
+      <button @click="exportToJson">7️⃣</button>
+      <button @click="exportToJson">8️⃣</button>
+      <button @click="exportToJson">9️⃣</button>
+      
+    </div>
+    
     <VueFlow
+      v-if="!showPreview"
       v-model:nodes="flow.nodes"
       v-model:edges="flow.edges"
       @node-click="onNodeClick"
@@ -170,14 +191,63 @@ loadFromServer()
       connection-mode="loose"
       fit-view
       style="flex: 1"
+      class="local-flow"
     >
-      <Panel position="top-right">
-        <button @click="exportToJson">📄 匯出 JSON</button>
-        <label style="cursor: pointer;">
-          匯入 JSON
-          <input type="file" accept=".json" @change="onFileSelected" style="display: none" />
-        </label>
-      </Panel>
     </VueFlow>
   </div>
 </template>
+
+<style>
+
+.local-flow{
+    background: #e6fcff
+}
+
+.flow-toolbar {
+  row-gap: 20px;
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.7); /* 淺白半透明條 */
+  border-bottom: 1px solid #bde0eb;
+  backdrop-filter: blur(6px);
+}
+
+
+.wrapper-flow {
+  display: flex;
+  flex-direction: column; /* 工具列在上，流程圖在下 */
+  height: 100vh;
+  background: #929292ff;    /* 藍色背景 */
+  overflow: hidden;
+  border: 2px solid #d0f0f7;
+  border-radius: 10px;
+  padding: 20px 20px 20px 20px;
+}
+
+.flow-toolbar button,
+.flow-toolbar .import-btn {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.flow-toolbar button:hover,
+.flow-toolbar .import-btn:hover {
+  background-color: #f0f8ff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.flow-toolbar .import-btn {
+  display: inline-block;
+  color: #333;
+}
+
+</style>

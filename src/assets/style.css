@@ -3,7 +3,7 @@ html,body{height:100%;font-family:sans-serif;overflow:hidden;background:#f9f9f9}
 #app,.container{display:flex; height:100%;width: 100%;}
 .sidebar{width:100px;background:#333;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .sidebar button{margin:10px;padding:10px;background:#555;border:none;color:#fff;cursor:pointer}
-.diagram{flex:1;display:flex;flex-direction:column;padding:20px;overflow:hidden;background:#e6fcff}
+.diagram{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .chat-area{flex:1;display:flex;flex-direction:column;padding:20px;background:#fff;overflow: hidden;}
 .messages{flex:1;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin-bottom:10px}
 .message{margin:8px;padding:10px;border-radius:6px;background:#f0f0f0}
@@ -19,6 +19,7 @@ html,body{height:100%;font-family:sans-serif;overflow:hidden;background:#f9f9f9}
   height: 100%;
 }
 .flow-wrapper {
+  gap: 20px;
   display: flex;
   flex-direction: column;
   height: 100vh; /* 或你要的高度 */

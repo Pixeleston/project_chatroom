@@ -63,6 +63,7 @@ async function extractDetail(outline, nodeArray){
     success = false
   }
   if(detailArray.length !== nodeArray.length){
+    console.error(detailArray.length + " " + nodeArray.length);
     console.error("細節陣列長度與流程陣列長度不符")
     success = false;
   }

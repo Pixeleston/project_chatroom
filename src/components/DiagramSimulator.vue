@@ -138,6 +138,7 @@ const smallFlowEdges = computed(() => {
 </script>
 
 <template>
+<div style="display: height: 100%" class="wrapper-flow2">
   <div class="flow-wrapper">
     <!-- 主狀態圖 (70%) -->
     <div class="flow-top">
@@ -146,8 +147,9 @@ const smallFlowEdges = computed(() => {
         :edges="diagramSimulator.edges"
         :node-types="nodeTypes"
         fit-view
+        class="local-flow2"
       >
-        <Panel position="top-right" class="nodrag nopan">
+        <Panel position="top-right" class="import-btn">
           <label style="cursor:pointer">
             更改狀態圖
             <input
@@ -168,7 +170,45 @@ const smallFlowEdges = computed(() => {
         :edges="smallFlowEdges"
         :node-types="nodeTypes"
         fit-view
+        class="local-flow2"
       />
     </div>
   </div>
+</div>
 </template>
+
+<style>
+
+.local-flow2{
+    background:#e6fcff
+}
+
+.flow-wrapper .import-btn {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.flow-wrapper .import-btn:hover {
+  background-color: #f0f8ff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.wrapper-flow2 {
+  row-gap: 20px;
+  display: flex;
+  flex-direction: column; /* 工具列在上，流程圖在下 */
+  height: 100vh;
+  background: #929292ff;    /* 藍色背景 */
+  overflow: hidden;
+  border: 2px solid #d0f0f7;
+  border-radius: 10px;
+  padding: 20px 20px 20px 20px;
+}
+
+</style>

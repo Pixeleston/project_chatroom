@@ -1,6 +1,30 @@
 <template>
   <div class="chat-area">
 
+    <div v-if="showPreview" class="modal-overlay">
+  <div class="modal-content">
+    <h3>🧩 預覽生成的流程圖</h3>
+
+    <!-- 放預覽區（可以用小型 VueFlow） -->
+    <VueFlow
+      :key="showPreview"
+      :nodes="previewData.nodes"
+      :edges="previewData.edges"
+      :nodes-draggable="false"
+      :nodes-connectable="false"
+      :node-types="nodeTypes"
+      :elements-selectable="false"
+      fit-view
+      style="width: 800px; height: 600px;"
+    />
+
+    <div class="modal-actions">
+      <button @click="confirmImport">✅ 確定匯入</button>
+      <button @click="cancelPreview">❌ 取消</button>
+    </div>
+  </div>
+</div>
+
     <h3>目前選取的節點</h3>
     <div v-if="flow.selectedNode">
       <p><strong>ID:</strong> {{ flow.selectedNode.id }}</p>
@@ -41,9 +65,24 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useFlowStore } from '@/stores/flowStore'
+import { VueFlow, Panel, useVueFlow } from '@vue-flow/core'
+
+import custom_node_condition from './components/custom_node_condition_edit.vue'
+import custom_node_direct from './components/custom_node_direct_edit.vue'
+import custom_node_start from './components/custom_node_start_edit.vue'
+
 // import { prompt_ask, prompt_spawn_example  } from '../prompt.js'
 // import { callLLM } from '../callLLM.js'
 const props = defineProps(['username'])
+
+const showPreview = ref(false)
+const previewData = ref({ nodes: [], edges: [] })
+
+const nodeTypes = {
+  condition: custom_node_condition,
+  direct: custom_node_direct,
+  start: custom_node_start,
+}
 
 const newMessage = ref('')
 const flow = useFlowStore()
@@ -164,6 +203,18 @@ async function saveToServer() {
   }
 }
 
+function confirmImport() {
+  // ✅ 使用者按「確定」後，才匯入主 VueFlow
+  flow.nodes = previewData.value.nodes
+  flow.edges = previewData.value.edges
+  showPreview.value = false
+  saveToServer()
+}
+
+function cancelPreview() {
+  showPreview.value = false
+}
+
 async function spawnDiagram(){
   if (outlineText.value.trim()) {
     const res = await fetch('http://localhost:3000/api/spawn_diagram', {
@@ -226,13 +277,43 @@ async function spawnDiagram(){
     };
     edges.push(edge);
   }
+  console.log("good");
+    showPreview.value = true;
+    previewData.value.nodes = nodes;
+    previewData.value.edges = edges;
+    previewData.value.currentNode = "start";
 
-    flow.nodes = nodes;
-    flow.edges = edges;
-    flow.currentNode = "start";
-
-    saveToServer();
+    //saveToServer();
   }
 }
 
 </script>
+
+<style>
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+</style>
