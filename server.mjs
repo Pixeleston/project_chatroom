@@ -599,20 +599,24 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   
   async function sendMessageFromQueue(){
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
-    if(!RUN_TOGGLE_SIMULATOR || simulatorMessageQueue.length === 0) return;
-    
-    if (Date.now() - lastReplyTime < SIMULATOR_CONFIG.shareReplyInterval) {
-        // 如果共用冷卻還沒結束，則丟棄較舊的訊息，只留最新一則
-        while(simulatorMessageQueue.length > 1) {
-            simulatorMessageQueue.shift();
-        }
-        return;
+    if(!RUN_TOGGLE_SIMULATOR) return;
+    while(simulatorMessageQueue.length > 0 && simulatorMessageQueue[0].time.getTime() - lastReplyTime <  SIMULATOR_CONFIG.shareReplyInterval){
+      simulatorMessageQueue.shift()
     }
+    if(simulatorMessageQueue.length > 0){
+      const diagram = simulatorMessageQueue[0].diagram
+      const replyMsg = simulatorMessageQueue[0].msg
+      const chatroom_type = simulatorMessageQueue[0].chatroom_type
+      const time = simulatorMessageQueue[0].time
+      sendMessage(diagram, replyMsg, chatroom_type)
 
-    const item = simulatorMessageQueue.shift();
-    sendMessage(item.diagram, item.msg, item.chatroom_type);
-    lastReplyTime = Date.now();
-  }
+      console.log(time.getTime())
+      console.log(lastReplyTime)
+
+      lastReplyTime = time.getTime()
+      simulatorMessageQueue.shift()
+    }
+}
   
   setInterval(sendMessageFromQueue, SIMULATOR_CONFIG.processQueueInterval)
   
@@ -633,11 +637,13 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
-            simulatorMessageQueue.push({
-              diagram: currentDiagramSimulator,
-              msg: replyMsg,
-              chatroom_type: "simulator",
-            });
+            // simulatorMessageQueue.push({
+            //   diagram: currentDiagramSimulator,
+            //   msg: replyMsg,
+            //   chatroom_type: "simulator",
+            //   time: new Date()
+            // });
+            sendMessage(currentDiagramSimulator, replyMsg, "simulator")
             const flatHist = historySimulator.flatMap(n => n.history).slice(-50)
             await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
           }
@@ -645,13 +651,15 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
           if (moveNode) {
             if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
             else if (moveNode.nextNode === "small") {
-             newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
+              newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
               if(nextReply && nextReply.text && nextReply.text !== 'null'){
-                simulatorMessageQueue.push({
-                  diagram: currentDiagramSimulator,
-                  msg: nextReply,
-                  chatroom_type: "simulator",
-                });
+                // simulatorMessageQueue.push({
+                //   diagram: currentDiagramSimulator,
+                //   msg: nextReply,
+                //   chatroom_type: "simulator",
+                //   time: new Date()
+                // });
+                sendMessage(currentDiagramSimulator, nextReply, "simulator")
               }
             }
           }
@@ -674,7 +682,18 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         const data = JSON.parse(raw)
         const { chatroom_type, msg_data } = data
         if (msg_data.role !== 'host') {
-          sendMessage(currentDiagram, msg_data, chatroom_type);
+          if(chatroom_type === 'simulator'){  // 如果來自模擬聊天室並且是模擬學生，則加入Queue
+            simulatorMessageQueue.push({
+              diagram: currentDiagramSimulator,
+              msg: msg_data,
+              chatroom_type: "simulator",
+              time: new Date()
+            });
+            console.log(JSON.stringify(msg_data))
+          }
+          else {
+            sendMessage(currentDiagram, msg_data, chatroom_type);
+          }
           const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
           const historyFlat = rawH.flatMap(n => n.history).slice(-50);
           await runBeliefAndRelationship(msg_data, historyFlat, RELATIONSHIP_BELIEF_FILE);

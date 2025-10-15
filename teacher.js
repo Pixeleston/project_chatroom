@@ -46,9 +46,9 @@ async function double_check(diagram, replyText, hostMemory){
 export async function decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
     let prompt = prompt_decide_small_part(diagram, nextNodeID)
     let llmReply = await callLLM("gpt-4o", prompt);
-    console.log("========== llmReply ==========");
-    console.log(llmReply);
-    console.log("========== llmReply ==========");
+    //console.log("========== llmReply ==========");
+    //console.log(llmReply);
+    //console.log("========== llmReply ==========");
 
     const target = diagram.memory.nodesMemory.find(node => node.id === nextNodeID)
     if (target) {
@@ -126,7 +126,7 @@ export async function teacher_action(stateDiagram, hostMemory){
   let prompt = prompt_teacher(stateDiagram, targets, hostMemory)
   //const stop = ["}"]
     let llmReply = await callLLM("gpt-4o", prompt);
-    console.log("teachers reply : " + llmReply)
+  //  console.log("teachers reply : " + llmReply)
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
 let result

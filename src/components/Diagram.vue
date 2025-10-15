@@ -17,7 +17,7 @@ socket.onopen = () => {
 
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data)
-  if (data.type === 'diagramUpdated'/* && chatroom_type === 'chatroom'*/) {
+  if (data.type === 'diagramUpdated' && data.chatroom_type === 'chatroom') {
     diagram.nodes = data.diagram.nodes
     diagram.edges = data.diagram.edges
     diagram.currentNode = data.diagram.currentNode

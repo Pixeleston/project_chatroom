@@ -317,7 +317,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     - ${nextNode.data.label_detail ? nextNode.data.label_detail:"(目前大節點無細節)"}
 
     `
-    console.log(prompt)
+  //  console.log(prompt)
     return prompt
 }
 
@@ -413,7 +413,7 @@ export function prompt_teacher(stateDiagram, targets, history){
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
-    console.log('prompt : ' + prompt)
+    //console.log('prompt : ' + prompt)
     return prompt
 }
 

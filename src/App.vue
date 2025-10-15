@@ -27,11 +27,10 @@
         <DiagramEditor v-else />
       </div>
       <div class="chat-area">
-        <StudentSimulator v-if="diagram_type === 'simulate'"/>
+        <Simulator v-if="diagram_type === 'simulate'"/>
         <ChatroomEditor v-else-if="diagram_type === 'edit'"/>
         <ChatroomImprove v-else-if="diagram_type === 'improve'"/>
         <Chatroom :username="username" v-else-if="diagram_type === 'display'"/>
-        <ChatroomSimulator v-if="diagram_type === 'simulate'"/>
         <TestPrompt v-if="diagram_type === 'test'"/>
       </div>
     </div>
@@ -50,7 +49,7 @@ import DiagramImprove from './components/DiagramImprove.vue'
 import ChatroomSimulator from './components/ChatroomSimulator.vue'
 import ChatroomImprove from './components/ChatroomImprove.vue'
 import DiagramSimulator from './components/DiagramSimulator.vue'
-import StudentSimulator from './components/StudentSimulator.vue'
+import Simulator from './components/Simulator.vue'
 import TestPrompt from './components/TestPrompt.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'
 

@@ -17,12 +17,12 @@ socket.onopen = () => {
 
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data)
-  if (data.type === 'diagramUpdated' && chatroom_type === 'simulator1111') {
-    diagramSimulator.nodes = data.diagramSimulator.nodes
-    diagramSimulator.edges = data.diagramSimulator.edges
-    diagramSimulator.currentNode = data.diagramSimulator.currentNode
-    diagramSimulator.memory = data.diagramSimulator.memory
-    diagramSimulator.currentNodeSmall = data.diagramSimulator.currentNodeSmall
+  if (data.type === 'diagramUpdated' && data.chatroom_type === 'simulator') {
+    diagramSimulator.nodes = data.diagram.nodes
+    diagramSimulator.edges = data.diagram.edges
+    diagramSimulator.currentNode = data.diagram.currentNode
+    diagramSimulator.memory = data.diagram.memory
+    diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
   }
 }
 
