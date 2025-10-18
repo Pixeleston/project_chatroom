@@ -504,6 +504,21 @@ export function prompt_spawn_student(metricsJson) {
 export function prompt_student(stateDiagram, history, student_profile){
   let memory_string = ""
   let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  let stateDiagram_memory = ""
+
+  let pre_summary = `以下是學生(你們)在聊天室目前為止討論的所有總結：\n`
+    
+    let len = 0
+    for (const memoryNode of stateDiagram.memory.nodesMemory) {
+      for (const smallNode of memoryNode.smallNodes) {
+        pre_summary += `       -${smallNode.summary} \n`
+        len += 1
+      }
+    }
+
+    if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
+    pre_summary += `請你們不要重複討論這些內容，請根據Host的指示討論議題 \n`
+
   if(history) history_string = history.join('\n')
 
   if (LLM_CONFIG.custom_memory) {
@@ -524,6 +539,8 @@ ${socialBlock}
 你的名字是：${student_profile.name}。請注意不要和自己對話。
 以下是你所扮演的學生角色的各項指標（會以 JSON 或文字形式提供），請根據指標與上面的社會脈絡規則判斷是否發話，以及發話的內容為何：
 ${student_profile.profile}
+
+${pre_summary}
 
 ${memory_string}
 

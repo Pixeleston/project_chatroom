@@ -3,45 +3,69 @@
     {
       "name": "a",
       "belief": {
-        "ideas": {}
+        "ideas": {
+          "game": 0.989,
+          "遊戲": 0.729,
+          "balance": -0.414,
+          "puzzle mechanism": -0.093,
+          "game_design": 0.524
+        }
       },
       "relationship": {
-        "b": 0.085,
-        "c": 0.287,
-        "d": 0.93
+        "b": 0.645,
+        "c": 0.768,
+        "d": 0.324
       }
     },
     {
       "name": "b",
       "belief": {
-        "ideas": {}
+        "ideas": {
+          "game": -0.647,
+          "遊戲": 0.857,
+          "balance": -0.763,
+          "puzzle mechanism": 0.843,
+          "game_design": 0.067
+        }
       },
       "relationship": {
-        "a": 0.524,
-        "c": -0.261,
-        "d": -0.993
+        "a": 0.892,
+        "c": 0.027,
+        "d": 0.298
       }
     },
     {
       "name": "c",
       "belief": {
-        "ideas": {}
+        "ideas": {
+          "game": 0.182,
+          "遊戲": 0.511,
+          "balance": 0.374,
+          "puzzle mechanism": 0.255,
+          "game_design": 0.059
+        }
       },
       "relationship": {
-        "a": -0.972,
-        "b": -0.864,
-        "d": 0.398
+        "a": -0.233,
+        "b": 0.416,
+        "d": 0.283
       }
     },
     {
       "name": "d",
       "belief": {
-        "ideas": {}
+        "ideas": {
+          "game": 0.224,
+          "遊戲": 0.924,
+          "balance": 0.879,
+          "puzzle mechanism": -0.043,
+          "game_design": -0.462
+        }
       },
       "relationship": {
-        "a": -0.13,
-        "b": -0.745,
-        "c": 0.125
+        "a": 1,
+        "b": 0.349,
+        "c": -0.411
       }
     }
   ]

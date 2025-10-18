@@ -603,34 +603,47 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     while(simulatorMessageQueue.length > 0 && simulatorMessageQueue[0].time.getTime() - lastReplyTime <  SIMULATOR_CONFIG.shareReplyInterval){
       simulatorMessageQueue.shift()
     }
+
     if(simulatorMessageQueue.length > 0){
-      const diagram = simulatorMessageQueue[0].diagram
-      const replyMsg = simulatorMessageQueue[0].msg
-      const chatroom_type = simulatorMessageQueue[0].chatroom_type
-      const time = simulatorMessageQueue[0].time
+      const randomIndex = Math.floor(Math.random() * simulatorMessageQueue.length);
+      const selectedMsg = simulatorMessageQueue[randomIndex];
+      
+      const { diagram, msg: replyMsg, chatroom_type, time } = selectedMsg;
+
+      // const diagram = simulatorMessageQueue[0].diagram
+      // const replyMsg = simulatorMessageQueue[0].msg
+      // const chatroom_type = simulatorMessageQueue[0].chatroom_type
+      // const time = simulatorMessageQueue[0].time
       sendMessage(diagram, replyMsg, chatroom_type)
 
       console.log(time.getTime())
       console.log(lastReplyTime)
 
       lastReplyTime = time.getTime()
-      simulatorMessageQueue.shift()
+      simulatorMessageQueue.splice(randomIndex, 1);
     }
-}
+  }
+
+  function clearQueue(){
+    simulatorMessageQueue = []
+  }
   
   setInterval(sendMessageFromQueue, SIMULATOR_CONFIG.processQueueInterval)
   
   async function tick_simulator() {
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
     if (RUN_TOGGLE_SIMULATOR) {
+      
       let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
-      const studentTasks = student_profile.map(student =>
-        student_action(currentDiagramSimulator, currentHistory, student).catch(e => {
-            console.error(`Error in student_action for ${student.name}:`, e);
-            return null; // 避免 Promise.all 中斷
-        })
-      );
-      await Promise.all(studentTasks);
+      if(currentDiagramSimulator.currentNode !== "start"){ // 如果host還沒發言模擬學生就不能發話
+        const studentTasks = student_profile.map(student =>
+          student_action(currentDiagramSimulator, currentHistory, student).catch(e => {
+              console.error(`Error in student_action for ${student.name}:`, e);
+              return null; // 避免 Promise.all 中斷
+          })
+        );
+        await Promise.all(studentTasks);
+      }
   
       try {
         const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg: nextReply, actionSuccess } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15))
@@ -662,6 +675,8 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
                 sendMessage(currentDiagramSimulator, nextReply, "simulator")
               }
             }
+
+            clearQueue()  // 當轉移節點時清空模擬學生訊息 Queue
           }
           saveDiagram(newStateDiagram, "simulator")
         }

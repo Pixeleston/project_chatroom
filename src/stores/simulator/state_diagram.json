@@ -101,10 +101,24 @@
       "targetY": 586.3649946196999
     }
   ],
-  "currentNode": "start",
+  "currentNode": "node-1755506597825",
   "memory": {
     "currentMemory": "",
-    "nodesMemory": []
+    "nodesMemory": [
+      {
+        "id": "node-1755506597825",
+        "label": "主題",
+        "smallNodes": [
+          {
+            "id": "node-1760793911769-0",
+            "theme": "專案主題討論",
+            "target": "使用者必須明確討論並確定最終的專案主題，例如遊戲或網頁應用程式。",
+            "summary": "小組確定了專案主題為遊戲，並考慮結合解謎和動作元素以及創新解謎機制。",
+            "finish": true
+          }
+        ]
+      }
+    ]
   },
-  "currentNodeSmall": "null"
+  "currentNodeSmall": "node-1760793911769-1"
 }
