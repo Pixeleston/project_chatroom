@@ -327,7 +327,7 @@ function categorizeStudentMessage(history){
     
 }
 
-export function prompt_teacher(stateDiagram, targets, history, student_profile, votingPass){
+export function prompt_teacher(stateDiagram, targets, history, student_profile){
   // if student_profile == null, then this is normal mode
   // else this is simulation mode
   
@@ -427,17 +427,25 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
     `
     
     let prompt_voting = ``
+    let prompt_voting2 = ``
     if(stateDiagram.voting){
       // 統計已同意的人數和聊天室人數比例，若同意的人>=一半則直接轉移
       // 如果要更改比例可以從這邊修改
+      let student_count = student_profile.length
+      let votingPass = false
+      if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
+        votingPass = true
+      }
       if(votingPass){
         prompt_voting += `
-        - 大多數使用者都已同意轉移節點，可以準備轉移了
+    - **(重要)** 大多數使用者都已投票同意轉移節點，請轉移節點並總結使用者在此小節點做的事情寫入summary
+    - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
+    - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
         `
       }
       else {
         prompt_voting += `
-        - 使用者尚未達成共識同意轉移節點，請不要轉移節點，
+    - **(重要)** 使用者尚未達成共識同意轉移節點，請不要轉移節點，
         `
       }
     }
@@ -459,8 +467,8 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
 
     prompt += `
     ${prompt_voting}
-    - **(重要)**請注意不要轉移到currentSmallNode所記錄的小節點、已經完成的節點、或是不存在的節點上
-    - 如果所有小節點都完成了，則可以轉移至下一個大節點，若當前節點無小節點，則只需判斷目前大節點的目標是否完成，完成則轉移至下一個大節點
+    - 請注意不要轉移到currentSmallNode所記錄的小節點、已經完成的節點、或是不存在的節點上
+    - **(重要)**如果所有小節點都完成了，則可以轉移至下一個大節點，若當前節點無小節點，則只需判斷目前大節點的目標是否完成，完成則轉移至下一個大節點
 
     請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
     JSON 結構如下：
@@ -474,6 +482,8 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
       "summary": "<string>", // 若next為small，請給出學生在目前完成的小節點所得出的總結，若next為其他字串則此處給null
       "why":   "<string>"         // 轉移或不轉移的理由，你有詢問過使用者是否要轉移了嗎？使用者全部同意轉移了嗎？請簡短說明
     }
+
+    ${prompt_voting2}
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
@@ -818,139 +828,185 @@ function normalizeUserKey(rawKey, memberNames) {
  * @param {string} REL_FILE - relationship_belief.json 檔案的路徑。
  * @param {object} opts - 選項物件，例如 { nHistory?: number, model?: string }。
  */
-export async function updateBeliefWithLLM(latestMsg, history, REL_FILE, opts = {}) {
-  const nHistory = opts.nHistory ?? 12;
-  const model = opts.model ?? 'gpt-4o';
-  const BELIEF_POS_MIN = 0.1, BELIEF_POS_MAX = 1.0;
-  const BELIEF_RAND_MIN = -1.0, BELIEF_RAND_MAX = 1.0;
-  const rand = _makePRNG(Date.now());
+export async function updateBeliefWithLLM(latestMsg, history, REL_FILE, stateDiagram, opts = {}) {
+    const nHistory = opts.nHistory ?? 12;
+    const model = opts.model ?? 'gpt-4o';
+    // 基礎最大變化量 (當 growthSpeedFactor 最小 (假設0.1), score=0 時的最大值)
+    const baseMaxChange = opts.baseMaxChange ?? 0.1;
+    // 成長速率因子 (越大越慢)，建議範圍 [0.1, ~]，預設 1.0 (中等速度)
+    const growthSpeedFactor = Math.max(0.1, opts.growthSpeedFactor ?? 1.0); // 確保不小於 0.1
+    const BELIEF_POS_MIN = 0.01; // 最小正向初始值 (固定)
+    const BELIEF_RAND_MIN = -1.0, BELIEF_RAND_MAX = 1.0; // 初始隨機範圍 (固定)
+    const rand = _makePRNG(Date.now());
+    const minDeltaThreshold = 0.001; // 最小變化量閾值
 
-  if (!latestMsg || latestMsg.user === 'Host' || latestMsg.role === 'host') return;
+    if (!latestMsg || latestMsg.user === 'Host' || latestMsg.role === 'host') return;
+    
+    console.log(latestMsg.user)
+    let data;
+    try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
+    catch (e) { console.error('[belief] read/parse failed:', e); return; }
+    if (!data?.members || data.members.length === 0) return;
 
-  let data;
-  try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
-  catch (e) { 
-    if(DEBUG_CONFIG.consoleLogBelief){
-      console.error('[belief] read/parse failed:', e);
+    data.members.forEach(m => {
+        m.name = String(m.name ?? '').trim();
+        if (!m.belief?.ideas) m.belief = { ideas: {} };
+    });
+    const memberNames = data.members.map(m => m.name).filter(n => n && n !== 'Host');
+    const transcript = [...history.slice(-nHistory).map(m => `${m.user}: ${m.text}`), `(最新) ${latestMsg.user}: ${latestMsg.text}`].join('\n');
+
+    // ==========================================================
+    // ★ 步驟 1: 提取所有現有的唯一 Idea 字串 ★
+    // ==========================================================
+    const existingIdeasSet = new Set();
+    data.members.forEach(member => {
+        if (member.belief?.ideas) {
+            Object.keys(member.belief.ideas).forEach(idea => existingIdeasSet.add(idea));
+        }
+    });
+    const existingIdeasArray = Array.from(existingIdeasSet);
+    // ==========================================================
+
+    // --- 獲取當前 target 作為上下文 (邏輯不變) ---
+    let currentSmallNodeTarget = null;
+    if (stateDiagram?.currentNodeSmall && stateDiagram.currentNodeSmall !== "null") {
+        const currentNodeMemory = stateDiagram.memory?.nodesMemory?.find(n => n.id === stateDiagram.currentNode);
+        const currentSmallNode = currentNodeMemory?.smallNodes?.find(sn => sn.id === stateDiagram.currentNodeSmall);
+        currentSmallNodeTarget = currentSmallNode?.target?.trim();
     }
-    return;
-  }
-  if (!data || !Array.isArray(data.members) || data.members.length === 0) return;
 
-  data.members.forEach(m => {
-    m.name = String(m.name ?? '').trim();
-    if (!m.belief?.ideas) m.belief = { ideas: {} };
-  });
-  const memberNames = data.members.map(m => m.name).filter(n => n && n !== 'Host');
-  const transcript = [...history.slice(-nHistory).map(m => `${m.user}: ${m.text}`), `(最新) ${latestMsg.user}: ${latestMsg.text}`].join('\n');
+    // ==========================================================
+    // ★ 步驟 2: 修改 Prompt，注入現有 Ideas 並更新指令 ★
+    // ==========================================================
+    let prompt = `
+你是小組互動觀察者。請分析以下對話。
+${currentSmallNodeTarget ? `當前小組的討論目標 (target) 是：「${currentSmallNodeTarget}」。` : ''}
 
-  const prompt = `
-你是小組互動觀察者。請判斷是否需更新，若需要，只允許輸出一個短詞 idea，並針對該 idea 輸出成員的分數增量 delta。
+請判斷對話中是否出現了與此目標相關的【具體想法 (idea)】或【選項】（例如：「遊戲」、「網頁」、「某個功能」等）。
+
+【重要】以下是目前 belief 系統中【已經存在】的主題列表：
+${existingIdeasArray.length > 0 ? JSON.stringify(existingIdeasArray) : '（目前沒有任何已存在的主題）'}
+
+你的任務：
+1.  識別出對話中正在討論的【具體想法 (idea)】。
+2.  判斷這個想法是否與上面【已經存在的主題列表】中的某一個意思非常接近或相同。
+3.  如果【是】，請在 JSON 回應的 "idea" 欄位中，填寫列表中【最匹配的那個現有主題字串】。
+4.  如果【否】（是全新的主題，或列表為空），請在 "idea" 欄位填寫你新識別出的主題字串。
+5.  如果找到了 idea 且成員對其表達了立場，請輸出該 idea 及成員的分數變化 delta。
+
 規則：
+- 每次請輸出一個 idea 就好。
+- 你統整 idea 的方式，請在***最新的對話***中抓關鍵字，不要憑空生成對話中沒有出現的單字。
 - delta 必須限制在 [-0.1, +0.1] 之間。
-- Host 發言只作為上下文，不可影響分數。
+- ***Host 發言只作為上下文，不可影響分數。***
+- 輸出idea，除非是轉有名詞或縮寫，請一律使用繁體中文。
+- 你不可以把【已經存在的主題列表】中的任意元素刪除。
 - 成員鍵名只能用這些：${JSON.stringify(memberNames)}
-- 若無明確主題或立場，請不要更新。
+- 若無明確的具體 idea 被討論，或沒有明確立場，請不要更新 (should_update: false)。
 
 === 對話 ===
 ${transcript}
 === 結束 ===
 
-請輸出純 JSON：
+請輸出純 JSON（新增 "matched_existing_idea" 欄位）：
 {
   "should_update": true,
-  "idea": "AI",
+  "idea": "益智類遊戲", // <-- 必須是【匹配到的現有主題】或【新主題】字串
+  "matched_existing_idea": "益智遊戲", // <-- 如果匹配了現有主題，填寫匹配到的那個；如果是新主題，填 null
   "delta_by_user": { "Alice": 0.1, "Bob": -0.05 },
-  "reason": "..."
+  "reason": "Alice 提議益智類遊戲，與現有的 '益智遊戲' 主題匹配..."
 }`;
-
-  let parsed;
-  try {
-    const llmReply = await callLLM(model, prompt, "[belief]");
-    parsed = safeParseLLMJson(llmReply);
-    appendBeliefDebugLog({ prompt, raw: llmReply, parsed });
-  } catch (e) {
-    if(DEBUG_CONFIG.consoleLogBelief){
-      console.error('[belief] LLM call/parse failed:', e); return;
-    }
-  }
-
-  if (parsed?.reason) {
-    if(DEBUG_CONFIG.consoleLogBelief){
-      console.log('[belief] LLM Reason:', parsed.reason);
-    }
-  }
-  if (!parsed || parsed.should_update === false) return;
-  const idea = typeof parsed.idea === 'string' ? parsed.idea.trim() : '';
-  if (!idea) return;
-
-  const rawDeltas = parsed?.delta_by_user ?? {};
-  const cleanDeltas = {};
-  for (const [userKey, val] of Object.entries(rawDeltas)) {
-    const mappedUser = normalizeUserKey(userKey, memberNames);
-    if (!mappedUser) continue;
-    const num = Number(val);
-    if (Number.isFinite(num)) {
-        cleanDeltas[mappedUser] = clamp(num, -0.1, 0.1);
-    }
-  }
-
-  for (const member of data.members) {
-    if(member.name === 'Host') continue;
-    let before;
-    const isNewIdea = !(idea in member.belief.ideas);
-    if (isNewIdea) {
-        before = (member.name === latestMsg.user)
-            ? _randRange(rand, BELIEF_POS_MIN, BELIEF_POS_MAX)
-            : _randRange(rand, BELIEF_RAND_MIN, BELIEF_RAND_MAX);
-    } else {
-        before = Number(member.belief.ideas[idea]);
-    }
-
-    const llmDelta = cleanDeltas[member.name] ?? 0;
-    let finalDelta = 0;
-
-    // ==========================================================
-    // [修改] 導入隨機分數變化邏輯
-    // ==========================================================
-    // 只有在 LLM 建議的變化足夠大時才進行隨機化
-    if (llmDelta > 0.01) {
-        // 如果是正向變化，在 0.01 到 LLM建議值 之間取隨機數
-        finalDelta = _randRange(rand, 0.01, llmDelta);
-    } else if (llmDelta < -0.01) {
-        // 如果是負向變化，在 LLM建議值 到 -0.01 之間取隨機數
-        finalDelta = _randRange(rand, llmDelta, -0.01);
-    } else {
-        // 如果變化太小或為 0，則直接使用 LLM 的值
-        finalDelta = llmDelta;
-    }
     // ==========================================================
 
-    if (isNewIdea || finalDelta !== 0) {
-        const after = clamp(before + finalDelta, -1, 1);
-        member.belief.ideas[idea] = Number(after.toFixed(3));
-        
-        if (isNewIdea) {
-          if(DEBUG_CONFIG.consoleLogBelief){
-            console.log(`[belief] INIT: ${member.name} on new idea "${idea}": ${after.toFixed(3)}`);
-          }
+    // --- LLM 呼叫與解析 ---
+    let parsed;
+    try {
+        const llmReply = await callLLM(model, prompt, "[belief]");
+        parsed = safeParseLLMJson(llmReply);
+        // appendBeliefDebugLog({ prompt, raw: llmReply, parsed });
+    } catch (e) { console.error('[belief] LLM call/parse failed:', e); return; }
+
+    if (parsed?.reason) console.log('[belief] LLM Reason:', parsed.reason);
+    if (!parsed || parsed.should_update === false) return;
+
+    // ==========================================================
+    // ★ 步驟 3: 根據 LLM 的匹配結果確定 finalIdea ★
+    // ==========================================================
+    let finalIdea = '';
+    const llmIdea = typeof parsed.idea === 'string' ? parsed.idea.trim() : '';
+    const matchedIdea = typeof parsed.matched_existing_idea === 'string' ? parsed.matched_existing_idea.trim() : null;
+
+    // 優先使用 LLM 聲稱匹配到的現有 Idea (如果該 Idea 真的存在)
+    if (matchedIdea && existingIdeasArray.includes(matchedIdea)) {
+        finalIdea = matchedIdea;
+        console.log(`[belief] LLM matched existing idea: "${finalIdea}"`);
+    } 
+    // 否則，使用 LLM 在 "idea" 欄位提供的字串 (可能是新 Idea，或 LLM 沒正確匹配)
+    else if (llmIdea) {
+        finalIdea = llmIdea;
+        if (matchedIdea && !existingIdeasArray.includes(matchedIdea)) {
+             console.warn(`[belief] LLM reported matching "${matchedIdea}", but it's not in the existing list. Using "${finalIdea}" instead.`);
+        } else if (!existingIdeasArray.includes(finalIdea)) {
+             console.log(`[belief] LLM proposed a new idea: "${finalIdea}"`);
         } else {
-            // 更新日誌，顯示 LLM 意向和最終隨機值
-          if(DEBUG_CONFIG.consoleLogBelief){
-            console.log(`[belief] UPDATE: ${member.name} on "${idea}": ${before.toFixed(3)} + (LLM: ${llmDelta.toFixed(3)} -> Final: ${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
-          }
+             console.log(`[belief] LLM directly used an existing idea: "${finalIdea}"`);
         }
     }
-  }
 
-  try {
-    fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (e) {
-    if(DEBUG_CONFIG.consoleLogBelief){
-      console.error('[belief] write failed:', e);
+    if (!finalIdea) { console.warn("[belief] No valid final idea determined. Skipping."); return; }
+    // ==========================================================
+
+    // --- 清理 Delta (邏輯不變) ---
+    const rawDeltas = parsed?.delta_by_user ?? {};
+    const cleanDeltas = {};
+    for (const [userKey, val] of Object.entries(rawDeltas)) {
+        const mappedUser = normalizeUserKey(userKey, memberNames);
+        if (!mappedUser) continue;
+        const num = Number(val);
+        if (Number.isFinite(num)) {
+            cleanDeltas[mappedUser] = clamp(num, -0.1, 0.1);
+        }
     }
-  }
+
+    // --- 更新分數 (使用 finalIdea，邏輯不變) ---
+    for (const member of data.members) {
+        if(member.name === 'Host') continue;
+        let before;
+        const isNewIdea = !(finalIdea in member.belief.ideas);
+        if (isNewIdea) {
+            before = (member.name === latestMsg.user)
+                ? _randRange(rand, BELIEF_POS_MIN, 1.0)
+                : _randRange(rand, BELIEF_RAND_MIN, BELIEF_RAND_MAX);
+        } else {
+            before = Number(member.belief.ideas[finalIdea]);
+        }
+
+        const llmDelta = cleanDeltas[member.name] ?? 0;
+        let randomDelta = 0;
+        if (llmDelta > 0.01) randomDelta = _randRange(rand, 0.01, llmDelta);
+        else if (llmDelta < -0.01) randomDelta = _randRange(rand, llmDelta, -0.01);
+        else randomDelta = llmDelta;
+        
+        // --- 計算逆向成長速率 (邏輯不變) ---
+        const currentAbsScore = Math.abs(before);
+        const speedAdjustedBase = baseMaxChange / growthSpeedFactor;
+        const adjustedMaxDeltaAbs = Math.max(minDeltaThreshold, speedAdjustedBase * (1 - currentAbsScore));
+        const finalDelta = clamp(randomDelta, -adjustedMaxDeltaAbs, adjustedMaxDeltaAbs);
+
+        if (isNewIdea || finalDelta !== 0) {
+            const after = clamp(before + finalDelta, -1, 1);
+            member.belief.ideas[finalIdea] = Number(after.toFixed(3));
+            
+            const logPrefix = isNewIdea ? '[belief] INIT:' : '[belief] UPDATE:';
+            const logDetail = isNewIdea ? '' : `(LLM:${llmDelta.toFixed(3)} -> Rnd:${randomDelta.toFixed(3)} -> AdjMax:±${adjustedMaxDeltaAbs.toFixed(3)} -> Final:${finalDelta.toFixed(3)})`;
+            console.log(`${logPrefix} ${member.name} on "${finalIdea}": ${before.toFixed(3)} + ${logDetail} -> ${after.toFixed(3)}`);
+        }
+    }
+
+    try { fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8'); }
+    catch (e) { console.error('[belief] write failed:', e); }
 }
+
 
 
 function appendRelationshipDebugLog({ prompt, raw, parsed, file='src/stores/simulator/relationship_debug.log' }) {
@@ -970,33 +1026,32 @@ function appendRelationshipDebugLog({ prompt, raw, parsed, file='src/stores/simu
 }
 
 export async function updateRelationshipWithLLM(latestMsg, history, REL_FILE, opts = {}) {
-  const nHistory = opts.nHistory ?? 12;
-  const model = opts.model ?? 'gpt-4o';
-  const magnitudeMax = opts.magnitudeMax ?? 0.1;
-  const symmetric = !!opts.symmetric;
-  // [新增] 隨機數產生器，用於分數隨機化
-  const rand = _makePRNG(Date.now());
+    const nHistory = opts.nHistory ?? 12;
+    const model = opts.model ?? 'gpt-4o';
+    const magnitudeMax = opts.magnitudeMax ?? 0.1; // LLM 建議上限 (固定)
+    const symmetric = !!opts.symmetric;
+    // 基礎最大變化量
+    const baseMaxChange = opts.baseMaxChange ?? 0.1;
+    // 成長速率因子 (越大越慢)
+    const growthSpeedFactor = Math.max(0.1, opts.growthSpeedFactor ?? 1.0); // 確保不小於 0.1
+    const rand = _makePRNG(Date.now());
+    const minDeltaThreshold = 0.001; // 最小變化量閾值
 
-  if (!latestMsg || latestMsg.user === 'Host' || latestMsg.role === 'host') return;
+    if (!latestMsg || latestMsg.user === 'Host' || latestMsg.role === 'host') return;
 
-  let data;
-  try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
-  catch (e) { 
-    if(DEBUG_CONFIG.consoleLogRelationship){
-      console.error('[relationship] read/parse failed:', e);
-    }
-    return;
-  }
-  if (!data || !Array.isArray(data.members) || data.members.length === 0) return;
+    let data;
+    try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
+    catch (e) { console.error('[relationship] read/parse failed:', e); return; }
+    if (!data?.members || data.members.length === 0) return;
 
-  data.members.forEach(m => {
-    m.name = String(m.name ?? '').trim();
-    if (!m.relationship) m.relationship = {};
-  });
-  const memberNames = data.members.map(m => m.name).filter(n => n && n !== 'Host');
-  const transcript = [...history.slice(-nHistory).map(m => `${m.user}: ${m.text}`), `(最新) ${latestMsg.user}: ${latestMsg.text}`].join('\n');
+    data.members.forEach(m => {
+        m.name = String(m.name ?? '').trim();
+        if (!m.relationship) m.relationship = {};
+    });
+    const memberNames = data.members.map(m => m.name).filter(n => n && n !== 'Host');
+    const transcript = [...history.slice(-nHistory).map(m => `${m.user}: ${m.text}`), `(最新) ${latestMsg.user}: ${latestMsg.text}`].join('\n');
 
-  const prompt = `
+    const prompt = `
 你是互動觀察者。請判斷是否需更新成員關係分數，若需要，輸出 delta 限制在 [-${magnitudeMax}, +${magnitudeMax}] 之間。
 規則：
 - Host 不可影響分數。
@@ -1019,91 +1074,74 @@ ${transcript}
   "reason": "..."
 }`;
 
-  let parsed;
-  try {
-    const llmReply = await callLLM(model, prompt, "[relationship]");
-    parsed = safeParseLLMJson(llmReply);
-    appendRelationshipDebugLog({ prompt, raw: llmReply, parsed });
-  } catch (e) {
-    if(DEBUG_CONFIG.consoleLogRelationship){
-      console.error('[relationship] LLM call/parse failed:', e);
-    }
-    return;
-  }
+    let parsed;
+    try {
+        const llmReply = await callLLM(model, prompt, "[relationship]");
+        parsed = safeParseLLMJson(llmReply);
+        // appendRelationshipDebugLog({ prompt, raw: llmReply, parsed }); // 可選
+    } catch (e) { console.error('[relationship] LLM call/parse failed:', e); return; }
 
-  if (parsed?.reason) {
-    if(DEBUG_CONFIG.consoleLogRelationship){
-      console.log('[relationship] LLM Reason:', parsed.reason);
-    }
-  }
-  if (!parsed || parsed.should_update === false) return;
-  
-  const rawPairs = parsed?.delta_by_pair ?? {};
-  const cleanPairs = {};
-  for (const [srcKey, m] of Object.entries(rawPairs)) {
-    const src = normalizeUserKey(srcKey, memberNames);
-    if (!src || typeof m !== 'object') continue;
-    for (const [dstKey, v] of Object.entries(m)) {
-      const dst = normalizeUserKey(dstKey, memberNames);
-      if (!dst || dst === src) continue;
-      const num = Number(v);
-      if (Number.isFinite(num)) {
-        const delta = clamp(num, -magnitudeMax, magnitudeMax);
-        if (!cleanPairs[src]) cleanPairs[src] = {};
-        cleanPairs[src][dst] = (cleanPairs[src][dst] ?? 0) + delta;
-      }
-    }
-  }
+    if (parsed?.reason) console.log('[relationship] LLM Reason:', parsed.reason);
+    if (!parsed || parsed.should_update === false) return;
 
-  const name2member = new Map(data.members.map(m => [m.name, m]));
-  for (const [src, dstMap] of Object.entries(cleanPairs)) {
-    const srcM = name2member.get(src);
-    if (!srcM) continue;
-    for (const [dst, llmDelta] of Object.entries(dstMap)) {
-        let finalDelta = 0;
-
-        // ==========================================================
-        // [修改] 導入隨機分數變化邏輯
-        // ==========================================================
-        if (llmDelta > 0.01) {
-            finalDelta = _randRange(rand, 0.01, llmDelta);
-        } else if (llmDelta < -0.01) {
-            finalDelta = _randRange(rand, llmDelta, -0.01);
-        } else {
-            finalDelta = llmDelta;
+    const rawPairs = parsed?.delta_by_pair ?? {};
+    const cleanPairs = {};
+    for (const [srcKey, m] of Object.entries(rawPairs)) {
+        const src = normalizeUserKey(srcKey, memberNames);
+        if (!src || typeof m !== 'object') continue;
+        for (const [dstKey, v] of Object.entries(m)) {
+            const dst = normalizeUserKey(dstKey, memberNames);
+            if (!dst || dst === src) continue;
+            const num = Number(v);
+            if (Number.isFinite(num)) {
+                const delta = clamp(num, -magnitudeMax, magnitudeMax);
+                if (!cleanPairs[src]) cleanPairs[src] = {};
+                cleanPairs[src][dst] = (cleanPairs[src][dst] ?? 0) + delta;
+            }
         }
-        // ==========================================================
-      
-      const before = Number(srcM.relationship[dst] ?? 0);
-      const after = clamp(before + finalDelta, -1, 1);
-      srcM.relationship[dst] = Number(after.toFixed(3));
-      
-      if(DEBUG_CONFIG.consoleLogRelationship){
-        console.log(`[relationship] ${src} -> ${dst}: ${before.toFixed(3)} + (LLM: ${llmDelta.toFixed(3)} -> Final: ${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
-      }
-      if (symmetric) {
-        const dstM = name2member.get(dst);
-        if (dstM) {
-          const before2 = Number(dstM.relationship?.[src] ?? 0);
-          // 對稱更新也使用相同的 finalDelta
-          const after2  = clamp(before2 + finalDelta, -1, 1);
-          if (!dstM.relationship) dstM.relationship = {};
-          dstM.relationship[src] = Number(after2.toFixed(3));
-          if(DEBUG_CONFIG.consoleLogRelationship){
-            console.log(`[relationship][sym] ${dst} -> ${src}: ${before2.toFixed(3)} + (Final: ${finalDelta.toFixed(3)}) -> ${after2.toFixed(3)}`);
-          }
+    }
+
+    const name2member = new Map(data.members.map(m => [m.name, m]));
+    for (const [src, dstMap] of Object.entries(cleanPairs)) {
+        const srcM = name2member.get(src);
+        if (!srcM) continue;
+        for (const [dst, llmDelta] of Object.entries(dstMap)) {
+            let randomDelta = 0;
+            if (llmDelta > 0.01) randomDelta = _randRange(rand, 0.01, llmDelta);
+            else if (llmDelta < -0.01) randomDelta = _randRange(rand, llmDelta, -0.01);
+            else randomDelta = llmDelta;
+
+            // --- 計算逆向成長速率 + 邊際遞減 ---
+            const before = Number(srcM.relationship[dst] ?? 0);
+            const currentAbsScore = Math.abs(before);
+            const speedAdjustedBase = baseMaxChange / growthSpeedFactor; // 使用與 belief 相同的公式
+            const adjustedMaxDeltaAbs = Math.max(minDeltaThreshold, speedAdjustedBase * (1 - currentAbsScore));
+            // ---
+
+            const finalDelta = clamp(randomDelta, -adjustedMaxDeltaAbs, adjustedMaxDeltaAbs);
+
+            if (finalDelta !== 0) {
+                const after = clamp(before + finalDelta, -1, 1);
+                srcM.relationship[dst] = Number(after.toFixed(3));
+                
+                console.log(`[relationship] ${src} -> ${dst}: ${before.toFixed(3)} + (LLM:${llmDelta.toFixed(3)} -> Rnd:${randomDelta.toFixed(3)} -> AdjMax:±${adjustedMaxDeltaAbs.toFixed(3)} -> Final:${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
+
+                if (symmetric) {
+                    const dstM = name2member.get(dst);
+                    if (dstM) {
+                        const before2 = Number(dstM.relationship?.[src] ?? 0);
+                        const after2  = clamp(before2 + finalDelta, -1, 1);
+                        if (!dstM.relationship) dstM.relationship = {};
+                        dstM.relationship[src] = Number(after2.toFixed(3));
+                        console.log(`[relationship][sym] ${dst} -> ${src}: ${before2.toFixed(3)} + (Final: ${finalDelta.toFixed(3)}) -> ${after2.toFixed(3)}`);
+                    }
+                }
+            }
         }
-      }
     }
-  }
-  
-  try {
-    fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (e) { 
-    if(DEBUG_CONFIG.consoleLogRelationship){
-      console.error('[relationship] write failed:', e);
-    }
-  }
+
+    try { fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8'); }
+    catch (e) { console.error('[relationship] write failed:', e); }
 }
 
 export async function updateBeliefAndRelationshipWithLLM(latestMsg, flatHistory, REL_FILE, opts = {}) {

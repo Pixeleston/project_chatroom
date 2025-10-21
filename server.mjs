@@ -364,7 +364,7 @@ app.get('/api/state', (req, res) => {
           currentDiagramSimulator.currentNode = "start";
           currentDiagramSimulator.memory.nodesMemory = [];
           currentDiagramSimulator.voting = false;
-          currentDiagramSimulator.voting_array = [{}]
+          currentDiagramSimulator.voting_array = []
           saveDiagram(currentDiagramSimulator, "simulator");
       }
 
@@ -581,20 +581,19 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     if (LLM_TOGGLE) {
       try {
         let currentHistory = filterHistory(currentDiagram, history)
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg, actionSuccess, startVoting} = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`), null)
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg, actionSuccess, startVoting} = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`), null)
         
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
             sendMessage(currentDiagram, replyMsg, "chatroom");
             const historyFlat = history.flatMap(n => n.history).slice(-50);
-            await runBeliefAndRelationship(replyMsg, historyFlat, RELATIONSHIP_BELIEF_FILE);
           }
           if (moveNode) {
             if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
             else if (moveNode.nextNode === "small") {
               newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
-              if(nextreplyMsg && nextreplyMsg.text && nextreplyMsg.text !== 'null'){
-                sendMessage(currentDiagram, nextreplyMsg, "chatroom");
+              if(nextReplyMsg && nextReplyMsg.text && nextReplyMsg.text !== 'null'){
+                sendMessage(currentDiagram, nextReplyMsg, "chatroom");
               }
             }
           }
@@ -639,10 +638,27 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
 
       lastReplyTime = time.getTime()
       simulatorMessageQueue.splice(randomIndex, 1);
+
+      while(simulatorMessageQueue.length > 0 && simulatorMessageQueue[0].time.getTime() - lastReplyTime <  SIMULATOR_CONFIG.shareReplyInterval){
+        simulatorMessageQueue.shift()
+      }
+
+      const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
+      const historyFlat = rawH.flatMap(n => n.history).slice(-50);
+      try {
+        await runBeliefAndRelationship(selectedMsg.msg, historyFlat, RELATIONSHIP_BELIEF_FILE);
+      }
+      catch(e){
+        if(DEBUG_CONFIG.consoleLogBELIEF){
+          console.log("[BELIEF] server.mjs 中的 ws.on(...) (伺服器接收學生訊息處) 中的 runBeliefAndRelationship 報錯");
+        }
+      }
+
     }
   }
 
   function updateVotingFromQueue(){
+    const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
     if(!RUN_TOGGLE_SIMULATOR) {
       simulatorVotingQueue = []
       return;
@@ -690,8 +706,11 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       }
   
       try {
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg: nextReply, actionSuccess, startVoting } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15), student_profile)
-        
+        const { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15), student_profile)
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!");
+        console.log("actionSuccess = " + actionSuccess)
+        console.log("moveNodeSuccess = " + moveNodeSuccess)
+        console.log("startVoting = " + startVoting)
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
             // simulatorMessageQueue.push({
@@ -712,30 +731,21 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             }
           }
 
+          if(nextReply && nextReply.text && nextReply.text !== 'null'){
+            sendMessage(currentDiagramSimulator, nextReply, "simulator")
+          }
+
           if(startVoting){
             newStateDiagram.voting = true;
+            newStateDiagram.voting_array = []
           }
-          else if (moveNode) {
-            // if(stateDiagram.currentSmallNode === "null" || stateDiagram.currentNode === "start"){
-            //   result.reply_voting = null
-            // }
-            if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
-            else if (moveNode.nextNode === "small") {
-              newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
-              if(nextReply && nextReply.text && nextReply.text !== 'null'){
-                // simulatorMessageQueue.push({
-                //   diagram: currentDiagramSimulator,
-                //   msg: nextReply,
-                //   chatroom_type: "simulator",
-                //   time: new Date()
-                // });
-                sendMessage(currentDiagramSimulator, nextReply, "simulator")
-              }
-            }
-            newStateDiagram.voting = false
-            newStateDiagram.voting_array = [{}]
-            clearQueue()  // 當轉移節點時清空模擬學生訊息 Queue
+
+          if(moveNodeSuccess){  // 轉移節點時將投票模式關掉，且清空模擬學生訊息Queue
+            newStateDiagram.voting = false;
+            newStateDiagram.voting_array = []
+            clearQueue()
           }
+
           saveDiagram(newStateDiagram, "simulator")
         }
       } catch (err) {
@@ -770,16 +780,6 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
           }
           else {
             sendMessage(currentDiagram, msg_data, chatroom_type);
-          }
-          const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
-          const historyFlat = rawH.flatMap(n => n.history).slice(-50);
-          try {
-            await runBeliefAndRelationship(msg_data, historyFlat, RELATIONSHIP_BELIEF_FILE);
-          }
-          catch(e){
-            if(DEBUG_CONFIG.consoleLogBELIEF){
-              console.log("[BELIEF] server.mjs 中的 ws.on(...) (伺服器接收學生訊息處) 中的 runBeliefAndRelationship 報錯");
-            }
           }
         }
       } catch (err) {

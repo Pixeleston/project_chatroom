@@ -115,6 +115,72 @@ async function summarize(stateDiagram, summary){
   return stateDiagram;
 }
 
+// 若動作成功且轉移成功則回傳修改後的狀態圖，否則回傳原狀態圖
+async function moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why){
+  let moveNodeSuccess = false;
+  let newStateDiagram = stateDiagram;
+    if (nextNode && nextNode !== 'stay') {
+      let nodeExists = true;
+      if(nextNode === "big"){
+        nodeExists = newStateDiagram.nodes.some(node => node.id === nextNodeID);
+        if(!nodeExists){  // 如果下一個大節點根本不存在，則直接跳過動作
+          moveNodeSuccess = false;
+          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
+        }
+      }
+      else if(nextNode === "small"){
+        nodeExists = newStateDiagram.memory.nodesMemory.some(memoryNode =>
+          memoryNode.smallNodes?.some(small => small.id === nextNodeID)
+        );
+        if(!nodeExists){  // 如果下一個小節點根本不存在，則直接跳過動作
+          moveNodeSuccess = false;
+          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
+        }
+      }
+      if(nodeExists){
+    //  update_Memory();  // 
+
+        moveNodeSuccess = true;
+
+        if(nextNode === "big"){
+          const result = await decide_small_part(newStateDiagram, nextNodeID);  // errorable
+          if(!result.success) {
+      //    console.log("========== result.success === false ==========")
+            moveNodeSuccess = false
+          }
+          const shouldSummarize = (newStateDiagram.currentNode === 'start' ? false : true)
+          newStateDiagram = result.diagram;
+          if(shouldSummarize){
+            console.log(" ===== summarizing =====")
+            console.log(newStateDiagram.currentNode)
+            newStateDiagram = await summarize(newStateDiagram, summary);
+          }
+          newStateDiagram.currentNodeSmall = "null"
+          newStateDiagram.currentNode = nextNodeID
+          moveNodeSuccess = result.success;
+        }
+        else if(nextNode === "small"){
+          newStateDiagram = await summarize(newStateDiagram, summary);
+          newStateDiagram.currentNodeSmall = nextNodeID
+        }
+        console.log(`➡️ 狀態轉移至: ${nextNodeID}（原因：${why}）`);
+      }
+    }
+  if(moveNodeSuccess) return {stateDiagram: newStateDiagram, moveNodeSuccess}
+  else return {stateDiagram: stateDiagram, moveNodeSuccess}
+}
+
+async function double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode){
+  let newReplyMsg = replyMsg
+  if (replyText && replyText !== 'null' && nextNode === 'stay') {
+    let check = await double_check(stateDiagram, replyText, hostMemory)  // errorable
+    if(check === "false") {
+      newReplyMsg = null;
+    }
+  }
+  return newReplyMsg
+}
+
 export async function teacher_action(stateDiagram, hostMemory, student_profile){
 
   console.log('teachers history : ')
@@ -124,152 +190,86 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   const targets = getOutgoingTargets(currentNode, stateDiagram)
   let actionSuccess = true
 
-  let student_count = student_profile.length
-  let votingPass = false
-  if(student_count >= stateDiagram.voting_array.length * SIMULATOR_CONFIG.votingRatio){
-    votingPass = true
-  }
-  if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){
-    votingPass = true
-  }
-
-  let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile, votingPass)
+  let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile)
   //const stop = ["}"]
     let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
     console.log("teachers reply : " + llmReply)
 
-    if(!llmReply) return {replyMsg:null, stateDiagram:null, moveNode:null, nextreplyMsg:null, actionSuccess:false, startVoting:false}
+    if(!llmReply) return {replyMsg:null, newStateDiagram:null, nextReplyMsg:null, actionSuccess:false, moveNodeSuccess:false, startVoting:false}
     
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
-let result
-try {
-  // 嘗試完整解析
-  result = JSON.parse(cleanedReply.trim())
-} catch (err) {
-  console.warn("❗ JSON.parse 失敗，試圖抽取物件")
+  let result
+  try {
+    // 嘗試完整解析
+    result = JSON.parse(cleanedReply.trim())
+  } catch (err) {
+    console.warn("❗ JSON.parse 失敗，試圖抽取物件")
+  }
 
-  // let fixedReply = cleanedReply
-  // if (!fixedReply.trim().endsWith("}")) {
-  //   fixedReply += "}"
-  // }
-
-  // // 嘗試用正則抽取 JSON 區塊
-  // const match = fixedReply.match(/\{[\s\S]*?"topics"\s*:\s*\[([\s\S]*?)\](.*?)\}/)
-  // if (match) {
-  //   try {
-  //     result = JSON.parse(`{"topics":[${match[1]}]}`)
-  //   } catch (err2) {
-  //     actionSuccess = false
-  //     throw new Error("❌ 修復後仍解析失敗：" + err2.message)
-  //   }
-  // } else {
-  //   actionSuccess = false
-  //   throw new Error("❌ 無法找出 topics 區塊")
-  // }
-  // if (!match) {
-  //   actionSuccess = false
-  //   throw new Error('❌ 無法解析 JSON：找不到大括號區塊')
-  // }
+  //let replyText = (result.reply ?? null); //result.reply_voting ?? (result.reply ?? null);
+  //let nextReplyMsg = (result.nextReply ?? null);
+  let startVoting = false;
+  if (result.reply_voting && result.reply_voting !== 'null'){
+    startVoting = true;
+    // result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
+  }
   
-  // try {
-  //   result = JSON.parse(match[0])
-  // } catch (err2) {
-  //   actionSuccess = false
-  //   throw new Error('❌ 解析 JSON 區塊失敗：' + err2.message)
-  // }
-}
-    
-    // 這兩種情況不用 vote 直接當作投票通過
-    if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){
-      result.reply_voting = null
+  const replyText = (result.reply ?? null);
+  const nextNode = result.next;   // small big stay
+  const nextNodeID = result.nextNode;
+  const nextReply = result.nextReply ?? null;
+  const summary = result.summary;
+  const why       = result.why   ?? '';
+  let replyMsg = { role: 'host', user: 'Host', text: replyText };
+  let nextReplyMsg = { role: 'host', user: 'Host', text: nextReply };
+
+  if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){  // 特例，直接轉移節點
+    startVoting = false; // 這種情況下不須開啟進入投票階段
+    const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
+    if(moveNodeSuccess) {
+      return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+    }
+    else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
+      actionSuccess = false;
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+    }
+  }
+  else if(stateDiagram.voting){ // 如果正在投票，那就看是否通過，沒通過就只需回傳replyMsg等，並回傳startVoting=false
+    startVoting = false; // 這種情況下不須開啟進入投票階段
+    let student_count = student_profile.length
+    let votingPass = false
+    console.log("!!!!!!!!!!!!!!!!!!!!")
+    console.log(stateDiagram.voting_array.length)
+    console.log(student_count + " * " +  SIMULATOR_CONFIG.votingRatio)
+    if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
+      votingPass = true
     }
 
-    let replyText = result.reply_voting ?? (result.reply ?? null);
-    let startVoting = false;
-    if (result.reply_voting && result.reply_voting !== 'null'){
-      startVoting = true;
-    }
-    
-    let nextNode = result.next;   // small big stay
-    const nextNodeID = result.nextNode;
-    const nextReply = result.nextReply ?? null;
-    const summary = result.summary;
-    const why       = result.why   ?? '';
-
-    if(!votingPass) nextNode = "stay"
-    
-    // const replyText = null;
-    // const nextNode = "small";   // small big stay
-    // const nextNodeID = "node-1757473413405-0";
-    // const nextReply = "現在，我們可以開始討論並確認期末專案的主題。請大家分享自己的想法，並達成一致。";
-    // const summary = null;
-    // const why       = "目前不在任何小節點，且需要進行大節點中的具體討論和確認主題，因此轉移到新的小節點進行專案主題的討論。";
-
-    let replyMsg = { role: 'host', user: 'Host', text: replyText };
-    let nextreplyMsg = null;
-
-    let moveNode = null;
-    
-    if (replyText && replyText !== 'null' && nextNode === 'stay') {
-      let check = await double_check(stateDiagram, replyText, hostMemory)  // errorable
-      if(check === "false") {
-        replyMsg = null;
+    if(votingPass){
+      const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
+      if(moveNodeSuccess) {
+        return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+      }
+      else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
+        actionSuccess = false;
+        return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
       }
     }
+    else {
 
-    if (nextReply && nextReply !== 'null'){
-      nextreplyMsg = { role: 'host', user: 'Host', text: nextReply };
+      // host 再次自我確認是否應該說話
+      replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
+
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
     }
+  }
+  else {  // 沒在投票，不可能轉移節點
 
-    if (nextNode && nextNode !== 'stay') {
-      let nodeExists = true;
-      if(nextNode === "big"){
-        nodeExists = stateDiagram.nodes.some(node => node.id === nextNodeID);
-        if(!nodeExists){  // 如果下一個大節點根本不存在，則直接跳過動作
-          actionSuccess = false;
-          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
-        }
-      }
-      else if(nextNode === "small"){
-        nodeExists = stateDiagram.memory.nodesMemory.some(memoryNode =>
-          memoryNode.smallNodes?.some(small => small.id === nextNodeID)
-        );
-        if(!nodeExists){  // 如果下一個小節點根本不存在，則直接跳過動作
-          actionSuccess = false;
-          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
-        }
-      }
-      if(nodeExists){
-    //  update_Memory();  // 
+    // host 再次自我確認是否應該說話
+    if(!startVoting) replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
 
-        let moveNodeSuccess = true;
-
-        if(nextNode === "big"){
-          const result = await decide_small_part(stateDiagram, nextNodeID);  // errorable
-          if(!result.success) {
-      //    console.log("========== result.success === false ==========")
-            actionSuccess = false
-          }
-          const shouldSummarize = (stateDiagram.currentNode === 'start' ? false : true)
-          stateDiagram = result.diagram;
-          if(shouldSummarize){
-            console.log(" ===== summarizing =====")
-            console.log(stateDiagram.currentNode)
-            stateDiagram = await summarize(stateDiagram, summary);
-          }
-          stateDiagram.currentNodeSmall = "null"
-          moveNodeSuccess = result.success;
-        }
-        else if(nextNode === "small"){
-          stateDiagram = await summarize(stateDiagram, summary);
-        }
-        console.log(`➡️ 狀態轉移至: ${nextNodeID}（原因：${why}）`);
-        if(moveNodeSuccess) moveNode = { nextNode: nextNode, nextNodeID: nextNodeID };
-      }
-    }
-    // console.log("teachers reply : " + llmReply)
-    // console.log(" ========== nextReplyMsg ==========");
-    // console.log(nextreplyMsg);
-    return {replyMsg, stateDiagram, moveNode, nextreplyMsg, actionSuccess, startVoting}
+    // startVoting = ???; // 唯一可能開啟進入投票階段的情況
+    return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
+  }
 }

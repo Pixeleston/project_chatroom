@@ -76,7 +76,7 @@ function exportToJson() {
   flowData.currentNode = 'start'
   flowData.currentNodeSmall = 'null'
   flowData.voting = false
-  flowData.voting_array = [{}]
+  flowData.voting_array = []
   flowData.memory = {
     currentMemory: "",
     nodesMemory: []
