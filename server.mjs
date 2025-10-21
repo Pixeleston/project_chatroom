@@ -11,7 +11,7 @@ import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn
   updateRelationshipBeliefOnNewStudentData, updateBeliefWithLLM, updateRelationshipWithLLM} from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 import { spawnDiagram } from './spawnDiagram.js'
-import { SIMULATOR_CONFIG } from './src/config.js'
+import { DEBUG_CONFIG, SIMULATOR_CONFIG } from './src/config.js'
 
 /* 取得等同於 CommonJS 的 __dirname */
 const __filename = fileURLToPath(import.meta.url)
@@ -148,6 +148,17 @@ app.get('/api/state', (req, res) => {
     }
   })
   
+  function SIMULATOR_TOGGLE_CLOSE(){
+    try {
+      let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+      settings.RUN_TOGGLE_SIMULATOR = false
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+    }
+    catch (err){
+
+    }
+  }
+  
   app.post('/api/SIMULATOR_TOGGLE_CLOSE', (req, res) => {
     try {
       const { RUN_TOGGLE_SIMULATOR } = req.body
@@ -165,7 +176,7 @@ app.get('/api/state', (req, res) => {
       const { selectedNode, newMessage } = req.body
       const prompt = prompt_spawn_example(selectedNode, newMessage)
       console.log(`prompt: ${prompt}`)
-      const response = await callLLM('gpt-4o', prompt)
+      const response = await callLLM('gpt-4o', prompt, "[/api/chatroom_ask_spawn]")
       console.log(`get result: ${response}`)
       res.json({ result: response })
     } catch (err) {
@@ -178,7 +189,7 @@ app.get('/api/state', (req, res) => {
     try {
       const { metrics } = req.body
       const prompt = prompt_spawn_student(JSON.stringify(metrics))
-      let llmReply = await callLLM('gpt-4o', prompt)
+      let llmReply = await callLLM('gpt-4o', prompt, "[/api/spawnStudent]")
       llmReply = (llmReply || '').replace(/<END>/g, '').trim()
       res.json({ reply: llmReply })
     } catch (err) {
@@ -207,6 +218,7 @@ app.get('/api/state', (req, res) => {
   
       data.push({ name, profile });
       fs.writeFileSync(STUDENT_PROFILE_SIMULATOR_FILE, JSON.stringify(data, null, 2), 'utf8');
+      student_profile = data;  // 若在模擬前臨時增加學生，記得同步更新模擬學生列表
   
       const names = data.map(s => s.name);
       const relData = fs.existsSync(RELATIONSHIP_BELIEF_FILE)
@@ -272,7 +284,7 @@ app.get('/api/state', (req, res) => {
   app.post('/api/spawnReport', async (req, res) => {
     try {
       const prompt = prompt_spawn_report(currentDiagramSimulator)
-      const llmReply = await callLLM('gpt-4o', prompt)
+      const llmReply = await callLLM('gpt-4o', prompt, "[/api/spawnReport]")
   
       const reportData = {
         report_text: llmReply,
@@ -291,7 +303,7 @@ app.get('/api/state', (req, res) => {
     try {
       const { state_diagram, history } = req.body
       const prompt = prompt_ask_improve(state_diagram, history)
-      const rawResponse = await callLLM('gpt-4o', prompt)
+      const rawResponse = await callLLM('gpt-4o', prompt, "[/api/chatroom_ask_improve]")
       const result = rawResponse.slice(rawResponse.indexOf('{'), rawResponse.lastIndexOf('}') + 1)
       const parsed = JSON.parse(result)
       res.json({ result: parsed })
@@ -315,7 +327,7 @@ app.get('/api/state', (req, res) => {
   app.post('/api/callLLM', async (req, res) => {
     try {
       const { prompt } = req.body
-      const rawResponse = await callLLM('gpt-4o', prompt)
+      const rawResponse = await callLLM('gpt-4o', prompt, "/api/callLLM")
       res.json({ result: rawResponse })
     } catch (err) {
       console.error('❌ LLM 呼叫失敗:', err)
@@ -351,6 +363,8 @@ app.get('/api/state', (req, res) => {
           currentDiagramSimulator.currentNodeSmall = "null";
           currentDiagramSimulator.currentNode = "start";
           currentDiagramSimulator.memory.nodesMemory = [];
+          currentDiagramSimulator.voting = false;
+          currentDiagramSimulator.voting_array = [{}]
           saveDiagram(currentDiagramSimulator, "simulator");
       }
 
@@ -567,7 +581,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     if (LLM_TOGGLE) {
       try {
         let currentHistory = filterHistory(currentDiagram, history)
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg, actionSuccess } = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`))
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg, actionSuccess, startVoting} = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`), null)
         
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
@@ -596,10 +610,14 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   let simulateStudentSpeakCool = false
   let lastReplyTime = 0
   let simulatorMessageQueue = []
+  let simulatorVotingQueue = []
   
   async function sendMessageFromQueue(){
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
-    if(!RUN_TOGGLE_SIMULATOR) return;
+    if(!RUN_TOGGLE_SIMULATOR) {
+      simulatorMessageQueue = []
+      return;
+    }
     while(simulatorMessageQueue.length > 0 && simulatorMessageQueue[0].time.getTime() - lastReplyTime <  SIMULATOR_CONFIG.shareReplyInterval){
       simulatorMessageQueue.shift()
     }
@@ -624,11 +642,37 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     }
   }
 
+  function updateVotingFromQueue(){
+    if(!RUN_TOGGLE_SIMULATOR) {
+      simulatorVotingQueue = []
+      return;
+    }
+    let updateSuccess = false;
+    while(simulatorVotingQueue.length > 0){
+      updateSuccess = true
+      let voted = false
+      for(const voting of currentDiagramSimulator.voting_array){
+        if(voting.user === simulatorVotingQueue[0].user){
+          voted = true;
+        }
+      }
+      if(!voted) {
+        currentDiagramSimulator.voting_array.push(simulatorVotingQueue[0])
+      }
+      simulatorVotingQueue.shift()
+    }
+    if(updateSuccess){
+      console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      console.log(currentDiagramSimulator.voting_array)
+    }
+  }
+
   function clearQueue(){
     simulatorMessageQueue = []
   }
   
   setInterval(sendMessageFromQueue, SIMULATOR_CONFIG.processQueueInterval)
+  setInterval(updateVotingFromQueue, 1000)
   
   async function tick_simulator() {
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
@@ -646,7 +690,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       }
   
       try {
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg: nextReply, actionSuccess } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15))
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextreplyMsg: nextReply, actionSuccess, startVoting } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15), student_profile)
         
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
@@ -658,10 +702,23 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             // });
             sendMessage(currentDiagramSimulator, replyMsg, "simulator")
             const flatHist = historySimulator.flatMap(n => n.history).slice(-50)
-            await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
+            try {
+              await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
+            }
+            catch(e){
+              if(DEBUG_CONFIG.consoleLogBELIEF){
+                console.log("[BELIEF] server.mjs 中的 tick_simulator() 中的 runBeliefAndRelationship 報錯");
+              }
+            }
           }
-  
-          if (moveNode) {
+
+          if(startVoting){
+            newStateDiagram.voting = true;
+          }
+          else if (moveNode) {
+            // if(stateDiagram.currentSmallNode === "null" || stateDiagram.currentNode === "start"){
+            //   result.reply_voting = null
+            // }
             if (moveNode.nextNode === "big") newStateDiagram.currentNode = moveNode.nextNodeID;
             else if (moveNode.nextNode === "small") {
               newStateDiagram.currentNodeSmall = moveNode.nextNodeID;
@@ -675,7 +732,8 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
                 sendMessage(currentDiagramSimulator, nextReply, "simulator")
               }
             }
-
+            newStateDiagram.voting = false
+            newStateDiagram.voting_array = [{}]
             clearQueue()  // 當轉移節點時清空模擬學生訊息 Queue
           }
           saveDiagram(newStateDiagram, "simulator")
@@ -687,6 +745,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   }
   
   setInterval(tick_simulator, 15000)
+  SIMULATOR_TOGGLE_CLOSE()
   
   wss.on('connection', ws => {
     ws.send(JSON.stringify({ chatroom_type: 'chatroom', type: 'history', data: history }))
@@ -706,12 +765,22 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             });
             console.log(JSON.stringify(msg_data))
           }
+          else if(chatroom_type === 'simulator_voting'){
+            simulatorVotingQueue.push({ user: msg_data.user })
+          }
           else {
             sendMessage(currentDiagram, msg_data, chatroom_type);
           }
           const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
           const historyFlat = rawH.flatMap(n => n.history).slice(-50);
-          await runBeliefAndRelationship(msg_data, historyFlat, RELATIONSHIP_BELIEF_FILE);
+          try {
+            await runBeliefAndRelationship(msg_data, historyFlat, RELATIONSHIP_BELIEF_FILE);
+          }
+          catch(e){
+            if(DEBUG_CONFIG.consoleLogBELIEF){
+              console.log("[BELIEF] server.mjs 中的 ws.on(...) (伺服器接收學生訊息處) 中的 runBeliefAndRelationship 報錯");
+            }
+          }
         }
       } catch (err) {
         console.error('Invalid message or LLM error:', err)

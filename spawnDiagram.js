@@ -4,7 +4,7 @@ import { callLLM } from './src/callLLM.js'
 
 async function extractOutline(outline){  
   const prompt = extractOutlinePrompt(outline)
-  let raw = await callLLM('gpt-4o', prompt)
+  let raw = await callLLM('gpt-4o', prompt, "[extractOutline()]")
 
   raw = raw.replace(/<END>\s*$/, '')
 
@@ -36,7 +36,7 @@ async function extractOutline(outline){
 
 async function extractDetail(outline, nodeArray){  
   const prompt = extractDetailPrompt(outline, nodeArray)
-  let raw = await callLLM('gpt-4o', prompt)
+  let raw = await callLLM('gpt-4o', prompt, "[extractDetail()]")
 
   raw = raw.replace(/<END>\s*$/, '')
 

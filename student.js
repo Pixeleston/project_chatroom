@@ -38,7 +38,7 @@ export async function student_action(stateDiagram, history, student_profile){
   let prompt = prompt_student(stateDiagram, history, student_profile)
   let actionSuccess = true
 
-  let llmReply = await callLLM("gpt-4o", prompt);
+  let llmReply = await callLLM("gpt-4o", prompt, "[prompt_student]");
   if(!llmReply) return null  // [Bug] 已知此處有可能回傳null
   const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
@@ -62,8 +62,9 @@ export async function student_action(stateDiagram, history, student_profile){
     }
   }
 
-  const replyText = result.reply ?? null;
-  const why       = result.why   ?? '';
+  const replyText = result.reply  ?? null;
+  const why       = result.why    ?? '';
+  const voting    = result.voting ?? null;
 
   if (replyText && replyText !== 'null') {
     const payload = {
@@ -81,6 +82,23 @@ export async function student_action(stateDiagram, history, student_profile){
       console.warn('⚠️ socket 尚未連線，無法發送')
     }
   }
+  
+  if(stateDiagram.voting && voting && voting === "true"){
+    // TODO 廣播到 server.mjs 裡面將此學生名字推入 stateDiagram.votingArray中
+    const payload = {
+      chatroom_type: 'simulator_voting',
+      msg_data: {
+        role: 'user',
+        user: student_profile.name || 'unknown-student',
+      }
+    }
+    if (socket.readyState === WebSocket.OPEN && actionSuccess) {
+      socket.send(JSON.stringify(payload))
+    } else {
+      console.warn('⚠️ socket 尚未連線，無法發送')
+    }
+  }
+
   console.log(`replyText: ${replyText}\n why: ${why}\n`)
   return replyText
 }

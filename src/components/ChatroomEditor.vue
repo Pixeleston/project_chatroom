@@ -282,7 +282,8 @@ async function spawnDiagram(){
     previewData.value.nodes = nodes;
     previewData.value.edges = edges;
     previewData.value.currentNode = "start";
-
+    previewData.value.voting = false;
+    previewData.value.voting_array = [{}]
     //saveToServer();
   }
 }

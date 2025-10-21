@@ -1,5 +1,7 @@
 // npm install node-fetch
 import { LLM_CONFIG } from './config.js'
+import { DEBUG_CONFIG } from './config.js'
+import { SIMULATOR_CONFIG } from './config.js'
 import { callLLM } from './callLLM.js'
 import fs from 'fs'
 
@@ -321,7 +323,33 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     return prompt
 }
 
-export function prompt_teacher(stateDiagram, targets, history){
+function categorizeStudentMessage(history){
+    
+}
+
+export function prompt_teacher(stateDiagram, targets, history, student_profile, votingPass){
+  // if student_profile == null, then this is normal mode
+  // else this is simulation mode
+  
+  let student_count = student_profile.length
+  let student_information_prompt = `聊天室中有 ${student_count} 位學生，以下是他們在目前節點每位玩家傳送過的訊息：\n`
+  for (const student of student_profile) {
+    student_information_prompt += `- 學生：${student.name}\n`
+    let messages = history.filter(m => m.startsWith(student.name + ':'))
+    //console.log("????????????????????????????? " + messages)
+    if(messages.length == 0){
+      student_information_prompt += `    - (目前此學生沒有任何訊息)\n`
+    }
+    else {
+      for(const message of messages){
+        student_information_prompt += `    - ${message}\n`
+      }
+    }
+  }
+  // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+  // console.log(student_information_prompt)
+  // console.log(history)
+  
   let currentNode = stateDiagram.currentNode;
   let currentSmallNode = stateDiagram.currentNodeSmall;
   let diagram_edge_prompt = "以下是狀態圖中目前節點連出去的所有大節點："
@@ -371,12 +399,12 @@ export function prompt_teacher(stateDiagram, targets, history){
       - 目前所在小節點與目標
       `
 
-      if(currentSmallNode != "null") diagram_small_node_prompt += `  - ${currentSmallNodeObj.target}\n`
-      else diagram_small_node_prompt += ` - 目前不在任何小節點當中\n`
+      if(currentSmallNode != "null") diagram_small_node_prompt += `  - **(重要)** ${currentSmallNodeObj.target}\n`
+      else diagram_small_node_prompt += ` - **(重要)** 目前不在任何小節點當中\n`
     }
     else diagram_small_node_prompt = `- 此大節點內部沒有小節點\n`
 
-    const prompt = `
+    let prompt = `
     ${headerPrompt}
 
     ${diagram_edge_prompt}
@@ -389,31 +417,73 @@ export function prompt_teacher(stateDiagram, targets, history){
 
     你可以根據目前聊天室狀態來判斷是否轉移節點或說話
     ${memory_string}
+    
+    ${student_information_prompt}
+
     - 如果聊天室都沒什麼使用者在對話，可以引導使用者進行目前節點上的目標，如果還是沒有使用者回應，則可以停止回應，等待使用者發話
     - 如果目前主持人還沒提供小節點內的目標，請簡略說明並使用者討論
     - 主要是由使用者之間進行對話，請不要太頻繁發話
     - 請盡量不要介入使用者之間的對話，除非使用者有很明確的疑問或是詢問主持人
+    `
     
-    - 若目前不在任何小節點上，則可以選擇一個小節點進行轉移
-    - 若判斷目前小節點的目標已經完成，則可以轉移至下一個未完成的小節點，請注意不要轉移到currentSmallNode所記錄的小節點上。
+    let prompt_voting = ``
+    if(stateDiagram.voting){
+      // 統計已同意的人數和聊天室人數比例，若同意的人>=一半則直接轉移
+      // 如果要更改比例可以從這邊修改
+      if(votingPass){
+        prompt_voting += `
+        - 大多數使用者都已同意轉移節點，可以準備轉移了
+        `
+      }
+      else {
+        prompt_voting += `
+        - 使用者尚未達成共識同意轉移節點，請不要轉移節點，
+        `
+      }
+    }
+    else {
+      prompt_voting += `
+      - 若判斷聊天室中的使用者已完成目前的小節點目標，並且超過一半的使用者對於同一個主題都取得共識之後，請詢問使用者是否要進入下一個小節點，並進入投票環節
+      - 如果要進入投票環節，則只需要輸出reply_voting、why就好
+      `
+    }
+
+    let prompt_direct_move_to_small = ``
+    if(currentSmallNode === "null"){
+      prompt_voting = `目前不在任何小節點上，請選擇一個小節點進行轉移`
+    }
+
+    if(stateDiagram.currentNode === "start"){
+      prompt_voting = `- 目前節點是start節點，發完話就可以轉移至下一個大節點了`
+    }
+
+    prompt += `
+    ${prompt_voting}
+    - **(重要)**請注意不要轉移到currentSmallNode所記錄的小節點、已經完成的節點、或是不存在的節點上
     - 如果所有小節點都完成了，則可以轉移至下一個大節點，若當前節點無小節點，則只需判斷目前大節點的目標是否完成，完成則轉移至下一個大節點
-    - 若目前大節點是start節點，則發完話就可以轉移至下一個大節點了
 
     請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
     JSON 結構如下：
 
     {
       "reply": "<string 或 null>",  // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
+      "reply_voting": "<string 或 null>" // 若判斷已完成小節點目標，可以問學生是否同意進行下一個議題討論，可以說一些話像是：「看起來你們對於...的討論達成了共識，請投票決定要不要進入下一個議題討論吧」
       "next": "<small 或 big 或 stay>"
       "nextNode":  "<string 或 \"stay\">", // 若next為small，則給出下一個小節點ID，若next為big，則給出下一個大節點ID，若next為stay，則給stay"
       "nextReply": "<string 或 null>" //若next為small，則給出進入下個小節點時的開場話，若next為stay或是big，則給null
       "summary": "<string>", // 若next為small，請給出學生在目前完成的小節點所得出的總結，若next為其他字串則此處給null
-      "why":   "<string>"         // 轉移或不轉移的理由，簡短說明
+      "why":   "<string>"         // 轉移或不轉移的理由，你有詢問過使用者是否要轉移了嗎？使用者全部同意轉移了嗎？請簡短說明
     }
 
     請確保 key 都存在，不要多 key，不要少 key。
     `
-    //console.log('prompt : ' + prompt)
+
+    appendTeacherPromptLog({
+    prompt
+  })
+    if(DEBUG_CONFIG.consoleLogTeacherPrompt){
+      console.log('prompt : ' + prompt)
+    }
     return prompt
 }
 
@@ -506,6 +576,25 @@ export function prompt_student(stateDiagram, history, student_profile){
   let history_string = "(目前聊天室沒有任何歷史紀錄)"
   let stateDiagram_memory = ""
 
+  let voted = false
+  for(const voting of stateDiagram.voting_array){
+    if(voting.user === student_profile.name){
+      voted = true;
+    }
+  }
+
+  let prompt_voting = ""
+  if(stateDiagram.voting && !voted){
+    prompt_voting = `
+    目前主持人認為所有學生都討論完目前的議題了，正在進行投票階段，如果你認為你的想法和聊天室的總結有共識的話，可以將voting設成同意票
+    同意的話將voting設成ture
+    不同意就將voting設成false
+    `
+  }
+  else {
+    prompt_voting = `目前不在投票階段，voting直接設成false就好了`
+  }
+
   let pre_summary = `以下是學生(你們)在聊天室目前為止討論的所有總結：\n`
     
     let len = 0
@@ -557,9 +646,12 @@ ${memory_string}
 請使用中文回答。
 JSON 結構如下：
 
+${prompt_voting}
+
 {
   "reply": "<string 或 null>",
   "why":   "<string>"
+  "voting": "<true 或 false>" // 請回傳字串"true"或是"false"
 }
 
 說明（供模型參考）：
@@ -686,7 +778,9 @@ function appendBeliefDebugLog({ prompt, raw, parsed, file='src/stores/simulator/
     ].join('\n')
     fs.appendFileSync(file, line + '\n', 'utf8')
   } catch (e) {
-    console.warn('[belief debug log] append fail:', e.message)
+    if(DEBUG_CONFIG.consoleLogBelief){
+      console.warn('[belief debug log] append fail:', e.message)
+    }
   }
 }
 
@@ -735,7 +829,12 @@ export async function updateBeliefWithLLM(latestMsg, history, REL_FILE, opts = {
 
   let data;
   try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
-  catch (e) { console.error('[belief] read/parse failed:', e); return; }
+  catch (e) { 
+    if(DEBUG_CONFIG.consoleLogBelief){
+      console.error('[belief] read/parse failed:', e);
+    }
+    return;
+  }
   if (!data || !Array.isArray(data.members) || data.members.length === 0) return;
 
   data.members.forEach(m => {
@@ -767,12 +866,20 @@ ${transcript}
 
   let parsed;
   try {
-    const llmReply = await callLLM(model, prompt);
+    const llmReply = await callLLM(model, prompt, "[belief]");
     parsed = safeParseLLMJson(llmReply);
     appendBeliefDebugLog({ prompt, raw: llmReply, parsed });
-  } catch (e) { console.error('[belief] LLM call/parse failed:', e); return; }
+  } catch (e) {
+    if(DEBUG_CONFIG.consoleLogBelief){
+      console.error('[belief] LLM call/parse failed:', e); return;
+    }
+  }
 
-  if (parsed?.reason) console.log('[belief] LLM Reason:', parsed.reason);
+  if (parsed?.reason) {
+    if(DEBUG_CONFIG.consoleLogBelief){
+      console.log('[belief] LLM Reason:', parsed.reason);
+    }
+  }
   if (!parsed || parsed.should_update === false) return;
   const idea = typeof parsed.idea === 'string' ? parsed.idea.trim() : '';
   if (!idea) return;
@@ -824,17 +931,25 @@ ${transcript}
         member.belief.ideas[idea] = Number(after.toFixed(3));
         
         if (isNewIdea) {
+          if(DEBUG_CONFIG.consoleLogBelief){
             console.log(`[belief] INIT: ${member.name} on new idea "${idea}": ${after.toFixed(3)}`);
+          }
         } else {
             // 更新日誌，顯示 LLM 意向和最終隨機值
+          if(DEBUG_CONFIG.consoleLogBelief){
             console.log(`[belief] UPDATE: ${member.name} on "${idea}": ${before.toFixed(3)} + (LLM: ${llmDelta.toFixed(3)} -> Final: ${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
+          }
         }
     }
   }
 
   try {
     fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (e) { console.error('[belief] write failed:', e); }
+  } catch (e) {
+    if(DEBUG_CONFIG.consoleLogBelief){
+      console.error('[belief] write failed:', e);
+    }
+  }
 }
 
 
@@ -848,7 +963,9 @@ function appendRelationshipDebugLog({ prompt, raw, parsed, file='src/stores/simu
     ].join('\n')
     fs.appendFileSync(file, line + '\n', 'utf8')
   } catch (e) {
-    console.warn('[relationship debug log] append fail:', e.message)
+    if(DEBUG_CONFIG.consoleLogRelationship){
+      console.warn('[relationship debug log] append fail:', e.message)
+    }
   }
 }
 
@@ -864,7 +981,12 @@ export async function updateRelationshipWithLLM(latestMsg, history, REL_FILE, op
 
   let data;
   try { data = JSON.parse(fs.readFileSync(REL_FILE, 'utf8') || '{"members":[]}'); }
-  catch (e) { console.error('[relationship] read/parse failed:', e); return; }
+  catch (e) { 
+    if(DEBUG_CONFIG.consoleLogRelationship){
+      console.error('[relationship] read/parse failed:', e);
+    }
+    return;
+  }
   if (!data || !Array.isArray(data.members) || data.members.length === 0) return;
 
   data.members.forEach(m => {
@@ -899,12 +1021,21 @@ ${transcript}
 
   let parsed;
   try {
-    const llmReply = await callLLM(model, prompt);
+    const llmReply = await callLLM(model, prompt, "[relationship]");
     parsed = safeParseLLMJson(llmReply);
     appendRelationshipDebugLog({ prompt, raw: llmReply, parsed });
-  } catch (e) { console.error('[relationship] LLM call/parse failed:', e); return; }
+  } catch (e) {
+    if(DEBUG_CONFIG.consoleLogRelationship){
+      console.error('[relationship] LLM call/parse failed:', e);
+    }
+    return;
+  }
 
-  if (parsed?.reason) console.log('[relationship] LLM Reason:', parsed.reason);
+  if (parsed?.reason) {
+    if(DEBUG_CONFIG.consoleLogRelationship){
+      console.log('[relationship] LLM Reason:', parsed.reason);
+    }
+  }
   if (!parsed || parsed.should_update === false) return;
   
   const rawPairs = parsed?.delta_by_pair ?? {};
@@ -946,9 +1077,10 @@ ${transcript}
       const before = Number(srcM.relationship[dst] ?? 0);
       const after = clamp(before + finalDelta, -1, 1);
       srcM.relationship[dst] = Number(after.toFixed(3));
-
-      console.log(`[relationship] ${src} -> ${dst}: ${before.toFixed(3)} + (LLM: ${llmDelta.toFixed(3)} -> Final: ${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
       
+      if(DEBUG_CONFIG.consoleLogRelationship){
+        console.log(`[relationship] ${src} -> ${dst}: ${before.toFixed(3)} + (LLM: ${llmDelta.toFixed(3)} -> Final: ${finalDelta.toFixed(3)}) -> ${after.toFixed(3)}`);
+      }
       if (symmetric) {
         const dstM = name2member.get(dst);
         if (dstM) {
@@ -957,7 +1089,9 @@ ${transcript}
           const after2  = clamp(before2 + finalDelta, -1, 1);
           if (!dstM.relationship) dstM.relationship = {};
           dstM.relationship[src] = Number(after2.toFixed(3));
-          console.log(`[relationship][sym] ${dst} -> ${src}: ${before2.toFixed(3)} + (Final: ${finalDelta.toFixed(3)}) -> ${after2.toFixed(3)}`);
+          if(DEBUG_CONFIG.consoleLogRelationship){
+            console.log(`[relationship][sym] ${dst} -> ${src}: ${before2.toFixed(3)} + (Final: ${finalDelta.toFixed(3)}) -> ${after2.toFixed(3)}`);
+          }
         }
       }
     }
@@ -965,7 +1099,11 @@ ${transcript}
   
   try {
     fs.writeFileSync(REL_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (e) { console.error('[relationship] write failed:', e); }
+  } catch (e) { 
+    if(DEBUG_CONFIG.consoleLogRelationship){
+      console.error('[relationship] write failed:', e);
+    }
+  }
 }
 
 export async function updateBeliefAndRelationshipWithLLM(latestMsg, flatHistory, REL_FILE, opts = {}) {
@@ -1147,6 +1285,20 @@ function _sanitizeFilePart(s) {
     .slice(0, 80)
 }
 
+export function appendTeacherPromptLog({
+  prompt,
+  baseFile = 'src/stores/simulator/teacher_prompts.log',
+}) {
+  try {
+    const ts = new Date().toISOString()
+
+    fs.appendFileSync(baseFile, `${header}\nPROMPT:\n${prompt}\n`, 'utf8')
+
+  } catch (e) {
+    console.warn('[teacher-prompt] append fail:', e.message)
+  }
+}
+
 export function appendStudentPromptLog({
   name,
   prompt,
@@ -1173,9 +1325,12 @@ export function appendStudentPromptLog({
       fs.mkdirSync('src/stores/simulator/prompts', { recursive: true })
       fs.appendFileSync(perFile, `${header}\nPROMPT:\n${prompt}\n`, 'utf8')
     }
-
-    console.log(`[student-prompt] wrote for ${name} @ node=${node}/${small}`)
+    if(DEBUG_CONFIG.consoleLogStudentPrompt){
+      console.log(`[student-prompt] wrote for ${name} @ node=${node}/${small}`)
+    }
   } catch (e) {
-    console.warn('[student-prompt] append fail:', e.message)
+    if(DEBUG_CONFIG.consoleLogStudentPrompt){
+      console.warn('[student-prompt] append fail:', e.message)
+    }
   }
 }

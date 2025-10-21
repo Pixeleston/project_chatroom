@@ -3,6 +3,7 @@ import fetch from 'node-fetch'
 // npm install node-fetch
 import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './src/config.js'
+import { SIMULATOR_CONFIG } from './src/config.js'
 import { prompt_teacher, prompt_decide_small_part, prompt_double_check } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
@@ -30,7 +31,7 @@ function getNodeById(diagram, id) {
 async function double_check(diagram, replyText, hostMemory){
   let prompt = prompt_double_check(diagram, replyText, hostMemory)
 //  console.log(prompt);
-  let llmReply = await callLLM("gpt-4o", prompt);
+  let llmReply = await callLLM("gpt-4o", prompt, "[prompt_double_check]");
   if(!llmReply || llmReply.includes("true")) {
 //    console.log("進入true")
 //    console.log(llmReply)
@@ -45,7 +46,7 @@ async function double_check(diagram, replyText, hostMemory){
 
 export async function decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
     let prompt = prompt_decide_small_part(diagram, nextNodeID)
-    let llmReply = await callLLM("gpt-4o", prompt);
+    let llmReply = await callLLM("gpt-4o", prompt, "[decide_small_part()]");
     //console.log("========== llmReply ==========");
     //console.log(llmReply);
     //console.log("========== llmReply ==========");
@@ -114,7 +115,7 @@ async function summarize(stateDiagram, summary){
   return stateDiagram;
 }
 
-export async function teacher_action(stateDiagram, hostMemory){
+export async function teacher_action(stateDiagram, hostMemory, student_profile){
 
   console.log('teachers history : ')
   console.log(hostMemory)
@@ -123,10 +124,22 @@ export async function teacher_action(stateDiagram, hostMemory){
   const targets = getOutgoingTargets(currentNode, stateDiagram)
   let actionSuccess = true
 
-  let prompt = prompt_teacher(stateDiagram, targets, hostMemory)
+  let student_count = student_profile.length
+  let votingPass = false
+  if(student_count >= stateDiagram.voting_array.length * SIMULATOR_CONFIG.votingRatio){
+    votingPass = true
+  }
+  if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){
+    votingPass = true
+  }
+
+  let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile, votingPass)
   //const stop = ["}"]
-    let llmReply = await callLLM("gpt-4o", prompt);
-  //  console.log("teachers reply : " + llmReply)
+    let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
+    console.log("teachers reply : " + llmReply)
+
+    if(!llmReply) return {replyMsg:null, stateDiagram:null, moveNode:null, nextreplyMsg:null, actionSuccess:false, startVoting:false}
+    
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
 let result
@@ -166,17 +179,25 @@ try {
   //   throw new Error('❌ 解析 JSON 區塊失敗：' + err2.message)
   // }
 }
-
-
-    // 抓出下一個節點
-
-    const replyText = result.reply ?? null;
     
-    const nextNode = result.next;   // small big stay
+    // 這兩種情況不用 vote 直接當作投票通過
+    if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){
+      result.reply_voting = null
+    }
+
+    let replyText = result.reply_voting ?? (result.reply ?? null);
+    let startVoting = false;
+    if (result.reply_voting && result.reply_voting !== 'null'){
+      startVoting = true;
+    }
+    
+    let nextNode = result.next;   // small big stay
     const nextNodeID = result.nextNode;
     const nextReply = result.nextReply ?? null;
     const summary = result.summary;
     const why       = result.why   ?? '';
+
+    if(!votingPass) nextNode = "stay"
     
     // const replyText = null;
     // const nextNode = "small";   // small big stay
@@ -201,38 +222,54 @@ try {
       nextreplyMsg = { role: 'host', user: 'Host', text: nextReply };
     }
 
-
-
     if (nextNode && nextNode !== 'stay') {
-
-    //  update_Memory();  // 
-
-      let moveNodeSuccess = true;
-
+      let nodeExists = true;
       if(nextNode === "big"){
-        const result = await decide_small_part(stateDiagram, nextNodeID);  // errorable
-        if(!result.success) {
-      //    console.log("========== result.success === false ==========")
-          actionSuccess = false
+        nodeExists = stateDiagram.nodes.some(node => node.id === nextNodeID);
+        if(!nodeExists){  // 如果下一個大節點根本不存在，則直接跳過動作
+          actionSuccess = false;
+          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
         }
-        const shouldSummarize = (stateDiagram.currentNode === 'start' ? false : true)
-        stateDiagram = result.diagram;
-        if(shouldSummarize){
-          console.log(" ===== summarizing =====")
-          console.log(stateDiagram.currentNode)
-          stateDiagram = await summarize(stateDiagram, summary);
-        }
-        stateDiagram.currentNodeSmall = "null"
-        moveNodeSuccess = result.success;
       }
       else if(nextNode === "small"){
-        stateDiagram = await summarize(stateDiagram, summary);
+        nodeExists = stateDiagram.memory.nodesMemory.some(memoryNode =>
+          memoryNode.smallNodes?.some(small => small.id === nextNodeID)
+        );
+        if(!nodeExists){  // 如果下一個小節點根本不存在，則直接跳過動作
+          actionSuccess = false;
+          console.error(`❌ Host 決定轉移的節點 ID ${nextNode} 不存在於圖表中`);
+        }
       }
-      console.log(`➡️ 狀態轉移至: ${nextNodeID}（原因：${why}）`);
-      if(moveNodeSuccess) moveNode = { nextNode: nextNode, nextNodeID: nextNodeID };
+      if(nodeExists){
+    //  update_Memory();  // 
+
+        let moveNodeSuccess = true;
+
+        if(nextNode === "big"){
+          const result = await decide_small_part(stateDiagram, nextNodeID);  // errorable
+          if(!result.success) {
+      //    console.log("========== result.success === false ==========")
+            actionSuccess = false
+          }
+          const shouldSummarize = (stateDiagram.currentNode === 'start' ? false : true)
+          stateDiagram = result.diagram;
+          if(shouldSummarize){
+            console.log(" ===== summarizing =====")
+            console.log(stateDiagram.currentNode)
+            stateDiagram = await summarize(stateDiagram, summary);
+          }
+          stateDiagram.currentNodeSmall = "null"
+          moveNodeSuccess = result.success;
+        }
+        else if(nextNode === "small"){
+          stateDiagram = await summarize(stateDiagram, summary);
+        }
+        console.log(`➡️ 狀態轉移至: ${nextNodeID}（原因：${why}）`);
+        if(moveNodeSuccess) moveNode = { nextNode: nextNode, nextNodeID: nextNodeID };
+      }
     }
     // console.log("teachers reply : " + llmReply)
     // console.log(" ========== nextReplyMsg ==========");
     // console.log(nextreplyMsg);
-    return {replyMsg, stateDiagram, moveNode, nextreplyMsg, actionSuccess}
+    return {replyMsg, stateDiagram, moveNode, nextreplyMsg, actionSuccess, startVoting}
 }

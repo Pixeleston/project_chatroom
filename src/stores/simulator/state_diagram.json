@@ -110,15 +110,19 @@
         "label": "主題",
         "smallNodes": [
           {
-            "id": "node-1760793911769-0",
-            "theme": "專案主題討論",
-            "target": "使用者必須明確討論並確定最終的專案主題，例如遊戲或網頁應用程式。",
-            "summary": "小組確定了專案主題為遊戲，並考慮結合解謎和動作元素以及創新解謎機制。",
-            "finish": true
+            "id": "node-1761043180231-0",
+            "theme": "討論主題",
+            "target": "全組需在本階段明確敲定單一專案主題（如：行事曆應用、學習打卡App、校園二手交易平台、療癒小遊戲等），並以軟體或應用程式為形式，取得一致共識。",
+            "summary": "",
+            "finish": false
           }
         ]
       }
     ]
   },
-  "currentNodeSmall": "node-1760793911769-1"
+  "currentNodeSmall": "node-1761043180231-0",
+  "voting": false,
+  "voting_array": [
+    {}
+  ]
 }

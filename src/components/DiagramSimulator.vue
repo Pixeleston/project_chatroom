@@ -21,6 +21,7 @@ socket.onmessage = (event) => {
     diagramSimulator.nodes = data.diagram.nodes
     diagramSimulator.edges = data.diagram.edges
     diagramSimulator.currentNode = data.diagram.currentNode
+    diagramSimulator.voting = data.diagram.voting
     diagramSimulator.memory = data.diagram.memory
     diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
   }
@@ -86,6 +87,7 @@ async function onFileSelected (event) {
         diagramSimulator.nodes = data.nodes
         diagramSimulator.edges = data.edges
         diagram.currentNode = data.currentNode
+        diagram.voting = data.voting
         diagram.memory = data.memory;
         diagram.currentNodeSmall = data.currentNodeSmall;
         console.log('✅ 匯入成功')
