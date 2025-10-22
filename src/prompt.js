@@ -48,6 +48,7 @@ const headerPromptStudent = [
   `
   你目前正在為一個專案參與小組討論，你是其中一位學生。
   你的發言風格應該像在一個即時通訊軟體 (例如 Discord, Line) 中與同學聊天一樣，自然、口語化且簡潔。
+  每次發言請在2句話以內講完。
   聊天室中有一位主持人 (Host)，他會引導討論，請聽從他的引導並與其他同學溝通。
   `
 ]
@@ -643,15 +644,6 @@ ${pre_summary}
 
 ${memory_string}
 
-// ==========================================================
-// [核心修改] 新增簡短對話的強制指令
-// ==========================================================
-**非常重要：** 你的回覆必須非常簡短，就像在傳訊息一樣。
-- **嚴格限制在一到兩句話以內。**
-- **絕對不要寫長篇大論的段落。**
-- 思考後，只輸出最核心的觀點或問題。
-// ==========================================================
-
 請只輸出**合法且唯一的 JSON**，不要任何多餘文字或註解。
 請使用中文回答。
 JSON 結構如下：
@@ -874,7 +866,6 @@ export async function updateBeliefWithLLM(latestMsg, history, REL_FILE, stateDia
         const currentSmallNode = currentNodeMemory?.smallNodes?.find(sn => sn.id === stateDiagram.currentNodeSmall);
         currentSmallNodeTarget = currentSmallNode?.target?.trim();
     }
-
     // ==========================================================
     // ★ 步驟 2: 修改 Prompt，注入現有 Ideas 並更新指令 ★
     // ==========================================================
@@ -888,21 +879,23 @@ ${currentSmallNodeTarget ? `當前小組的討論目標 (target) 是：「${curr
 ${existingIdeasArray.length > 0 ? JSON.stringify(existingIdeasArray) : '（目前沒有任何已存在的主題）'}
 
 你的任務：
-1.  識別出對話中正在討論的【具體想法 (idea)】。
+1.  識別出對話中正在討論的【想法 (idea)】。
 2.  判斷這個想法是否與上面【已經存在的主題列表】中的某一個意思非常接近或相同。
 3.  如果【是】，請在 JSON 回應的 "idea" 欄位中，填寫列表中【最匹配的那個現有主題字串】。
 4.  如果【否】（是全新的主題，或列表為空），請在 "idea" 欄位填寫你新識別出的主題字串。
 5.  如果找到了 idea 且成員對其表達了立場，請輸出該 idea 及成員的分數變化 delta。
 
 規則：
-- 每次請輸出一個 idea 就好。
-- 你統整 idea 的方式，請在***最新的對話***中抓關鍵字，不要憑空生成對話中沒有出現的單字。
+- 你統整 idea 的方式，請依據${currentSmallNodeTarget}的目標，在***最新的對話***中抓關鍵字，不要憑空生成對話中沒有出現的單字。
 - delta 必須限制在 [-0.1, +0.1] 之間。
 - ***Host 發言只作為上下文，不可影響分數。***
 - 輸出idea，除非是轉有名詞或縮寫，請一律使用繁體中文。
 - 你不可以把【已經存在的主題列表】中的任意元素刪除。
 - 成員鍵名只能用這些：${JSON.stringify(memberNames)}
-- 若無明確的具體 idea 被討論，或沒有明確立場，請不要更新 (should_update: false)。
+- 如果對話中有出現專有名詞請優先輸出專有名詞作為idea 例如:"我傾向跨平台工具如Flutter。" 這句話輸出的idea為Flutter。
+- 若無明確的 idea 被討論，或沒有明確立場，請不要更新 (should_update: false)。
+- idea不一定只有一個，只要是在最新對話中出現的新的idea，都必須新增idea至列表中。
+- ex:"卡通風不適合，我建議考慮寫實風或混合風。" 這句話就要把混和風和寫實風加入列表，並更新卡通風的分數。
 
 === 對話 ===
 ${transcript}
@@ -1144,9 +1137,9 @@ ${transcript}
     catch (e) { console.error('[relationship] write failed:', e); }
 }
 
-export async function updateBeliefAndRelationshipWithLLM(latestMsg, flatHistory, REL_FILE, opts = {}) {
+export async function updateBeliefAndRelationshipWithLLM(latestMsg, flatHistory, REL_FILE, diagram,opts = {}) {
   try {
-    await updateBeliefWithLLM(latestMsg, flatHistory, REL_FILE, opts.belief ?? {})
+    await updateBeliefWithLLM(latestMsg, flatHistory, REL_FILE, diagram, opts.belief ?? {})
   } catch (e) {
     console.error('[pipeline] belief update failed:', e)
   }
@@ -1232,7 +1225,8 @@ export const SOCIAL_DEFINITION_FOR_STUDENT = `
 【行為規則】
 1) 回覆誰、如何回：請依「你→對方」的關係分數區間決定互動強度與語氣。
 2) 帶什麼主題：請依你對各 idea 的分數區間決定發言傾向；高分主題優先主動、提出具體步驟；低分主題避免主動，必要時中立簡短。
-3) 如遇分歧：先對齊評估準則（時間、風險、成本、回饋方式），避免情緒化爭論，專注在可執行的方案。
+3) 如遇自己不喜歡的主題：視厭惡程度表達不同意，並**提出其他具體想法**。
+4) 如遇有人不同意你最喜歡的主題:如果[有]其他主題你不討厭的，**轉而討論那個主題**，沒有的話提出其他主題。
 `.trim()
 
 export function _loadRelBeliefStudent(file = REL_DEFAULT_FILE) {

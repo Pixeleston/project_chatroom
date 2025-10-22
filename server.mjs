@@ -563,9 +563,9 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     broadcast({ chatroom_type:chatroom_type, type: 'message', data: replyMsg });
   }
   
-  async function runBeliefAndRelationship(latestMsg, flatHistory, relFile) {
+  async function runBeliefAndRelationship(latestMsg, flatHistory, relFile, diagram) {
     try {
-      await updateBeliefWithLLM(latestMsg, flatHistory, relFile)
+      await updateBeliefWithLLM(latestMsg, flatHistory, relFile, diagram)
     } catch (e) {
       console.error('[runBR] belief update failed:', e)
     }
@@ -646,7 +646,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
       const historyFlat = rawH.flatMap(n => n.history).slice(-50);
       try {
-        await runBeliefAndRelationship(selectedMsg.msg, historyFlat, RELATIONSHIP_BELIEF_FILE);
+        await runBeliefAndRelationship(selectedMsg.msg, historyFlat, RELATIONSHIP_BELIEF_FILE,currentDiagramSimulator);
       }
       catch(e){
         if(DEBUG_CONFIG.consoleLogBELIEF){
@@ -722,7 +722,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             sendMessage(currentDiagramSimulator, replyMsg, "simulator")
             const flatHist = historySimulator.flatMap(n => n.history).slice(-50)
             try {
-              await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE)
+              await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE, currentDiagramSimulator)
             }
             catch(e){
               if(DEBUG_CONFIG.consoleLogBELIEF){
@@ -741,6 +741,22 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
           }
 
           if(moveNodeSuccess){  // 轉移節點時將投票模式關掉，且清空模擬學生訊息Queue
+            console.log("[Belief Reset] Moving to new small node. Clearing belief ideas...");
+            try {
+                let relBeliefData = loadJson(RELATIONSHIP_BELIEF_FILE, { members: [] }); // 使用 loadJson 讀取
+                if (relBeliefData?.members) {
+                    relBeliefData.members.forEach(member => {
+                        // 直接重設 belief 或 ideas
+                        member.belief = { ideas: {} }; 
+                    });
+                    writeJson(RELATIONSHIP_BELIEF_FILE, relBeliefData); // 使用 writeJson 寫回
+                    console.log("[Belief Reset] Successfully cleared belief ideas.");
+                } else {
+                      console.warn("[Belief Reset] relationship_belief.json structure invalid.");
+                }
+            } catch (err) {
+                console.error("[Belief Reset] Error clearing belief ideas:", err);
+            }
             newStateDiagram.voting = false;
             newStateDiagram.voting_array = []
             clearQueue()
