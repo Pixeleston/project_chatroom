@@ -328,9 +328,10 @@ function categorizeStudentMessage(history){
     
 }
 
-export function prompt_teacher(stateDiagram, targets, history, student_profile){
+export function prompt_teacher(stateDiagram, targets, history, student_profile, nextNodeData, mustMove){
   // if student_profile == null, then this is normal mode
   // else this is simulation mode
+  const { nextNode, nextNodeID, theme, target } = nextNodeData
   
   let student_count = student_profile.length
   let student_information_prompt = `聊天室中有 ${student_count} 位學生，以下是他們在目前節點每位玩家傳送過的訊息：\n`
@@ -353,17 +354,10 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile){
   
   let currentNode = stateDiagram.currentNode;
   let currentSmallNode = stateDiagram.currentNodeSmall;
-  let diagram_edge_prompt = "以下是狀態圖中目前節點連出去的所有大節點："
   let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
   let history_string = "(目前聊天室沒有任何歷史紀錄)"
   if(history) history_string = history.join('\n')
-    for (const node of targets){
-      diagram_edge_prompt += `\n     - id : ${node.id}`
-    }
-    if (targets.length === 0){
-      diagram_edge_prompt += '目前沒有可轉移出去的節點'
-    }
-    
+
     let len = 0
     for (const memoryNode of stateDiagram.memory.nodesMemory) {
       for (const smallNode of memoryNode.smallNodes) {
@@ -376,11 +370,11 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile){
 
     let memory_string = pre_summary
 
-    memory_string += `\n以下是使用者在新議題節點中的歷史對話：${history_string}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
+    memory_string += `\n以下是使用者在目前議題節點中的歷史對話：${history_string}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
 
     const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
 
-    let diagram_small_node_prompt = "- 以下為所在大節點內部的其他小節點："
+    let diagram_small_node_prompt = ""
     let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
     let currentSmallNodes = null
     if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
@@ -389,26 +383,19 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile){
     if(currentSmallNodes){
       currentSmallNodeObj = currentSmallNodes.find(n => n.id === currentSmallNode)
 
-      for(const node of currentSmallNodes){
-          diagram_small_node_prompt += `- 節點 id : ${node.id}\n`
-          diagram_small_node_prompt += `  - theme : ${node.theme}\n`
-          diagram_small_node_prompt += `  - target : ${node.target}\n`
-          diagram_small_node_prompt += `  - finish : ${node.finish}\n`
-      }
-
       diagram_small_node_prompt += `
       - 目前所在小節點與目標
       `
 
       if(currentSmallNode != "null") diagram_small_node_prompt += `  - **(重要)** ${currentSmallNodeObj.target}\n`
-      else diagram_small_node_prompt += ` - **(重要)** 目前不在任何小節點當中\n`
+      else {
+        diagram_small_node_prompt += ` - 目前不在任何小節點當中\n`
+      }
     }
     else diagram_small_node_prompt = `- 此大節點內部沒有小節點\n`
 
     let prompt = `
     ${headerPrompt}
-
-    ${diagram_edge_prompt}
 
     以下是目前所在大節點的描述，以及所在的內部小節點，請根據此描述做出行動：
     - 大節點名稱： ${currentNodeObj.data.label}
@@ -416,75 +403,96 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile){
     - 大節點目標：${currentNodeObj.data?.label_then || ""}
     ${diagram_small_node_prompt}
 
-    你可以根據目前聊天室狀態來判斷是否轉移節點或說話
+    你可以根據目前聊天室狀態來判斷是否說話
     ${memory_string}
     
     ${student_information_prompt}
 
     - 如果聊天室都沒什麼使用者在對話，可以引導使用者進行目前節點上的目標，如果還是沒有使用者回應，則可以停止回應，等待使用者發話
-    - 如果目前主持人還沒提供小節點內的目標，請簡略說明並使用者討論
+    - 如果目前主持人還沒提供小節點內的目標，請簡略說明引導使用者討論
     - 主要是由使用者之間進行對話，請不要太頻繁發話
     - 請盡量不要介入使用者之間的對話，除非使用者有很明確的疑問或是詢問主持人
     `
     
-    let prompt_voting = ``
-    let prompt_voting2 = ``
-    if(stateDiagram.voting){
-      // 統計已同意的人數和聊天室人數比例，若同意的人>=一半則直接轉移
-      // 如果要更改比例可以從這邊修改
-      let student_count = student_profile.length
-      let votingPass = false
-      if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
-        votingPass = true
-      }
-      if(votingPass){
-        prompt_voting += `
-    - **(重要)** 大多數使用者都已投票同意轉移節點，請轉移節點並總結使用者在此小節點做的事情寫入summary
-    - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
-    - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
-        `
-      }
-      else {
-        prompt_voting += `
-    - **(重要)** 使用者尚未達成共識同意轉移節點，請不要轉移節點，
-        `
-      }
+    // let prompt_voting = ``
+    // let prompt_voting2 = ``
+    // if(stateDiagram.voting){
+    //   // 統計已同意的人數和聊天室人數比例，若同意的人>=一半則直接轉移
+    //   // 如果要更改比例可以從這邊修改
+    //   let student_count = student_profile.length
+    //   let votingPass = false
+    //   if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
+    //     votingPass = true
+    //   }
+    //   if(votingPass){
+    //     prompt_voting += `
+    // - **(重要)** 大多數使用者都已投票同意轉移節點，請轉移節點並總結使用者在此小節點做的事情寫入summary
+    // - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
+    // - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
+    //     `
+    //   }
+    //   else {
+    //     prompt_voting += `
+    // - **(重要)** 使用者尚未達成共識同意轉移節點，請不要轉移節點，
+    //     `
+    //   }
+    // }
+    // else {
+    //   prompt_voting += `
+    //   - 若判斷聊天室中的使用者已完成目前的小節點目標，並且超過一半的使用者對於同一個主題都取得共識之後，請詢問使用者是否要進入下一個小節點，並進入投票環節
+    //   - 如果要進入投票環節，則只需要輸出reply_voting、why就好
+    //   `
+    // }
+
+    let prompt_moveNode = ``
+    let prompt_nextReply = ``
+    let prompt_summary = ``
+    let prompt_reply_voting = ``
+    
+    if(mustMove){
+      prompt_moveNode = `
+        - 下一個要轉移的節點主題是：${theme}
+        - 要達成的目標是：${target}
+        - 請根據以上資訊給出進入下個節點時的開場話作為 "nextReply"，不需要提到目前已完成xx議題，直接提下一個主題就好
+      `
+      prompt_nextReply = `// 請根據前面提到的資訊填寫此欄位`
+      prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
     }
     else {
-      prompt_voting += `
-      - 若判斷聊天室中的使用者已完成目前的小節點目標，並且超過一半的使用者對於同一個主題都取得共識之後，請詢問使用者是否要進入下一個小節點，並進入投票環節
-      - 如果要進入投票環節，則只需要輸出reply_voting、why就好
-      `
+      prompt_nextReply = `// 請留空`
+      prompt_summary = `// 請留空`
     }
+    
+    // ** 特判 **
+    if(stateDiagram.currentNode === "start") prompt_nextReply = `// 請留空`
 
-    let prompt_direct_move_to_small = ``
-    if(currentSmallNode === "null"){
-      prompt_voting = `目前不在任何小節點上，請選擇一個小節點進行轉移`
+    if(stateDiagram.voting){
+      prompt_reply_voting = `// 請留空`
     }
+    else {
+      prompt_reply_voting = `// 若判斷已完成小節點目標，可以問學生是否同意進行下一個議題討論，可以說一些話像是：「看起來你們對於...的討論達成了共識，請投票決定要不要進入下一個議題討論吧」`
+    }
+    // if(currentSmallNode === "null"){
+    //   prompt_voting = `目前不在任何小節點上，請選擇一個小節點進行轉移`
+    // }
 
-    if(stateDiagram.currentNode === "start"){
-      prompt_voting = `- 目前節點是start節點，發完話就可以轉移至下一個大節點了`
-    }
+    // if(stateDiagram.currentNode === "start"){
+    //   prompt_voting = `- 目前節點是start節點，發完話就可以轉移至下一個大節點了`
+    // }
 
     prompt += `
-    ${prompt_voting}
-    - 請注意不要轉移到currentSmallNode所記錄的小節點、已經完成的節點、或是不存在的節點上
-    - **(重要)**如果所有小節點都完成了，則可以轉移至下一個大節點，若當前節點無小節點，則只需判斷目前大節點的目標是否完成，完成則轉移至下一個大節點
+    ${prompt_moveNode}
 
     請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
     JSON 結構如下：
 
     {
       "reply": "<string 或 null>",  // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
-      "reply_voting": "<string 或 null>" // 若判斷已完成小節點目標，可以問學生是否同意進行下一個議題討論，可以說一些話像是：「看起來你們對於...的討論達成了共識，請投票決定要不要進入下一個議題討論吧」
-      "next": "<small 或 big 或 stay>"
-      "nextNode":  "<string 或 \"stay\">", // 若next為small，則給出下一個小節點ID，若next為big，則給出下一個大節點ID，若next為stay，則給stay"
-      "nextReply": "<string 或 null>" //若next為small，則給出進入下個小節點時的開場話，若next為stay或是big，則給null
-      "summary": "<string>", // 若next為small，請給出學生在目前完成的小節點所得出的總結，若next為其他字串則此處給null
-      "why":   "<string>"         // 轉移或不轉移的理由，你有詢問過使用者是否要轉移了嗎？使用者全部同意轉移了嗎？請簡短說明
+      "reply_voting": "<string 或 null>" ${prompt_reply_voting}
+      "nextReply": "<string 或 null>" ${prompt_nextReply}
+      "summary": "<string 或 null>", ${prompt_summary}
+      "why":   "<string>"         // 給出以上回應的理由，或是summary這麼寫的理由
     }
-
-    ${prompt_voting2}
 
     請確保 key 都存在，不要多 key，不要少 key。
     `

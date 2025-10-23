@@ -181,7 +181,70 @@ async function double_check_text(stateDiagram, hostMemory, replyMsg, replyText, 
   return newReplyMsg
 }
 
+/*
+let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
+if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
+    let currentSmallNodeObj = []
+
+    if(currentSmallNodes){
+      currentSmallNodeObj = currentSmallNodes.find(n => n.id === currentSmallNode)
+
+      for(const node of currentSmallNodes){
+          diagram_small_node_prompt += `- 節點 id : ${node.id}\n`
+          diagram_small_node_prompt += `  - theme : ${node.theme}\n`
+          diagram_small_node_prompt += `  - target : ${node.target}\n`
+          diagram_small_node_prompt += `  - finish : ${node.finish}\n`
+      }
+*/
+
+// return { nextNode, nextNodeID, mustMove }  "big"  "node-xxxx-0"  true
+// 假設此時必須轉移到下一個節點
+function findNextNode(stateDiagram){
+  const currentNode = stateDiagram.currentNode || 'start'
+  const currentNodeSmall = stateDiagram.currentNodeSmall || 'null'
+  const target = getOutgoingTargets(currentNode, stateDiagram)[0]
+
+  let mustMove = false
+  let nextNodeData = { nextNode: "stay", nextNodeID: "null", theme: "null", target: "null" }
+
+  if(currentNodeSmall === "null") mustMove = true
+
+  if(currentNode === "start"){
+    nextNodeData = { nextNode: "big", nextNodeID: target.id, theme: target.data.label, target: target.data.label_then }
+  }
+  else { // 隨機找一個沒finish的，如果全finish就轉移big
+    let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
+    let nextSmallCandidate = []
+    let currentSmallNodes = []
+    if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
+    for(const node of currentSmallNodes){
+      if(!node.finish && node.id !== currentNodeSmall){
+        nextSmallCandidate.push(node)
+      }
+    }
+
+    if(nextSmallCandidate.length == 0){  // 轉移到big
+      nextNodeData = { nextNode: "big", nextNodeID: target.id, theme: target.data.label, target: target.data.label_then }
+    }
+    else {
+      const randomIndex = Math.floor(Math.random() * nextSmallCandidate.length);
+      nextNodeData = { nextNode: "small", nextNodeID: nextSmallCandidate[randomIndex].id, theme: nextSmallCandidate[randomIndex].theme, target: nextSmallCandidate[randomIndex].target }
+    }
+  }
+  
+  return { nextNodeData, mustMove }
+}
+
 export async function teacher_action(stateDiagram, hostMemory, student_profile){
+
+  let student_count = student_profile.length
+  let votingPass = false
+  console.log("!!!!!!!!!!!!!!!!!!!!")
+  console.log(stateDiagram.voting_array.length)
+  console.log(student_count + " * " +  SIMULATOR_CONFIG.votingRatio)
+  if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
+    votingPass = true
+  }
 
   console.log('teachers history : ')
   console.log(hostMemory)
@@ -190,7 +253,10 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   const targets = getOutgoingTargets(currentNode, stateDiagram)
   let actionSuccess = true
 
-  let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile)
+  let { nextNodeData, mustMove } = findNextNode(stateDiagram)
+  if(votingPass) mustMove = true  // 投票成功強制轉移
+
+  let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile, nextNodeData, mustMove)
   //const stop = ["}"]
     let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
     console.log("teachers reply : " + llmReply)
@@ -212,12 +278,12 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   let startVoting = false;
   if (result.reply_voting && result.reply_voting !== 'null'){
     startVoting = true;
-    // result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
+    result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
   }
   
   const replyText = (result.reply ?? null);
-  const nextNode = result.next;   // small big stay
-  const nextNodeID = result.nextNode;
+  const nextNode = nextNodeData.nextNode;   // small big stay
+  const nextNodeID = nextNodeData.nextNodeID;
   const nextReply = result.nextReply ?? null;
   const summary = result.summary;
   const why       = result.why   ?? '';
@@ -237,14 +303,6 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   }
   else if(stateDiagram.voting){ // 如果正在投票，那就看是否通過，沒通過就只需回傳replyMsg等，並回傳startVoting=false
     startVoting = false; // 這種情況下不須開啟進入投票階段
-    let student_count = student_profile.length
-    let votingPass = false
-    console.log("!!!!!!!!!!!!!!!!!!!!")
-    console.log(stateDiagram.voting_array.length)
-    console.log(student_count + " * " +  SIMULATOR_CONFIG.votingRatio)
-    if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
-      votingPass = true
-    }
 
     if(votingPass){
       const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)

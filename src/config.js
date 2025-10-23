@@ -24,7 +24,7 @@ export const DEBUG_CONFIG = {
 }
 
 export const TOKEN_CONFIG = {
-  consoleLogToken: true
+  consoleLogToken: false
 }
 
 export const OPENAI_API_KEY = ''

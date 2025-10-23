@@ -712,7 +712,10 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         console.log("moveNodeSuccess = " + moveNodeSuccess)
         console.log("startVoting = " + startVoting)
         if(actionSuccess){
-          if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
+          if(nextReply && nextReply.text && nextReply.text !== 'null'){
+            sendMessage(currentDiagramSimulator, nextReply, "simulator")
+          }
+          else if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
             // simulatorMessageQueue.push({
             //   diagram: currentDiagramSimulator,
             //   msg: replyMsg,
@@ -729,10 +732,6 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
                 console.log("[BELIEF] server.mjs 中的 tick_simulator() 中的 runBeliefAndRelationship 報錯");
               }
             }
-          }
-
-          if(nextReply && nextReply.text && nextReply.text !== 'null'){
-            sendMessage(currentDiagramSimulator, nextReply, "simulator")
           }
 
           if(startVoting){
