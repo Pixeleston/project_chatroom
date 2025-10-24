@@ -30,6 +30,22 @@
       ➕ 匯出報告
     </button>
 
+    <button @click="showVoteResults = !showVoteResults">
+      ➕ 投票結果
+    </button>
+
+    <div v-if="showVoteResults" class="vote-results-panel">
+      <h3>投票結果</h3>
+      <ul v-if="diagramSimulator?.voting_array?.length > 0">
+        <li v-for="(vote, index) in diagramSimulator.voting_array" :key="index">
+          學生 {{ vote.user }} 已投票
+        </li>
+      </ul>
+      <p v-else>
+        目前非投票階段。
+      </p>
+    </div>
+
     <!-- 新增面板 -->
     <div v-if="showNewStudentPanel" class="new-student-panel">
       <input v-model="newStudentName" placeholder="請輸入學生名稱" />
@@ -67,6 +83,7 @@
 import { ref, onMounted } from 'vue'
 import StudentCreate from './components/StudentCreate.vue'
 import StudentManage from './components/StudentManage.vue'
+import { useDiagramStore }  from '@/stores/diagramStoreSimulator.js'
 
 const showNewStudentPanel = ref(false)
 const newStudentName = ref('')
@@ -81,6 +98,11 @@ const messages = ref([])
 const newMessage = ref('')
 const allHistory = ref([])
 const allMessages = ref([])
+const voting_array = ref([])
+const showVoteResults = ref(false)
+
+const diagramSimulator = useDiagramStore()
+
 let socket
 
 
@@ -187,7 +209,18 @@ onMounted(() => {
       console.error('❌ WebSocket error', err)
     })
 
-    
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.type === 'diagramUpdated' && data.chatroom_type === 'simulator') {
+        diagramSimulator.nodes = data.diagram.nodes
+        diagramSimulator.edges = data.diagram.edges
+        diagramSimulator.currentNode = data.diagram.currentNode
+        diagramSimulator.voting = data.diagram.voting
+        diagramSimulator.memory = data.diagram.memory
+        diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
+        diagramSimulator.voting_array = data.diagram.voting_array
+      }
+    }
 
     socket.addEventListener('message', (e) => {
       try {
@@ -238,6 +271,7 @@ function sendMessage() {
 </script>
 
 <style scoped>
+
 .student-panel {
   height: 500px;
   border: 1px solid #ccc;
@@ -247,4 +281,33 @@ function sendMessage() {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border-radius: 8px;
 }
+
+.vote-results-panel {
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  padding: 16px;
+  background-color: #f0f0f5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.vote-results-panel h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+.vote-results-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.vote-results-panel li {
+  padding: 4px 0;
+  border-bottom: 1px dashed #ddd;
+}
+.vote-results-panel li:last-child {
+  border-bottom: none;
+}
+
 </style>

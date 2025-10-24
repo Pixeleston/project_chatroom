@@ -7,6 +7,7 @@ export const useDiagramStore  = defineStore('diagram', () => {
   const memory = ref({ currentMemory: "", nodesMemory: [] })
   const currentNodeSmall = ref(null)
   const currentNode = ref('start')
+  const voting_array = ref([])
 
   async function loadFromServer() {
   try {
@@ -18,6 +19,7 @@ export const useDiagramStore  = defineStore('diagram', () => {
 
     memory.value = json.memory || { currentMemory: "", nodesMemory: [] }
     currentNodeSmall.value = json.currentNodeSmall || null
+    voting_array.value = json.voting_array || []
 
     // 若沒有 currentNode，設定並回寫
     if (!json.currentNode || !json.memory) {
@@ -53,6 +55,7 @@ export const useDiagramStore  = defineStore('diagram', () => {
   nodes,
   edges,
   currentNode,
+  voting_array,
   currentNodeSmall,
   memory,
   loadFromServer,

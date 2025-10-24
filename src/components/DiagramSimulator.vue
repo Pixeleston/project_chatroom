@@ -22,6 +22,7 @@ socket.onmessage = (event) => {
     diagramSimulator.edges = data.diagram.edges
     diagramSimulator.currentNode = data.diagram.currentNode
     diagramSimulator.voting = data.diagram.voting
+    diagramSimulator.voting_array = data.diagram.voting_array
     diagramSimulator.memory = data.diagram.memory
     diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
   }

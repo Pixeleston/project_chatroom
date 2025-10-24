@@ -29,6 +29,14 @@
     <button @click="report">
       ➕ 匯出報告
     </button>
+    <button @click="report">
+      ➕ 匯出報告
+    </button>
+
+    <div>
+    123
+    {{ voting_array }}
+    </div>
 
     <!-- 新增面板 -->
     <div v-if="showNewStudentPanel" class="new-student-panel">
@@ -53,6 +61,7 @@
 import { ref } from 'vue'
 import StudentCreate from './components/StudentCreate.vue'
 import StudentManage from './components/StudentManage.vue'
+import { useDiagramStore }  from '@/stores/diagramStoreSimulator.js'
 
 const showNewStudentPanel = ref(false)
 const newStudentName = ref('')
@@ -60,6 +69,28 @@ const students = ref([])
 const showStudentPanel = ref(false)
 const showCreateStudent = ref(true)
 const loadingReport = ref(false)
+const voting_array = ref([])
+
+const diagramSimulator = useDiagramStore()
+
+const socket = new WebSocket('ws://localhost:3001')
+
+socket.onopen = () => {
+  console.log('✅ StudentSimulator.vue 已連上 WebSocket Server')
+}
+
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'diagramUpdated' && data.chatroom_type === 'simulator') {
+    diagramSimulator.nodes = data.diagram.nodes
+    diagramSimulator.edges = data.diagram.edges
+    diagramSimulator.currentNode = data.diagram.currentNode
+    diagramSimulator.voting = data.diagram.voting
+    diagramSimulator.memory = data.diagram.memory
+    diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
+    diagramSimulator.voting_array = data.diagram.voting_array
+  }
+}
 
 
 function addNewStudent() {

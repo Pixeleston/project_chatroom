@@ -643,10 +643,11 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         simulatorMessageQueue.shift()
       }
 
-      const rawH = (chatroom_type === 'chatroom') ? history : historySimulator;
-      const historyFlat = rawH.flatMap(n => n.history).slice(-50);
+      let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
+      //const historyFlat = currentHistory.flatMap(n => n.history).slice(-50);
       try {
-        await runBeliefAndRelationship(selectedMsg.msg, historyFlat, RELATIONSHIP_BELIEF_FILE,currentDiagramSimulator);
+        await runBeliefAndRelationship(selectedMsg.msg, currentHistory, RELATIONSHIP_BELIEF_FILE,currentDiagramSimulator);
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log send message from queue")
       }
       catch(e){
         if(DEBUG_CONFIG.consoleLogBELIEF){
@@ -680,6 +681,8 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     if(updateSuccess){
       console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       console.log(currentDiagramSimulator.voting_array)
+
+      saveDiagram(currentDiagramSimulator, "simulator")
     }
   }
 
@@ -693,18 +696,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   async function tick_simulator() {
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
     if (RUN_TOGGLE_SIMULATOR) {
-      
       let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
-      if(currentDiagramSimulator.currentNode !== "start"){ // 如果host還沒發言模擬學生就不能發話
-        const studentTasks = student_profile.map(student =>
-          student_action(currentDiagramSimulator, currentHistory, student).catch(e => {
-              console.error(`Error in student_action for ${student.name}:`, e);
-              return null; // 避免 Promise.all 中斷
-          })
-        );
-        await Promise.all(studentTasks);
-      }
-  
       try {
         const { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15), student_profile)
         console.log("!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -723,9 +715,12 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             //   time: new Date()
             // });
             sendMessage(currentDiagramSimulator, replyMsg, "simulator")
-            const flatHist = historySimulator.flatMap(n => n.history).slice(-50)
+            currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
+            //const flatHist = currentHistory.flatMap(n => n.history).slice(-50)
             try {
-              await runBeliefAndRelationship(replyMsg, flatHist, RELATIONSHIP_BELIEF_FILE, currentDiagramSimulator)
+              await runBeliefAndRelationship(replyMsg, currentHistory, RELATIONSHIP_BELIEF_FILE, currentDiagramSimulator)
+              console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log tick simulator")
+              console.log()
             }
             catch(e){
               if(DEBUG_CONFIG.consoleLogBELIEF){
@@ -765,6 +760,18 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         }
       } catch (err) {
         console.error('tick_simulator() failed:', err)
+      }
+
+
+      currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
+      if(currentDiagramSimulator.currentNode !== "start" && currentDiagramSimulator.currentNodeSmall && currentDiagramSimulator.currentNodeSmall !== "null"){ // 如果host還沒發言模擬學生就不能發話
+        const studentTasks = student_profile.map(student =>
+          student_action(currentDiagramSimulator, currentHistory, student).catch(e => {
+              console.error(`Error in student_action for ${student.name}:`, e);
+              return null; // 避免 Promise.all 中斷
+          })
+        );
+        await Promise.all(studentTasks);
       }
     }
   }
