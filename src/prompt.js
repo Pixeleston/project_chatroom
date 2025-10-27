@@ -773,6 +773,14 @@ ${history}
   return prompt.trim()
 }
 
+export function prompt_evaluate(outline, history, hoping){
+  // 針對每個summary去評估有沒有對應到大綱中的對應條目目標
+  let prompt = []
+  // for(const bigNode){
+
+  // }
+}
+
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)) }
 
 function safeParseLLMJson(raw) {

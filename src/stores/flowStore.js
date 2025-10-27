@@ -4,7 +4,14 @@ import { ref } from 'vue'
 export const useFlowStore  = defineStore('flow', () => {
   const nodes = ref([])
   const edges = ref([])
+  const currentNode = ref("start")
+  const currentNodeSmall = ref("null")
+  const voting = ref(false)
+  const voting_array = ref([])
+  const hoping = ref("")
   const selectedNode = ref(null)
+  const memory = ref([])
+  const outline = ref("")
 
   function setNodes(newNodes) {
     nodes.value = newNodes
@@ -27,6 +34,13 @@ export const useFlowStore  = defineStore('flow', () => {
     return {
       nodes: nodes.value,
       edges: edges.value,
+      currentNode: currentNode.value,
+      currentNodeSmall: currentNodeSmall.value,
+      voting: voting.value,
+      voting_array: voting_array.value,
+      hoping: hoping.value,
+      memory: memory.value,
+      outline: outline.value
     }
   }
 
@@ -36,6 +50,13 @@ export const useFlowStore  = defineStore('flow', () => {
 
     nodes.value = json.nodes || []
     edges.value = json.edges || []
+    currentNode.value = json.currentNode || "start"
+    currentNodeSmall.value = json.currentNodeSmall || "null"
+    voting.value = json.voting || false
+    voting_array.value = json.voting_array || []
+    hoping.value = json.hoping || ""
+    memory.value = json.memory
+    outline.value = json.outline
 
     // 若沒有 currentNode，設定並回寫
     if (!json.currentNode || !json.memory) {
@@ -55,6 +76,13 @@ export const useFlowStore  = defineStore('flow', () => {
   body: JSON.stringify({
     nodes: nodes.value,
     edges: edges.value,
+    currentNode: currentNode.value,
+    currentNodeSmall: currentNodeSmall.value,
+    voting: voting.value,
+    voting_array: voting_array.value,
+    hoping: hoping.value,
+    memory: memory.value,
+    outline: outline.value
   }, null, 2)
 })
       if (!res.ok) throw new Error(await res.text())
@@ -67,6 +95,13 @@ export const useFlowStore  = defineStore('flow', () => {
   return {
   nodes,
   edges,
+  currentNode,
+  currentNodeSmall,
+  voting,
+  voting_array,
+  hoping,
+  memory,
+  outline, 
   selectedNode,
   setNodes,
   setEdges,

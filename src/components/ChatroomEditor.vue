@@ -24,7 +24,7 @@
     </div>
   </div>
 </div>
-
+    <!--
     <h3>目前選取的節點</h3>
     <div v-if="flow.selectedNode">
       <p><strong>ID:</strong> {{ flow.selectedNode.id }}</p>
@@ -33,6 +33,10 @@
     <div v-else>
       <p>尚未選取節點</p>
     </div>
+    -->
+    
+    <h3>輸入大綱 -> 執行模擬學生 -> 匯出報告 -> LLM評分及評語 -> LLM改善狀態圖</h3>
+
     <!--
     <h3>Welcome, designer</h3>
       <textarea v-model="detailText" 
@@ -41,13 +45,30 @@
           class="message"
         />
     -->
-    <h3>請輸入大綱</h3>
-      <textarea v-model="outlineText" 
+    <div class="textarea-container">
+      <div class="textarea-box">
+        <h3>請輸入大綱</h3>
+        <textarea v-model="outlineText" 
           placeholder=""
-          style="width: 100%; height: 200px; resize: vertical; box-sizing: border-box;"
           class="message"
         />
-      <button @click="spawnDiagram">Spawn Diagram</button>
+      </div>
+      <div class="textarea-box">
+        <h3>請輸入你希望的討論過程願景</h3>
+        <textarea v-model="hopeText" 
+          placeholder=""
+          class="message"
+        />
+      </div>
+    </div>
+    <button @click="spawnDiagram">生成狀態圖</button>
+    <button @click="startSimulate">開始模擬</button>
+    <button @click="spawnReport">生成報告</button>
+    <button @click="improve">LLM改進</button>
+    <div>
+    {{ finishedRatio }} %
+    </div>
+    <!---
     <div class="messages">
       <div v-for="(msg, index) in history" :key="index"
         :class="['message', msg.user === username ? 'me' : (msg.role === 'host' ? 'host' : '')]">
@@ -59,13 +80,16 @@
       <button @click="teacher_sendMessage">Send</button>
       <button @click="spawnExample">Spawn Examples</button>
     </div>
+    -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed  } from 'vue'
 import { useFlowStore } from '@/stores/flowStore'
 import { VueFlow, Panel, useVueFlow } from '@vue-flow/core'
+import { useDiagramStore } from '@/stores/diagramStoreSimulator'
+const diagramSimulator = useDiagramStore()
 
 import custom_node_condition from './components/custom_node_condition_edit.vue'
 import custom_node_direct from './components/custom_node_direct_edit.vue'
@@ -96,6 +120,46 @@ let latest_msg
 
 const detailText = ref('')
 const outlineText = ref('')
+const hopeText = ref('')
+const outlineArray = ref([])
+
+const finishedRatio = computed(() => {
+  const nodes = diagramSimulator.nodes || []
+  const len = nodes.length - 2
+  if (len === 0) return 0.0
+  
+  if(diagramSimulator.currentNode === "start") return 0.0
+  if(diagramSimulator.currentNode === "end") return 100.0
+
+  let finishedLen = 0
+  let finishedLenSmall = 0
+  let lenSmallNodes = 1
+
+  for(const node of nodes){
+    if(node.id !== diagramSimulator.currentNode){
+      if(node.id !== "start") {
+        finishedLen ++
+      }
+    }
+    else {
+      const smallNodes = diagramSimulator.memory.nodesMemory.find(n => n.id === diagramSimulator.currentNode).smallNodes
+      lenSmallNodes = smallNodes.length
+      for(const smallNode of smallNodes){
+        if(smallNode.finish) finishedLenSmall ++
+      }
+      break
+    }
+  }
+
+  console.log("!!!!!!!!!!!!!!!!!!")
+  console.log("finishedLen: " + finishedLen)
+  console.log("len: " + len)
+  console.log("finishedLenSmall: " + finishedLenSmall)
+  console.log("lenSmallNodes: " + lenSmallNodes)
+
+  return finishedLen / len * 100.0 + finishedLen / len * finishedLenSmall / lenSmallNodes * 100.0
+})
+
 watch(() => flow.selectedNode, (newNode) => {
   if (newNode && newNode.data) {
     history.value = []
@@ -121,6 +185,19 @@ onMounted(() => {
 
     socket.addEventListener('error', (err) => {
       console.error('❌ WebSocket error', err)
+    })
+
+    socket.addEventListener('message', (e) => {
+      const data = JSON.parse(e.data)
+      if (data.type === 'diagramUpdated' && data.chatroom_type === 'simulator') {
+        diagramSimulator.nodes = data.diagram.nodes
+        diagramSimulator.edges = data.diagram.edges
+        diagramSimulator.currentNode = data.diagram.currentNode
+        diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
+        diagramSimulator.voting = data.diagram.voting
+        diagramSimulator.memory = data.diagram.memory
+        diagramSimulator.voting_array = data.diagram.voting_array
+      }
     })
     /*
     socket.addEventListener('message', (e) => {
@@ -186,11 +263,11 @@ async function spawnExample(){
   
 }
 
+
+
 async function saveToServer() {
-  const data = {
-    nodes: flow.nodes,
-    edges: flow.edges,
-  }
+  const data = flow
+  //console.log(JSON.stringify(data))
   try {
     await fetch('http://localhost:3000/api/state', {
       method: 'POST',
@@ -207,12 +284,65 @@ function confirmImport() {
   // ✅ 使用者按「確定」後，才匯入主 VueFlow
   flow.nodes = previewData.value.nodes
   flow.edges = previewData.value.edges
+  flow.currentNode = "start";
+  flow.currentNodeSmall = "null";
+  flow.voting = false;
+  flow.voting_array = []
+  flow.hoping = hopeText.value
+  flow.memory = {
+    "currentMemory": "",
+    "nodesMemory": []
+  }
+  flow.outline = outlineText.value
   showPreview.value = false
   saveToServer()
 }
 
 function cancelPreview() {
   showPreview.value = false
+}
+
+async function startSimulate() {
+
+  // ✅ 1. 在開頭呼叫 Import API
+  const importRes = await fetch('http://localhost:3000/api/importOutline', {
+    method: 'GET'
+  })
+  const importData = await importRes.json()
+  console.log("Import result:", importData)
+
+  // ✅ 2. 重啟模擬器（將節點重置到 start）
+  const res = await fetch('http://localhost:3000/api/restartSimulator', {
+    method: 'POST',
+  })
+  const json = await res.json()
+  console.log("Restart result:", json)
+
+  // ✅ 3. 啟動模擬學生
+  await fetch('http://localhost:3000/api/SIMULATOR_TOGGLE_OPEN', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ LLM_TOGGLE: true })
+  })
+}
+
+async function spawnReport(){
+  try {
+    const res = await fetch('http://localhost:3000/api/evaluate')
+    const data = await res.json()
+    if (data.success) {
+      console.log("評估結果:", data.result)
+      result.value = data.result
+    } else {
+      console.error("評估失敗:", data.error)
+    }
+  } catch (err) {
+    console.error("API 錯誤:", err)
+  }
+}
+
+async function improve(){
+
 }
 
 async function spawnDiagram(){
@@ -222,14 +352,13 @@ async function spawnDiagram(){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outline: outlineText.value})
     })
-    console.log("wait111111")
     const data = await res.json()
-    console.log("send!!!!!!")
     sendMessage('host', 'AI assistant', data.nodeArray)
     sendMessage('host', 'AI assistant', data.detailArray)
 
-    const titles = data.nodeArray || [];
+  const titles = data.nodeArray || [];
   const replies = data.detailArray || [];
+  const start = data.start
 
   const nodes = [];
   const edges = [];
@@ -242,11 +371,14 @@ async function spawnDiagram(){
     position: { x: 50, y: 50 },
     data: {
       label: "start",
-      label_then: "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+      label_then: start,
+      //label_then: "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
       label_detail: "",
     }
   };
   nodes.push(startNode);
+
+  let maxY = 50;
 
   for (let i = 0; i < titles.length; i++) {
     const node = {
@@ -263,6 +395,7 @@ async function spawnDiagram(){
         label_detail: "",
       }
     };
+    maxY = 360 + (i % 2 == 0 ? i / 2 * 300 : (i - 1) / 2 * 300)
     nodes.push(node);
     const sourceId = i === 0 ? "start" : nodes[nodes.length - 2].id;
     const edge = {
@@ -277,13 +410,41 @@ async function spawnDiagram(){
     };
     edges.push(edge);
   }
+
+  const endNode = {
+      id: "end",
+      type: "direct",
+      initialized: false,
+      position: { x: 50, y: maxY + 300 },
+      data: {
+        label: "討論結束",
+        label_then: "討論結束",
+        label_detail: "",
+      }
+    };
+    nodes.push(endNode);
+  const sourceId = nodes[nodes.length - 2].id;
+    const edge = {
+      id: `e-${titles.length + 1}`,
+      type: "default",
+      source: sourceId,
+      target: endNode.id,
+      sourceHandle: null,
+      targetHandle: null,
+      data: {},
+      label: ""
+    };
+    edges.push(edge);
+
   console.log("good");
     showPreview.value = true;
     previewData.value.nodes = nodes;
     previewData.value.edges = edges;
     previewData.value.currentNode = "start";
+    previewData.value.currentNodeSmall = "null";
     previewData.value.voting = false;
     previewData.value.voting_array = []
+    previewData.value.hoping = hopeText.value
     //saveToServer();
   }
 }
@@ -316,5 +477,26 @@ async function spawnDiagram(){
   justify-content: center;
   gap: 10px;
 }
+
+.textarea-container {
+  display: flex;
+  gap: 20px;
+}
+
+.textarea-box {
+  flex: 1; /* 各佔相同比例，平均拉伸 */
+  display: flex;
+  flex-direction: column;
+}
+
+textarea.message {
+  width: 100%;
+  height: 200px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.textarea-box:first-child { flex: 3; }
+.textarea-box:last-child { flex: 2; }
 
 </style>

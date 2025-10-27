@@ -10,12 +10,12 @@
       },
       "data": {
         "label": "start",
-        "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+        "label_then": "哈囉大家好，我是聊天室的聊天機器人，我們要討論的是final project，例如網頁或是遊戲，目標是確認主題與目標。請大家在討論過程中踴躍發言，讓我們一起努力打造出一個出色的專案！",
         "label_detail": ""
       }
     },
     {
-      "id": "node-1760385736298-0",
+      "id": "node-1761576950869-0",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -29,7 +29,7 @@
       }
     },
     {
-      "id": "node-1760385736298-1",
+      "id": "node-1761576950869-1",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "node-1760385736298-2",
+      "id": "node-1761576950869-2",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -57,7 +57,7 @@
       }
     },
     {
-      "id": "node-1760385736298-3",
+      "id": "node-1761576950869-3",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -71,7 +71,7 @@
       }
     },
     {
-      "id": "node-1760385736298-4",
+      "id": "node-1761576950869-4",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -85,7 +85,7 @@
       }
     },
     {
-      "id": "node-1760385736298-5",
+      "id": "node-1761576950869-5",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "node-1760385736298-6",
+      "id": "node-1761576950869-6",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -113,7 +113,7 @@
       }
     },
     {
-      "id": "node-1760385736298-7",
+      "id": "node-1761576950869-7",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -125,6 +125,20 @@
         "label_then": "快速檢視這次討論是否有效率，討論氣氛是否良好，並提出下次可以改進的地方。",
         "label_detail": ""
       }
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 1560
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      }
     }
   ],
   "edges": [
@@ -132,7 +146,7 @@
       "id": "e-1",
       "type": "default",
       "source": "start",
-      "target": "node-1760385736298-0",
+      "target": "node-1761576950869-0",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -141,8 +155,8 @@
     {
       "id": "e-2",
       "type": "default",
-      "source": "node-1760385736298-0",
-      "target": "node-1760385736298-1",
+      "source": "node-1761576950869-0",
+      "target": "node-1761576950869-1",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -151,8 +165,8 @@
     {
       "id": "e-3",
       "type": "default",
-      "source": "node-1760385736298-1",
-      "target": "node-1760385736298-2",
+      "source": "node-1761576950869-1",
+      "target": "node-1761576950869-2",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -161,8 +175,8 @@
     {
       "id": "e-4",
       "type": "default",
-      "source": "node-1760385736298-2",
-      "target": "node-1760385736298-3",
+      "source": "node-1761576950869-2",
+      "target": "node-1761576950869-3",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -171,8 +185,8 @@
     {
       "id": "e-5",
       "type": "default",
-      "source": "node-1760385736298-3",
-      "target": "node-1760385736298-4",
+      "source": "node-1761576950869-3",
+      "target": "node-1761576950869-4",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -181,8 +195,8 @@
     {
       "id": "e-6",
       "type": "default",
-      "source": "node-1760385736298-4",
-      "target": "node-1760385736298-5",
+      "source": "node-1761576950869-4",
+      "target": "node-1761576950869-5",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -191,8 +205,8 @@
     {
       "id": "e-7",
       "type": "default",
-      "source": "node-1760385736298-5",
-      "target": "node-1760385736298-6",
+      "source": "node-1761576950869-5",
+      "target": "node-1761576950869-6",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
@@ -201,12 +215,32 @@
     {
       "id": "e-8",
       "type": "default",
-      "source": "node-1760385736298-6",
-      "target": "node-1760385736298-7",
+      "source": "node-1761576950869-6",
+      "target": "node-1761576950869-7",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": ""
+    },
+    {
+      "id": "e-9",
+      "type": "default",
+      "source": "node-1761576950869-7",
+      "target": "end",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
       "label": ""
     }
-  ]
+  ],
+  "currentNode": "start",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "123456789012",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": []
+  },
+  "outline": "討論final project，例如網頁或是遊戲\n\n確認主題與目標\n明確了解討論的核心問題，確保每個成員都清楚今天的重點，避免討論分散。\n\n分配角色（主持、紀錄、計時）\n主持人負責引導流程，紀錄者整理意見，計時者確保時間分配合理，讓討論有秩序。\n\n腦力激盪，自由發言\n成員輪流發表想法，不批評或打斷，鼓勵提出多元意見，確保每個人都有發言機會。\n\n彙整意見，分類主題\n將重複或相似的想法歸納起來，劃分成幾個主要方向，方便後續深入探討。\n\n深入討論，分析可行性\n對每個方向進行優缺點評估，考慮資源、時間、影響等因素，篩選出較可行的方案。\n\n達成共識，選出方案\n透過討論或投票，選定最具可行性或最重要的解決方式，形成小組共同決定。\n\n總結成果，安排分工\n由紀錄者整理結論，明確規劃後續工作或行動步驟，讓成果能夠延續。\n\n反思過程，提出改進\n快速檢視這次討論是否有效率，討論氣氛是否良好，並提出下次可以改進的地方。"
 }

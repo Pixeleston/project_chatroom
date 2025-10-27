@@ -31,3 +31,19 @@ html,body{height:100%;font-family:sans-serif;overflow:hidden;background:#f9f9f9}
 .flow-bottom {
   flex: 3;
 }
+
+button {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: #f0f8ff;
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}

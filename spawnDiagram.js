@@ -34,31 +34,34 @@ async function extractOutline(outline){
   return { nodeArray, success }
 }
 
-async function extractDetail(outline, nodeArray){  
+async function extractDetail(outline, nodeArray){
   const prompt = extractDetailPrompt(outline, nodeArray)
-  let raw = await callLLM('gpt-4o', prompt, "[extractDetail()]")
+  let _result = await callLLM('gpt-4o', prompt, "[extractDetail()]")
+  _result = _result.replace(/^```json\s*|\s*```$/g, "");
+  let result
+  try {
+    result = JSON.parse(_result.trim())
+  }
+  catch(err){
+    console.error("解析失敗:", err, "回傳的json:", _result)
+  }
+  console.log(result)
 
-  raw = raw.replace(/<END>\s*$/, '')
+  const detailArray = result.array || []
+  const start = result.start
 
-  const match = raw.match(/\[[\s\S]*\]/)  
-  if (!match) {
+  if (!detailArray) {
     console.error("找不到陣列格式:", raw)
     return { nodeArray: [], success: false }
   }
-
-  let arrStr = match[0]
-
-  arrStr = arrStr.replace(/'/g, '"')
-
-  let detailArray = []
+  
   let success = true
   try {
-    detailArray = JSON.parse(arrStr)
     if (!Array.isArray(detailArray)) {
       throw new Error("回傳不是陣列")
     }
   } catch (err) {
-    console.error("解析失敗:", err, "原始輸出:", arrStr)
+    console.error("解析失敗:", err, "原始輸出:", result)
     detailArray = []
     success = false
   }
@@ -68,7 +71,7 @@ async function extractDetail(outline, nodeArray){
     success = false;
   }
 
-  return { detailArray, success }
+  return { start, detailArray, success }
 }
 
 export async function spawnDiagram(outline){
@@ -91,9 +94,12 @@ export async function spawnDiagram(outline){
   // TODO 在vue頁面上顯示生成流程陣列的訊息
   
   // 2. 產生描述陣列
+
+  let start = ""
   
   for (let i = 0; i < 5; i++) {
     const result = await extractDetail(outline, nodeArray)
+    start = result.start
     detailArray = result.detailArray
     success = result.success
     if (success) break
@@ -103,11 +109,12 @@ export async function spawnDiagram(outline){
     throw new Error("無法成功解析出細節陣列")
   }
   console.log("細節陣列:", detailArray)
+  console.log("start : ", start)
 
   // TODO 在vue頁面上顯示生成細節陣列的訊息
   
 
   // 3. 將兩陣列轉換成diagram
   // TODO
-  return { nodeArray, detailArray }
+  return { nodeArray, detailArray, start }
 }

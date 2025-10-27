@@ -84,13 +84,16 @@ async function onFileSelected (event) {
   reader.onload = async () => {
     try {
       const data = JSON.parse(reader.result)
+    //  console.log("!!!!!!!!!!!!!!!!")
+      console.log(JSON.stringify(data, null, 2))
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
         diagramSimulator.nodes = data.nodes
         diagramSimulator.edges = data.edges
-        diagram.currentNode = data.currentNode
-        diagram.voting = data.voting
-        diagram.memory = data.memory;
-        diagram.currentNodeSmall = data.currentNodeSmall;
+        diagramSimulator.currentNode = data.currentNode
+        diagramSimulator.voting = data.voting
+        diagramSimulator.memory = data.memory;
+        diagramSimulator.hoping = data.hoping;
+        diagramSimulator.currentNodeSmall = data.currentNodeSmall;
         console.log('✅ 匯入成功')
         await diagramSimulator.saveToServer()
         alert('✅ 已儲存到伺服器')

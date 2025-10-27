@@ -7,7 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { teacher_action } from './teacher.js'
 import { student_action } from './student.js'
-import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve, rebuildRelationshipBeliefFromNames,
+import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve, prompt_evaluate, rebuildRelationshipBeliefFromNames,
   updateRelationshipBeliefOnNewStudentData, updateBeliefWithLLM, updateRelationshipWithLLM} from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 import { spawnDiagram } from './spawnDiagram.js'
@@ -316,8 +316,8 @@ app.get('/api/state', (req, res) => {
   app.post('/api/spawn_diagram', async (req, res) => {
     try {
       const { outline } = req.body
-      const { nodeArray, detailArray } = await spawnDiagram(outline)
-      res.json({ nodeArray: nodeArray, detailArray: detailArray })
+      const { nodeArray, detailArray, start } = await spawnDiagram(outline)
+      res.json({ nodeArray: nodeArray, detailArray: detailArray, start: start })
     } catch (err) {
       console.error('❌ JSON 解析失敗:', err)
       res.status(500).json({ error: 'LLM 回傳格式錯誤：' + err.message })
@@ -351,18 +351,61 @@ app.get('/api/state', (req, res) => {
       res.status(500).json({ error: err.message })
     }
   })
+
+  app.get('/api/importOutline', async (req, res) => {
+  try {
+    const data = await fs.promises.readFile(FLOW_FILE, 'utf8')
+    currentDiagramSimulator = JSON.parse(data || '{}')
+
+    await fs.promises.writeFile(
+      STATE_DIAGRAM_SIMULATOR_FILE,
+      JSON.stringify(currentDiagramSimulator, null, 2),
+      'utf-8'
+    )
+
+    res.json({ success: true, diagram: currentDiagramSimulator })
+  }
+  catch (err) {
+    console.log("/api/importOutline 失敗", err)
+    res.status(500).json({ error: '匯入大綱失敗' })
+  }
+})
+
+  app.get('/api/evaluate', async (req, res) => {
+
+    try {
+      let prompt = prompt_evaluate(
+        currentDiagramSimulator.outline,
+        historySimulator,
+        currentDiagramSimulator.hoping
+      )
+      const result = await callLLM('gpt-4o', prompt, "[/api/evaluate]")
+      if (!result) {
+        throw new Error("LLM 無回應")
+      }
+
+      res.json({ success: true, result: result })
+    }
+    catch (err) {
+      console.log("/api/evaluate 失敗", err)
+      res.status(500).json({ error: '評估失敗' })
+    }
+  })
   
   app.post('/api/restartSimulator', async (req, res) => {
     try {
       // 1. 重置對話紀錄
       historySimulator = [];
       saveHistory("Simulator");
-
+      currentDiagramSimulator = loadJson(STATE_DIAGRAM_SIMULATOR_FILE, {})
       // 2. 重置狀態圖的進度
       if (currentDiagramSimulator) {
           currentDiagramSimulator.currentNodeSmall = "null";
           currentDiagramSimulator.currentNode = "start";
-          currentDiagramSimulator.memory.nodesMemory = [];
+          currentDiagramSimulator.memory = {
+            "currentMemory": "",
+            "nodesMemory": []
+          }
           currentDiagramSimulator.voting = false;
           currentDiagramSimulator.voting_array = []
           saveDiagram(currentDiagramSimulator, "simulator");
@@ -647,7 +690,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       //const historyFlat = currentHistory.flatMap(n => n.history).slice(-50);
       try {
         await runBeliefAndRelationship(selectedMsg.msg, currentHistory, RELATIONSHIP_BELIEF_FILE,currentDiagramSimulator);
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log send message from queue")
+      //  console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log send message from queue")
       }
       catch(e){
         if(DEBUG_CONFIG.consoleLogBELIEF){
@@ -679,7 +722,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       simulatorVotingQueue.shift()
     }
     if(updateSuccess){
-      console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    //  console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
       console.log(currentDiagramSimulator.voting_array)
 
       saveDiagram(currentDiagramSimulator, "simulator")
@@ -695,10 +738,15 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   
   async function tick_simulator() {
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
-    if (RUN_TOGGLE_SIMULATOR) {
+    if (RUN_TOGGLE_SIMULATOR && currentDiagramSimulator.currentNode !== 'end') {
+      console.log("????????????????????????????")
+      console.log(currentDiagramSimulator.currentNode)
       let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
       try {
-        const { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(currentDiagramSimulator, currentHistory.slice(-15), student_profile)
+        const { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(JSON.parse(JSON.stringify(currentDiagramSimulator)), currentHistory.slice(-15), student_profile)
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            console.log(currentDiagramSimulator.currentNode)
+        
         console.log("!!!!!!!!!!!!!!!!!!!!!!!!!");
         console.log("actionSuccess = " + actionSuccess)
         console.log("moveNodeSuccess = " + moveNodeSuccess)
@@ -719,7 +767,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
             //const flatHist = currentHistory.flatMap(n => n.history).slice(-50)
             try {
               await runBeliefAndRelationship(replyMsg, currentHistory, RELATIONSHIP_BELIEF_FILE, currentDiagramSimulator)
-              console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log tick simulator")
+            //  console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! log tick simulator")
               console.log()
             }
             catch(e){

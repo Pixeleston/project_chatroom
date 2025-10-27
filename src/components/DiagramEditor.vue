@@ -77,10 +77,12 @@ function exportToJson() {
   flowData.currentNodeSmall = 'null'
   flowData.voting = false
   flowData.voting_array = []
+  flowData.hoping = flow.hoping
   flowData.memory = {
     currentMemory: "",
     nodesMemory: []
   }
+  flowData.outline = flow.outline
   const jsonString = JSON.stringify(flowData, null, 2)
   const blob = new Blob([jsonString], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -100,6 +102,7 @@ async function loadFromServer() {
     const json = await res.json()
     flow.nodes.value = json.nodes ?? []
     flow.edges.value = json.edges ?? []
+    flow.outline = json.outline ?? ""
   } catch (err) {
     alert('❌ 無法讀取資料：' + err.message)
   }
@@ -111,6 +114,7 @@ async function saveToServer() {
   const data = {
     nodes: flow.nodes,
     edges: flow.edges,
+    outline: flow.outline,
   }
   try {
     await fetch('http://localhost:3000/api/state', {
@@ -135,6 +139,7 @@ function onFileSelected(event) {
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
         flow.nodes = data.nodes
         flow.edges = data.edges
+        flow.outline = data.outline ?? ""
         console.log('✅ 匯入成功')
       } else {
         alert('❌ 檔案格式錯誤：需要包含 nodes 和 edges 陣列')
@@ -238,13 +243,6 @@ loadFromServer()
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
-}
-
-.flow-toolbar button:hover,
-.flow-toolbar .import-btn:hover {
-  background-color: #f0f8ff;
-  border-color: #38bdf8;
-  transform: translateY(-1px);
 }
 
 .flow-toolbar .import-btn {

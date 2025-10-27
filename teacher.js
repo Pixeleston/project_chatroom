@@ -239,7 +239,7 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
 
   let student_count = student_profile.length
   let votingPass = false
-  console.log("!!!!!!!!!!!!!!!!!!!!")
+ // console.log("!!!!!!!!!!!!!!!!!!!!")
   console.log(stateDiagram.voting_array.length)
   console.log(student_count + " * " +  SIMULATOR_CONFIG.votingRatio)
   if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
@@ -281,7 +281,7 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
     result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
   }
   
-  const replyText = (result.reply ?? null);
+  let replyText = (result.reply ?? null);
   const nextNode = nextNodeData.nextNode;   // small big stay
   const nextNodeID = nextNodeData.nextNodeID;
   const nextReply = result.nextReply ?? null;
@@ -289,6 +289,12 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   const why       = result.why   ?? '';
   let replyMsg = { role: 'host', user: 'Host', text: replyText };
   let nextReplyMsg = { role: 'host', user: 'Host', text: nextReply };
+
+  if(stateDiagram.currentNode === "start") {
+    const currentNodeObj = stateDiagram.nodes.find(n => n.id === "start")
+    replyText = currentNodeObj.data.label_then
+    replyMsg = { role: 'host', user: 'Host', text: replyText };
+  }
 
   if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){  // 特例，直接轉移節點
     startVoting = false; // 這種情況下不須開啟進入投票階段

@@ -1,0 +1,175 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "跟使用者說：哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1755506597825",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -161.1498666652134,
+        "y": 360.45634150277465
+      },
+      "data": {
+        "label": "主題",
+        "label_then": "使用者必須有一個明確想做的主題，形式是軟體或應用程式，所有人想法需一致。",
+        "label_detail": "使用者要在此節點中討論出要做甚麼專案主題，例如遊戲、網頁等，裡面只需生成一個「討論主題」這個議題小節點就好，不須生成其他議題節點。"
+      }
+    },
+    {
+      "id": "node-1755506609238",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 249.8743251467489,
+        "y": 361.44518111330484
+      },
+      "data": {
+        "label": "細項討論",
+        "label_then": "使用者要根據決定好的軟體主題，想出開發該軟體所需決定好的項目。",
+        "label_detail": "使用者根據之前討論出要做甚麼主題，要在此討論出該主題所需決定的細項，例如當使用者決定要製作遊戲，則在這邊討論開發平台、美術風格、遊戲類型等，如果使用者決定要做網頁，則在這邊討論開發框架、使用哪種雲服務發布等，議題不拘，可以再新增。"
+      }
+    },
+    {
+      "id": "node-1755506616094",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 46.60678918047046,
+        "y": 589.3649946196999
+      },
+      "data": {
+        "label": "分工討論",
+        "label_then": "使用者要將每個項目分工給至少兩個以上的組員，每個組員可分到多個項目。",
+        "label_detail": "使用者必須在這邊討論哪些成員該分配到哪些工作，主要請讓使用者討論如何分配工作，而不要再次討論細項內容"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1755506597825",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 200,
+      "sourceY": 277,
+      "targetX": -11.14979292479552,
+      "targetY": 357.4563605428686
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "node-1755506597825",
+      "target": "node-1755506609238",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": -11.14979292479552,
+      "sourceY": 592.4563836497287,
+      "targetX": 399.8743251467489,
+      "targetY": 358.44518111330484
+    },
+    {
+      "id": "e3",
+      "type": "default",
+      "source": "node-1755506609238",
+      "target": "node-1755506616094",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 399.8743251467489,
+      "sourceY": 573.4451811133049,
+      "targetX": 196.60681969804858,
+      "targetY": 586.3649946196999
+    }
+  ],
+  "currentNode": "node-1755506609238",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": [
+      {
+        "id": "node-1755506597825",
+        "label": "主題",
+        "smallNodes": [
+          {
+            "id": "node-1761317825471-0",
+            "theme": "專案主題選擇",
+            "target": "使用者必須討論並確認開發的專案主題，例如遊戲或網頁",
+            "summary": "團隊達成一致，決定開發一個全新簡約且具彈性的多功能平台，以吸引不同需求的使用者。",
+            "finish": true
+          }
+        ]
+      },
+      {
+        "id": "node-1755506609238",
+        "label": "細項討論",
+        "smallNodes": [
+          {
+            "id": "node-1761319496233-0",
+            "theme": "開發工具選擇",
+            "target": "決定開發過程中所需使用的工具和技術，例如編程語言、IDE、版本控制系統等",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761319496233-1",
+            "theme": "使用者介面設計",
+            "target": "確定軟體的主要使用者視覺和交互設計風格，需考慮目標用戶的需求和使用體驗",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761319496233-2",
+            "theme": "功能需求分析",
+            "target": "列出軟體必須具備的功能，並根據重要性和優先級進行排序",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761319496233-3",
+            "theme": "測試計畫",
+            "target": "制定測試策略，以確保每個功能都能正常運作並識別潛在問題",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761319496233-4",
+            "theme": "資源分配",
+            "target": "確定每位團隊成員在專案中的具體角色和任務，確保合理分配資源以提升開發效率",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761319496233-5",
+            "theme": "發佈與維護",
+            "target": "制定後續的發佈計畫和維護策略，確保軟體可以穩定運行並獲得更新",
+            "summary": "團隊決定採取自動化工具輔助維護更新，設置阿卡納日誌監控維護過程，以及制定季度系統性能檢查計劃來確保軟體穩定運行並及時更新。",
+            "finish": true
+          }
+        ]
+      }
+    ]
+  },
+  "currentNodeSmall": "node-1761319496233-4",
+  "voting": false,
+  "voting_array": [],
+  "hoping": ""
+}
