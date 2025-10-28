@@ -8,7 +8,7 @@ import { callLLM } from './src/callLLM.js'
 
 import WebSocket from 'ws'
 
-const socket = new WebSocket('ws://localhost:3001')
+const socket = new WebSocket('ws://localhost:3000')
 
 socket.on('open', () => {
   console.log('✅ student.js WebSocket 已連線')

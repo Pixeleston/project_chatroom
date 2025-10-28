@@ -73,7 +73,7 @@ const voting_array = ref([])
 
 const diagramSimulator = useDiagramStore()
 
-const socket = new WebSocket('ws://localhost:3001')
+const socket = new WebSocket('ws://localhost:3000')
 
 socket.onopen = () => {
   console.log('✅ StudentSimulator.vue 已連上 WebSocket Server')

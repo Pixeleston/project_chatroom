@@ -6,10 +6,12 @@ import custom_node_direct   from './components/custom_node_direct.vue'
 import custom_node_start    from './components/custom_node_start.vue'
 import custom_node_child from './components/custom_node_child.vue'
 import { useDiagramStore }  from '@/stores/diagramStore.js'
+import { ADDRESS_CONFIG } from '../config.js'
 
 const diagram = useDiagramStore()
 
-const socket = new WebSocket('ws://localhost:3001')
+const socket = new WebSocket(ADDRESS_CONFIG.WEBSOCKET_3000)
+//const socket = new WebSocket('ws://localhost:3000')
 
 socket.onopen = () => {
   console.log('✅ 已連上 WebSocket Server')

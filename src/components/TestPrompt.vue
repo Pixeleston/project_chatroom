@@ -65,7 +65,7 @@ watch(detailText, (newVal) => {
 onMounted(() => {
   try {
     history.value = []
-    socket = new WebSocket('ws://localhost:3001')
+    socket = new WebSocket('ws://localhost:3000')
 
     socket.addEventListener('open', () => {
       console.log('✅ WebSocket connected')

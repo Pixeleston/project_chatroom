@@ -118,8 +118,8 @@ export async function callGPT(model, prompt, Class) {
   // 1️⃣ 計算 input tokens
 
   
-  // const encoder = encoding_for_model(model)
-  // const promptTokens = encoder.encode(prompt).length
+  const encoder = encoding_for_model(model)
+  const promptTokens = encoder.encode(prompt).length
   
 
   // 2️⃣ 發送 API 請求
@@ -155,19 +155,20 @@ export async function callGPT(model, prompt, Class) {
   const usage = data.usage || {}
 
   // if(TOKEN_CONFIG.consoleLogToken){
-  //   const completionTokens = usage.completion_tokens ?? 0
-  //   const totalTokens = usage.total_tokens ?? (promptTokens + completionTokens)
+  if(Class === "[/api/evaluate]"){
+    const completionTokens = usage.completion_tokens ?? 0
+    const totalTokens = usage.total_tokens ?? (promptTokens + completionTokens)
 
-  //   // 3️⃣ 顯示 token 計算
-  //   console.log("=============== Tokens Usage ===============")
-  //   console.log("類別：" + Class)
-  //   console.log(`🧮 Token 計算：
-  //   - Input tokens: ${promptTokens}
-  //   - Output tokens: ${completionTokens}
-  //   - Total tokens: ${totalTokens}
-  //   `)
-  //   console.log("============================================")
-  // }
+    // 3️⃣ 顯示 token 計算
+    console.log("=============== Tokens Usage ===============")
+    console.log("類別：" + Class)
+    console.log(`🧮 Token 計算：
+    - Input tokens: ${promptTokens}
+    - Output tokens: ${completionTokens}
+    - Total tokens: ${totalTokens}
+    `)
+    console.log("============================================")
+  }
 
 /*
   const completionTokens = usage.completion_tokens ?? 0

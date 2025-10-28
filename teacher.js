@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 // npm install node-fetch
 import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './src/config.js'
-import { SIMULATOR_CONFIG } from './src/config.js'
+import { SIMULATOR_CONFIG, REAL_CONFIG } from './src/config.js'
 import { prompt_teacher, prompt_decide_small_part, prompt_double_check } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
@@ -257,6 +257,109 @@ export async function teacher_action(stateDiagram, hostMemory, student_profile){
   if(votingPass) mustMove = true  // 投票成功強制轉移
 
   let prompt = prompt_teacher(stateDiagram, targets, hostMemory, student_profile, nextNodeData, mustMove)
+  //const stop = ["}"]
+    let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
+    console.log("teachers reply : " + llmReply)
+
+    if(!llmReply) return {replyMsg:null, newStateDiagram:null, nextReplyMsg:null, actionSuccess:false, moveNodeSuccess:false, startVoting:false}
+    
+    const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
+    
+  let result
+  try {
+    // 嘗試完整解析
+    result = JSON.parse(cleanedReply.trim())
+  } catch (err) {
+    console.warn("❗ JSON.parse 失敗，試圖抽取物件")
+  }
+
+  //let replyText = (result.reply ?? null); //result.reply_voting ?? (result.reply ?? null);
+  //let nextReplyMsg = (result.nextReply ?? null);
+  let startVoting = false;
+  if (result.reply_voting && result.reply_voting !== 'null'){
+    startVoting = true;
+    result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
+  }
+  
+  let replyText = (result.reply ?? null);
+  const nextNode = nextNodeData.nextNode;   // small big stay
+  const nextNodeID = nextNodeData.nextNodeID;
+  const nextReply = result.nextReply ?? null;
+  const summary = result.summary;
+  const why       = result.why   ?? '';
+  let replyMsg = { role: 'host', user: 'Host', text: replyText };
+  let nextReplyMsg = { role: 'host', user: 'Host', text: nextReply };
+
+  if(stateDiagram.currentNode === "start") {
+    const currentNodeObj = stateDiagram.nodes.find(n => n.id === "start")
+    replyText = currentNodeObj.data.label_then
+    replyMsg = { role: 'host', user: 'Host', text: replyText };
+  }
+
+  if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){  // 特例，直接轉移節點
+    startVoting = false; // 這種情況下不須開啟進入投票階段
+    const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
+    if(moveNodeSuccess) {
+      return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+    }
+    else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
+      actionSuccess = false;
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+    }
+  }
+  else if(stateDiagram.voting){ // 如果正在投票，那就看是否通過，沒通過就只需回傳replyMsg等，並回傳startVoting=false
+    startVoting = false; // 這種情況下不須開啟進入投票階段
+
+    if(votingPass){
+      const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
+      if(moveNodeSuccess) {
+        return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+      }
+      else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
+        actionSuccess = false;
+        return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+      }
+    }
+    else {
+
+      // host 再次自我確認是否應該說話
+      replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
+
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
+    }
+  }
+  else {  // 沒在投票，不可能轉移節點
+
+    // host 再次自我確認是否應該說話
+    if(!startVoting) replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
+
+    // startVoting = ???; // 唯一可能開啟進入投票階段的情況
+    return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
+  }
+}
+
+export async function teacher_action_real(stateDiagram, hostMemory){
+
+  let student_count = 3
+  let votingPass = false
+ // console.log("!!!!!!!!!!!!!!!!!!!!")
+  console.log(stateDiagram.voting_array.length)
+  console.log(student_count + " * " +  REAL_CONFIG.votingRatio)
+  if(stateDiagram.voting_array.length >= student_count * REAL_CONFIG.votingRatio){
+    votingPass = true
+  }
+
+  console.log('teachers history : ')
+  console.log(hostMemory)
+
+  const currentNode = stateDiagram.currentNode || 'start'
+  const targets = getOutgoingTargets(currentNode, stateDiagram)
+  let actionSuccess = true
+
+  let { nextNodeData, mustMove } = findNextNode(stateDiagram)
+  if(votingPass) mustMove = true  // 投票成功強制轉移
+
+  let prompt = prompt_teacher_real(stateDiagram, targets, hostMemory, student_profile, nextNodeData, mustMove)
   //const stop = ["}"]
     let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
     console.log("teachers reply : " + llmReply)

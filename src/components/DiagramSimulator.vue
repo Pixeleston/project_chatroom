@@ -9,7 +9,7 @@ import { useDiagramStore }  from '@/stores/diagramStoreSimulator.js'
 
 const diagramSimulator = useDiagramStore()
 
-const socket = new WebSocket('ws://localhost:3001')
+const socket = new WebSocket('ws://localhost:3000')
 
 socket.onopen = () => {
   console.log('✅ 已連上 WebSocket Server')

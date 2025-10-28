@@ -4,136 +4,52 @@
     "small_id": "null",
     "history": [
       {
-        "role": "host",
-        "user": "Host",
-        "text": "哈囉大家好，我是聊天室的聊天機器人，我們要討論的是期末的Final Project，目標是打造一個軟體供使用者使用，請大家討論想做甚麼主題，像是網頁、遊戲等。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506597825",
-    "small_id": "null",
-    "history": [
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "現在讓我們來討論專案的主題和類型，例如是遊戲、網頁還是應用程式。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506597825",
-    "small_id": "node-1757504949356-0",
-    "history": [
-      {
         "role": "user",
         "user": "abc",
-        "text": "我覺得我們可以來製作音樂遊戲",
-        "timestamp": "2025-09-10T11:55:12.651Z"
-      },
-      {
-        "role": "user",
-        "user": "def",
-        "text": "我也覺得可以製作音樂遊戲",
-        "timestamp": "2025-09-10T11:56:19.741Z"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "看起來你們完成了製作音樂遊戲的討論，讓我們進入下一個議題討論吧。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "null",
-    "history": [
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "大家可以開始討論開發平台，看看哪些平台最適合達成我們的目標。"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "請大家討論並確定將使用的開發平台，以適應專案需求。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "node-1757505393524-0",
-    "history": [
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "我們目前需要討論和確定將使用的開發平台，以適應專案需求。大家有什麼建議或想法嗎？"
-      },
-      {
-        "role": "user",
-        "user": "def",
-        "text": "我覺得或許用unity不錯?",
-        "timestamp": "2025-09-10T11:56:56.019Z"
+        "text": "123",
+        "timestamp": "2025-10-28T14:10:07.165Z"
       },
       {
         "role": "user",
         "user": "abc",
-        "text": "那就用unity吧",
-        "timestamp": "2025-09-10T11:57:02.376Z"
+        "text": "hello",
+        "timestamp": "2025-10-28T14:10:33.634Z"
       },
       {
-        "role": "host",
-        "user": "Host",
-        "text": "看起來你們完成了開發平台的討論，讓我們進入下一個議題討論吧。"
+        "role": "user",
+        "user": "admin",
+        "text": "hi",
+        "timestamp": "2025-10-28T14:10:38.008Z"
       },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "接下來我們來討論和確定專案中的美術風格，以統一整體視覺方向。大家有什麼建議嗎？"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "node-1757505393524-1",
-    "history": [
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "看起來你們完成了美術風格的討論，讓我們進入下一個議題討論吧"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "現在我們來討論程式語言選擇。請大家針對專案需求選定最適合的程式語言。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "node-1757501893316-0",
-    "history": [
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "看起來你們完成了軟體核心功能和附加功能的討論，讓我們進入下一個議題討論吧。"
-      },
-      {
-        "role": "host",
-        "user": "Host",
-        "text": "接下來，我們來討論用戶體驗設計。請分享你們認為目標客戶群的需求，並規劃相應的設計方案。"
-      }
-    ]
-  },
-  {
-    "id": "node-1755506609238",
-    "small_id": "node-1757501893316-1",
-    "history": [
       {
         "role": "user",
         "user": "abc",
-        "text": "s",
-        "timestamp": "2025-10-13T18:59:42.868Z"
+        "text": "a",
+        "timestamp": "2025-10-28T15:07:27.647Z"
+      },
+      {
+        "role": "user",
+        "user": "admin",
+        "text": "hi",
+        "timestamp": "2025-10-28T15:09:12.838Z"
+      },
+      {
+        "role": "user",
+        "user": "admin",
+        "text": "a",
+        "timestamp": "2025-10-28T15:12:14.322Z"
+      },
+      {
+        "role": "user",
+        "user": "abc",
+        "text": "hello",
+        "timestamp": "2025-10-28T15:12:40.167Z"
+      },
+      {
+        "role": "user",
+        "user": "abc",
+        "text": "GG",
+        "timestamp": "2025-10-28T15:50:20.224Z"
       }
     ]
   }

@@ -16,6 +16,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ADDRESS_CONFIG } from '../config.js'
 const props = defineProps(['username'])
 
 const messages = ref([])
@@ -26,7 +27,7 @@ let socket
 
 onMounted(() => {
   try {
-    socket = new WebSocket('ws://localhost:3001')
+    socket = new WebSocket(ADDRESS_CONFIG.WEBSOCKET_3000)
 
     socket.addEventListener('open', () => {
       console.log('✅ WebSocket connected')

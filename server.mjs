@@ -30,6 +30,7 @@ const STATE_DIAGRAM_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/
 const STATE_DIAGRAM_IMPROVE_FILE = path.join(__dirname, 'src/stores/improve/state_diagram.json')
 const STUDENT_PROFILE_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/student_profile.json')
 const REPORT_IMPROVE_FILE = path.join(__dirname, 'src/stores/improve/report.json')
+const REPORT_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/report.json')
 const RELATIONSHIP_BELIEF_FILE = path.join(__dirname, 'src/stores/simulator/relationship_belief.json');
 
 const INITIAL_SIMULATOR_TOPICS = ['AI應用', '資料庫設計', '前端框架', '專案時程', '使用者體驗', '商業模式'];
@@ -152,6 +153,17 @@ app.get('/api/state', (req, res) => {
     try {
       let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
       settings.RUN_TOGGLE_SIMULATOR = false
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+    }
+    catch (err){
+
+    }
+  }
+
+  function LLM_TOGGLE_CLOSE(){
+    try {
+      let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+      settings.LLM_TOGGLE = false
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
     }
     catch (err){
@@ -374,17 +386,36 @@ app.get('/api/state', (req, res) => {
   app.get('/api/evaluate', async (req, res) => {
 
     try {
-      let prompt = prompt_evaluate(
+
+      // prompt is a prompt array
+      /*
+      {
+        "score": <integer>  // 請打分數 [0, 100]
+        "defect": <string>  // 若使用者討論出的總結不符合教師大綱上對應的目標的話，請給出使用者的討論缺少了甚麼要素
+        "suggestion": <string>  // 若defect有輸出缺少要素的話，請指出可能原因是出在大綱的哪邊寫得不好，有不足之處
+      }
+      */
+      let promptArray = prompt_evaluate(
+        currentDiagramSimulator,
         currentDiagramSimulator.outline,
         historySimulator,
         currentDiagramSimulator.hoping
       )
-      const result = await callLLM('gpt-4o', prompt, "[/api/evaluate]")
-      if (!result) {
+      let resultArray = []
+      for(const prompt of promptArray){
+        let result = await callLLM('gpt-4o', prompt, "[/api/evaluate]")
+        result = result.replace(/^```json\s*|\s*```$/g, "");
+        result = JSON.parse(result.trim())
+        console.log("prompt : " + prompt)
+        console.log("result : " + result)
+        resultArray.push(result)
+      }
+      // 存到 REPORT_SIMULATOR_FILE
+      if (!resultArray) {
         throw new Error("LLM 無回應")
       }
 
-      res.json({ success: true, result: result })
+      res.json({ success: true, resultArray: resultArray })
     }
     catch (err) {
       console.log("/api/evaluate 失敗", err)
@@ -453,12 +484,12 @@ app.get('/api/state', (req, res) => {
     }
   });
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`HTTP API listening on http://localhost:${PORT}`)
 })
 
 /* ────────────────────────────── WebSocket Server & Data Loading */
-const wss = new WebSocketServer({ port: PORT + 1 })
+const wss = new WebSocketServer({ server: httpServer })
 
 let history = []
 let currentDiagram
@@ -624,7 +655,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     if (LLM_TOGGLE) {
       try {
         let currentHistory = filterHistory(currentDiagram, history)
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg, actionSuccess, startVoting} = await teacher_action(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`), null)
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting} = await teacher_action_real(currentDiagram, currentHistory.slice(-15).map(msg => `${msg.user}: ${msg.text}`), null)
         
         if(actionSuccess){
           if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
@@ -743,7 +774,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       console.log(currentDiagramSimulator.currentNode)
       let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
       try {
-        const { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(JSON.parse(JSON.stringify(currentDiagramSimulator)), currentHistory.slice(-15), student_profile)
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg: nextReply, actionSuccess, moveNodeSuccess, startVoting } = await teacher_action(JSON.parse(JSON.stringify(currentDiagramSimulator)), currentHistory.slice(-15), student_profile)
         console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             console.log(currentDiagramSimulator.currentNode)
         
@@ -826,6 +857,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   
   setInterval(tick_simulator, 15000)
   SIMULATOR_TOGGLE_CLOSE()
+  LLM_TOGGLE_CLOSE()
   
   wss.on('connection', ws => {
     ws.send(JSON.stringify({ chatroom_type: 'chatroom', type: 'history', data: history }))

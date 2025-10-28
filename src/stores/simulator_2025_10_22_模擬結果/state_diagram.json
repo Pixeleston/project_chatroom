@@ -101,7 +101,7 @@
       "targetY": 586.3649946196999
     }
   ],
-  "currentNode": "node-1755506616094",
+  "currentNode": "end",
   "memory": {
     "currentMemory": "",
     "nodesMemory": [
@@ -181,8 +181,8 @@
             "id": "node-1761069397743-2",
             "theme": "溝通與協作計畫",
             "target": "使用者必須建立定期會議與更新機制以確保各組員在分工後的合作順暢",
-            "summary": "",
-            "finish": false
+            "summary": "小組已達成共識，將以 Discord 作為主要溝通與協作平台，透過不同頻道清楚分類工作內容，並輔以 Google Drive 作為文件共享與存取空間。團隊將安排 每週定期會議 進行進度更新，同時使用共享日曆協調會議時間。整體而言，小組已建立完善的溝通機制，有助於後續專案執行的效率與透明度。",
+            "finish": true
           }
         ]
       }
@@ -190,5 +190,7 @@
   },
   "currentNodeSmall": "node-1761069397743-2",
   "voting": true,
-  "voting_array": []
+  "voting_array": [],
+  "hoping": "no hoping",
+  "outline": "期末Final Project，打造一個軟體供使用者使用\n\n討論主題\n討論出要做甚麼軟體或應用程式\n\n細項討論\n根據之前決定好的主題決定開發所需的細項\n\n分工討論\n將所有工作分給各個組員"
 }

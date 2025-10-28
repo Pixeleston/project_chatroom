@@ -101,74 +101,14 @@
       "targetY": 586.3649946196999
     }
   ],
-  "currentNode": "node-1755506609238",
+  "currentNode": "start",
   "memory": {
     "currentMemory": "",
     "nodesMemory": [
-      {
-        "id": "node-1755506597825",
-        "label": "主題",
-        "smallNodes": [
-          {
-            "id": "node-1761317825471-0",
-            "theme": "專案主題選擇",
-            "target": "使用者必須討論並確認開發的專案主題，例如遊戲或網頁",
-            "summary": "團隊達成一致，決定開發一個全新簡約且具彈性的多功能平台，以吸引不同需求的使用者。",
-            "finish": true
-          }
-        ]
-      },
-      {
-        "id": "node-1755506609238",
-        "label": "細項討論",
-        "smallNodes": [
-          {
-            "id": "node-1761319496233-0",
-            "theme": "開發工具選擇",
-            "target": "決定開發過程中所需使用的工具和技術，例如編程語言、IDE、版本控制系統等",
-            "summary": "",
-            "finish": false
-          },
-          {
-            "id": "node-1761319496233-1",
-            "theme": "使用者介面設計",
-            "target": "確定軟體的主要使用者視覺和交互設計風格，需考慮目標用戶的需求和使用體驗",
-            "summary": "",
-            "finish": false
-          },
-          {
-            "id": "node-1761319496233-2",
-            "theme": "功能需求分析",
-            "target": "列出軟體必須具備的功能，並根據重要性和優先級進行排序",
-            "summary": "",
-            "finish": false
-          },
-          {
-            "id": "node-1761319496233-3",
-            "theme": "測試計畫",
-            "target": "制定測試策略，以確保每個功能都能正常運作並識別潛在問題",
-            "summary": "",
-            "finish": false
-          },
-          {
-            "id": "node-1761319496233-4",
-            "theme": "資源分配",
-            "target": "確定每位團隊成員在專案中的具體角色和任務，確保合理分配資源以提升開發效率",
-            "summary": "",
-            "finish": false
-          },
-          {
-            "id": "node-1761319496233-5",
-            "theme": "發佈與維護",
-            "target": "制定後續的發佈計畫和維護策略，確保軟體可以穩定運行並獲得更新",
-            "summary": "團隊決定採取自動化工具輔助維護更新，設置阿卡納日誌監控維護過程，以及制定季度系統性能檢查計劃來確保軟體穩定運行並及時更新。",
-            "finish": true
-          }
-        ]
-      }
+
     ]
   },
-  "currentNodeSmall": "node-1761319496233-4",
+  "currentNodeSmall": "null",
   "voting": false,
   "voting_array": [],
   "hoping": ""

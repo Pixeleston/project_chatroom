@@ -68,6 +68,18 @@
     <div>
     {{ finishedRatio }} %
     </div>
+
+    <div class="textarea-box2">
+        <h3>評估結果</h3>
+        <textarea v-model="result" 
+          placeholder=""
+          style="height: 450px;"
+          class="message"
+        />
+      </div>
+    <div>
+
+    </div>
     <!---
     <div class="messages">
       <div v-for="(msg, index) in history" :key="index"
@@ -122,6 +134,7 @@ const detailText = ref('')
 const outlineText = ref('')
 const hopeText = ref('')
 const outlineArray = ref([])
+const result = ref("")
 
 const finishedRatio = computed(() => {
   const nodes = diagramSimulator.nodes || []
@@ -177,7 +190,7 @@ watch(detailText, (newVal) => {
 onMounted(() => {
   try {
     history.value = []
-    socket = new WebSocket('ws://localhost:3001')
+    socket = new WebSocket('ws://localhost:3000')
 
     socket.addEventListener('open', () => {
       console.log('✅ WebSocket connected')
@@ -326,13 +339,30 @@ async function startSimulate() {
   })
 }
 
+/*
+{
+  "score": <integer>  // 請打分數 [0, 100]
+  "defect": <string>  // 若使用者討論出的總結不符合教師大綱上對應的目標的話，請給出使用者的討論缺少了甚麼要素
+  "suggestion": <string>  // 若defect有輸出缺少要素的話，請指出可能原因是出在大綱的哪邊寫得不好，有不足之處
+}
+*/
 async function spawnReport(){
   try {
     const res = await fetch('http://localhost:3000/api/evaluate')
     const data = await res.json()
     if (data.success) {
-      console.log("評估結果:", data.result)
-      result.value = data.result
+      console.log("評估結果:", data.resultArray)
+      result.value = ""
+      for(const now of data.resultArray){
+        result.value += `
+        =====
+        score: ${now.score}
+        defect: ${now.defect}
+        suggestion: ${now.suggestion}
+        =====
+        
+        `
+      }
     } else {
       console.error("評估失敗:", data.error)
     }
@@ -491,7 +521,7 @@ async function spawnDiagram(){
 
 textarea.message {
   width: 100%;
-  height: 200px;
+  height: 100px;
   resize: vertical;
   box-sizing: border-box;
 }

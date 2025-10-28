@@ -199,7 +199,7 @@ async function restartSimulator(){  // set state_diagram to initial state
 
 onMounted(() => {
   try {
-    socket = new WebSocket('ws://localhost:3001')
+    socket = new WebSocket('ws://localhost:3000')
 
     socket.addEventListener('open', () => {
       console.log('✅ WebSocket connected')

@@ -296,7 +296,12 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     })
   }
 )
+  let target_array = []
+  for (const data of diagram.nodes){
+    target_array.push(data.data.label_then)
+  }
 
+  console.log(target_array)
   let prompt = `
 
     接下來要進行轉移大節點，請根據：
@@ -312,6 +317,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     - ${nextNode.data.label}：${nextNode.data.label_then}
 
     請根據這些情況及教師對於新主題的需求，來決定學生在新主題中具體要討論的「主題」與「討論目標」。
+    **注意:生成的主題與目標絕對不可以與${target_array}裡的任何目標相似。**
 
     請用以下格式輸出，並完整輸出，不要省略、不用加註解、不用加說明：
     {
@@ -773,12 +779,44 @@ ${history}
   return prompt.trim()
 }
 
-export function prompt_evaluate(outline, history, hoping){
+export function prompt_evaluate(diagramSimulator, outline, history, hoping){
   // 針對每個summary去評估有沒有對應到大綱中的對應條目目標
   let prompt = []
-  // for(const bigNode){
+  for(const node of diagramSimulator.nodes){
+    if(node.id === "start" || node.id === "end") continue
+    let summary = ``
+    const smallNodes = diagramSimulator.memory.nodesMemory.find(n => n.id === node.id).smallNodes
+    for(const smallNode of smallNodes){
+      summary += `
+      - 小節點議題：${smallNode.theme}
+        - 使用者討論總結：${smallNode.summary}
+      `
+    }
 
-  // }
+    let _prompt = `
+      你現在是評估者，你要幫忙評估目前這個主題使用者討論出的總結，有沒有符合老師提供的討論大綱上的要求
+      
+      以下是老師提供的討論大綱：
+      ${outline}
+      
+      目前大節點議題：${node.data.label}
+      裡面所有小節點議題討論總結：
+      ${summary}
+
+      請評估使用者討論出的總結是否符合老師提供的大綱上對應的內容。
+      **重要**：請只需針對目前大節點議題中是否討論到大綱上對應主題的要求就好，不須將其他大節點議題納入考量。
+      請回傳以下JSON格式：
+      {
+        "score": <integer>  // 請打分數 [0, 100]
+        "defect": <string>  // 若使用者討論出的總結不符合教師大綱上對應的目標的話，請給出使用者的討論缺少了甚麼要素，如果討論的不錯也可以解釋一下為甚麼不錯
+        "suggestion": <string>  // 若defect有輸出缺少要素的話，請指出可能原因是出在大綱的哪邊寫得不好，有不足之處
+      }
+
+    `
+    prompt.push(_prompt)
+  }
+
+  return prompt
 }
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)) }

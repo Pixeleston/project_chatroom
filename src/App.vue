@@ -5,37 +5,46 @@
     <button @click="enterChat">Enter</button>
   </div>
   <div v-else class="container">
-    <div class="sidebar">
-      <button @click="toggleLLM">
-      {{ LLM_TOGGLE ? '🟢 LLM 啟動中（點擊關閉）' : '🔴 LLM 已關閉（點擊開啟）' }}
-      </button>
-      <button @click="diagram_type = 'simulate'">🛠️ 模擬學生</button>
-      <button @click="toggleDiagram">
-        <img src="./assets/Barrier.png" style="width:20px; height:20px;" > 開關流程圖</img>
-      </button>
-      <button @click="diagram_type = 'edit'">🛠️ 編輯流程圖</button>
-      <button @click="diagram_type = 'improve'">🛠️ LLM輔助修改流程圖</button>
-      <button @click="diagram_type = 'display'">📄 檢視狀態圖</button>
-      <button @click="diagram_type = 'test'">📄 測試prompt</button>
-    </div>
-
-    <div class="main-area">
-      <div v-if="showDiagram" class="diagram">
-        <Diagram v-if="diagram_type === 'display'" ref="diagramRef" />
-        <DiagramSimulator v-else-if="diagram_type === 'simulate'" />
-        <DiagramImprove v-else-if="diagram_type === 'improve'"/>
-        <DiagramEditor v-else />
+      <div v-if="username==='admin'" class="sidebar">
+        <button @click="toggleLLM">
+        {{ LLM_TOGGLE ? '🟢 LLM 啟動中（點擊關閉）' : '🔴 LLM 已關閉（點擊開啟）' }}
+        </button>
+        <button @click="diagram_type = 'simulate'">🛠️ 模擬學生</button>
+        <button @click="toggleDiagram">
+          <img src="./assets/Barrier.png" style="width:20px; height:20px;" > 開關流程圖</img>
+        </button>
+        <button @click="diagram_type = 'edit'">🛠️ 編輯流程圖</button>
+        <button @click="diagram_type = 'improve'">🛠️ LLM輔助修改流程圖</button>
+        <button @click="diagram_type = 'display'">📄 檢視狀態圖</button>
+        <button @click="diagram_type = 'test'">📄 測試prompt</button>
       </div>
-      <div class="chat-area">
-        <Simulator v-if="diagram_type === 'simulate'"/>
-        <ChatroomEditor v-else-if="diagram_type === 'edit'"/>
-        <ChatroomImprove v-else-if="diagram_type === 'improve'"/>
-        <Chatroom :username="username" v-else-if="diagram_type === 'display'"/>
-        <TestPrompt v-if="diagram_type === 'test'"/>
+      <div v-if="username!=='admin'" class="main-area">
+        <div class="main-area">
+          <div class="diagram">
+            <Diagram ref="diagramRef" />
+          </div>
+          <div class="chat-area">
+            <Chatroom :username="username" />
+          </div>
+        </div>
       </div>
-    </div>
+      <div v-else class="main-area">
+        <div v-if="showDiagram" class="diagram">
+          <Diagram v-if="diagram_type === 'display'" ref="diagramRef" />
+          <DiagramSimulator v-else-if="diagram_type === 'simulate'" />
+          <DiagramImprove v-else-if="diagram_type === 'improve'"/>
+          <DiagramEditor v-else />
+        </div>
+        <div class="chat-area">
+          <Simulator v-if="diagram_type === 'simulate'"/>
+          <ChatroomEditor v-else-if="diagram_type === 'edit'"/>
+          <ChatroomImprove v-else-if="diagram_type === 'improve'"/>
+          <Chatroom :username="username" v-else-if="diagram_type === 'display'"/>
+          <TestPrompt v-if="diagram_type === 'test'"/>
+        </div>
+      </div>
 
-    <div class="sidebar"></div>
+      <div class="sidebar"></div>
   </div>
 </template>
 
@@ -52,6 +61,7 @@ import DiagramSimulator from './components/DiagramSimulator.vue'
 import Simulator from './components/Simulator.vue'
 import TestPrompt from './components/TestPrompt.vue'
 import { useDiagramStore } from '@/stores/diagramStore.js'
+import { ADDRESS_CONFIG } from './config.js'
 
 const username = ref('')
 const nameInput = ref('')
@@ -62,7 +72,8 @@ const diagram_type = ref('display')
 const diagram = useDiagramStore()
 
 // 連線到 WebSocket Server（注意要使用正確 port）
-const socket = new WebSocket('ws://localhost:3001')
+const socket = new WebSocket(ADDRESS_CONFIG.WEBSOCKET_3000)
+
 
 // 接收訊息
 socket.addEventListener('message', (event) => {
@@ -93,14 +104,14 @@ function toggleDiagram() {
 
 const LLM_TOGGLE = ref(true)
 async function fetchToggle() {
-  const res = await fetch('http://localhost:3000/api/LLM_TOGGLE')
+  const res = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/LLM_TOGGLE')
   const data = await res.json()
   LLM_TOGGLE.value = data.LLM_TOGGLE
 }
 
 async function toggleLLM() {
   const newVal = !LLM_TOGGLE.value
-  const res = await fetch('http://localhost:3000/api/LLM_TOGGLE', {
+  const res = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/LLM_TOGGLE', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ LLM_TOGGLE: newVal })
@@ -114,7 +125,7 @@ onMounted(() => {
 })
 
 /*
-const res = await fetch('http://localhost:3000/api/LLM_TOGGLE', {
+const res = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/LLM_TOGGLE', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ LLM_TOGGLE: true })

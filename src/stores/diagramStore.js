@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { ADDRESS_CONFIG } from '../config.js'
 
 export const useDiagramStore  = defineStore('diagram', () => {
   const nodes = ref([])
@@ -11,7 +12,7 @@ export const useDiagramStore  = defineStore('diagram', () => {
 
   async function loadFromServer() {
   try {
-    const json = await fetch('http://localhost:3000/api/diagram').then(r => r.json())
+    const json = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/diagram').then(r => r.json())
 
     nodes.value = json.nodes || []
     edges.value = json.edges || []
@@ -33,7 +34,7 @@ export const useDiagramStore  = defineStore('diagram', () => {
 
   async function saveToServer() {
     try {
-      const res = await fetch('http://localhost:3000/api/diagram', {
+      const res = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/diagram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
