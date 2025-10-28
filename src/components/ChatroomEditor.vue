@@ -135,6 +135,7 @@ const outlineText = ref('')
 const hopeText = ref('')
 const outlineArray = ref([])
 const result = ref("")
+const resultArray = ref([])
 
 const finishedRatio = computed(() => {
   const nodes = diagramSimulator.nodes || []
@@ -352,6 +353,7 @@ async function spawnReport(){
     const data = await res.json()
     if (data.success) {
       console.log("評估結果:", data.resultArray)
+      resultArray.value = data.resultArray
       result.value = ""
       for(const now of data.resultArray){
         result.value += `
@@ -372,6 +374,16 @@ async function spawnReport(){
 }
 
 async function improve(){
+  console.log("!!!!!!!!!!!!! " + JSON.stringify(resultArray.value))
+  if(resultArray.value){
+    const res = await fetch('http://localhost:3000/api/improve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resultArray: resultArray.value})
+    })
+    const data = await res.json()
+    result.value = data.result
+  }
 
 }
 

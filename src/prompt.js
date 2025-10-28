@@ -317,6 +317,9 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     - ${nextNode.data.label}：${nextNode.data.label_then}
 
     請根據這些情況及教師對於新主題的需求，來決定學生在新主題中具體要討論的「主題」與「討論目標」。
+    生出來的東西是一個明確的討論主題，而不是生成很多討論過程當作主題。
+    生成出來的東西盡量少，請確保是必須必須要討論的、沒有這些討論無法進行的，能合併的盡量合併。
+    生出來的東西請確保他在實際討論時只會有一個討論結果。
     **注意:生成的主題與目標絕對不可以與${target_array}裡的任何目標相似。**
 
     請用以下格式輸出，並完整輸出，不要省略、不用加註解、不用加說明：
@@ -520,6 +523,118 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
     return prompt
 }
 
+export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData, mustMove){
+  const { nextNode, nextNodeID, theme, target } = nextNodeData
+  
+  let student_count = 3
+
+  let currentNode = stateDiagram.currentNode;
+  let currentSmallNode = stateDiagram.currentNodeSmall;
+  let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
+  let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  if(history) history_string = history.join('\n')
+
+    let len = 0
+    for (const memoryNode of stateDiagram.memory.nodesMemory) {
+      for (const smallNode of memoryNode.smallNodes) {
+        pre_summary += `       -${smallNode.summary} \n`
+        len += 1
+      }
+    }
+
+    if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
+
+    let memory_string = pre_summary
+
+    memory_string += `\n以下是使用者在目前議題節點中的歷史對話：${history_string}\n歷史對話結束，請根據目前狀態圖及使用者對話給出回應與判斷：`
+
+    const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
+
+    let diagram_small_node_prompt = ""
+    let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
+    let currentSmallNodes = null
+    if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
+    let currentSmallNodeObj = []
+
+    if(currentSmallNodes){
+      currentSmallNodeObj = currentSmallNodes.find(n => n.id === currentSmallNode)
+
+      diagram_small_node_prompt += `
+      - 目前所在小節點與目標
+      `
+
+      if(currentSmallNode != "null") diagram_small_node_prompt += `  - **(重要)** ${currentSmallNodeObj.target}\n`
+      else {
+        diagram_small_node_prompt += ` - 目前不在任何小節點當中\n`
+      }
+    }
+    else diagram_small_node_prompt = `- 此大節點內部沒有小節點\n`
+
+    let prompt = `
+    ${headerPrompt}
+
+    以下是目前所在大節點的描述，以及所在的內部小節點，請根據此描述做出行動：
+    - 大節點名稱： ${currentNodeObj.data.label}
+    - 大節點ID：  ${currentNode}
+    - 大節點目標：${currentNodeObj.data?.label_then || ""}
+    ${diagram_small_node_prompt}
+
+    你可以根據目前聊天室狀態來判斷是否說話
+    ${memory_string}
+
+    - 如果聊天室都沒什麼使用者在對話，可以引導使用者進行目前節點上的目標，如果還是沒有使用者回應，則可以停止回應，等待使用者發話
+    - 如果目前主持人還沒提供小節點內的目標，請簡略說明引導使用者討論
+    - 主要是由使用者之間進行對話，請不要太頻繁發話
+    - 請盡量不要介入使用者之間的對話，除非使用者有很明確的疑問或是詢問主持人
+    `
+
+    let prompt_moveNode = ``
+    let prompt_nextReply = ``
+    let prompt_summary = ``
+    
+    if(mustMove){
+      prompt_moveNode = `
+        - 下一個要轉移的節點主題是：${theme}
+        - 要達成的目標是：${target}
+        - 請根據以上資訊給出進入下個節點時的開場話作為 "nextReply"，不需要提到目前已完成xx議題，直接提下一個主題就好
+      `
+      prompt_nextReply = `// 請根據前面提到的資訊填寫此欄位`
+      prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
+    }
+    else {
+      prompt_nextReply = `// 請留空`
+      prompt_summary = `// 請留空`
+    }
+    
+    // ** 特判 **
+    if(stateDiagram.currentNode === "start") prompt_nextReply = `// 請留空`
+
+    prompt += `
+    ${prompt_moveNode}
+
+    請只輸出**合法且唯一的 JSON**，不要任何多餘文字、註解、markdown。
+    JSON 結構如下：
+
+    {
+      "reply": "<string 或 null>",  // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
+      "reply_voting": "<string 或 null> // 請留空"
+      "nextReply": "<string 或 null>" ${prompt_nextReply}
+      "summary": "<string 或 null>", ${prompt_summary}
+      "why":   "<string>"         // 給出以上回應的理由，或是summary這麼寫的理由
+    }
+
+    請確保 key 都存在，不要多 key，不要少 key。
+    `
+
+  //   appendTeacherPromptLog({
+  //   prompt
+  // })
+    if(DEBUG_CONFIG.consoleLogTeacherPrompt){
+      console.log('prompt : ' + prompt)
+    }
+    return prompt
+}
+
 export function prompt_ask(selectedNode, history, latest_msg){
   let prompt = `${headerPrompt}
     現在教師正在設計狀態圖的某個大節點，教師已將該節點目標設計完成，但仍需完善該節點細節，你需要根據教師
@@ -641,6 +756,9 @@ export function prompt_student(stateDiagram, history, student_profile){
     if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
     pre_summary += `請你們不要重複討論這些內容，請根據Host的指示討論議題 \n`
 
+  let prompt_target = `以下是學生(你們)在這個討論的目標：\n`
+  prompt_target += stateDiagram.memory.nodesMemory.find(n => n.id === stateDiagram.currentNode).smallNodes.find(n => n.id === stateDiagram.currentNodeSmall).target
+  prompt_target += '\n'
   if(history) history_string = history.join('\n')
 
   if (LLM_CONFIG.custom_memory) {
@@ -663,6 +781,8 @@ ${socialBlock}
 ${student_profile.profile}
 
 ${pre_summary}
+
+${prompt_target}
 
 ${memory_string}
 
@@ -816,6 +936,26 @@ export function prompt_evaluate(diagramSimulator, outline, history, hoping){
     prompt.push(_prompt)
   }
 
+  return prompt
+}
+
+export function prompt_improve(outline, resultArray){
+  let prompt_suggestion = ``
+  for(const sug of resultArray){
+    prompt_suggestion += `
+    ${sug.suggestion}
+
+    `
+  }
+  let prompt = `
+    以下是老師提供的大綱：
+    ${outline}
+
+    以及先前LLM給出的建議：
+    ${prompt_suggestion}
+
+    請依照以上建議回傳修改後的大綱，(**重要**字數不要和原本大綱差太多，小修就好)，請回傳字串
+  `
   return prompt
 }
 

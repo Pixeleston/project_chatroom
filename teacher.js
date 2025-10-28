@@ -4,7 +4,7 @@ import fetch from 'node-fetch'
 import { encoding_for_model } from '@dqbd/tiktoken'
 import { LLM_CONFIG } from './src/config.js'
 import { SIMULATOR_CONFIG, REAL_CONFIG } from './src/config.js'
-import { prompt_teacher, prompt_decide_small_part, prompt_double_check } from './src/prompt.js'
+import { prompt_teacher, prompt_teacher_real, prompt_decide_small_part, prompt_double_check } from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 
 const headerPrompt = [
@@ -46,7 +46,7 @@ async function double_check(diagram, replyText, hostMemory){
 
 export async function decide_small_part(diagram, nextNodeID){  // 依照nextNodeID的教師prompt
     let prompt = prompt_decide_small_part(diagram, nextNodeID)
-    let llmReply = await callLLM("gpt-4o", prompt, "[decide_small_part()]");
+    let llmReply = await callLLM("gpt-5", prompt, "[decide_small_part()]");
     //console.log("========== llmReply ==========");
     //console.log(llmReply);
     //console.log("========== llmReply ==========");
@@ -359,12 +359,12 @@ export async function teacher_action_real(stateDiagram, hostMemory){
   let { nextNodeData, mustMove } = findNextNode(stateDiagram)
   if(votingPass) mustMove = true  // 投票成功強制轉移
 
-  let prompt = prompt_teacher_real(stateDiagram, targets, hostMemory, student_profile, nextNodeData, mustMove)
+  let prompt = prompt_teacher_real(stateDiagram, targets, hostMemory, nextNodeData, mustMove)
   //const stop = ["}"]
-    let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher]");
+    let llmReply = await callLLM("gpt-4o", prompt, "[prompt_teacher_real]");
     console.log("teachers reply : " + llmReply)
 
-    if(!llmReply) return {replyMsg:null, newStateDiagram:null, nextReplyMsg:null, actionSuccess:false, moveNodeSuccess:false, startVoting:false}
+    if(!llmReply) return {replyMsg:null, newStateDiagram:null, nextReplyMsg:null, actionSuccess:false, moveNodeSuccess:false}
     
     const cleanedReply = llmReply.replace(/^```json\s*|\s*```$/g, "");
     
@@ -378,11 +378,6 @@ export async function teacher_action_real(stateDiagram, hostMemory){
 
   //let replyText = (result.reply ?? null); //result.reply_voting ?? (result.reply ?? null);
   //let nextReplyMsg = (result.nextReply ?? null);
-  let startVoting = false;
-  if (result.reply_voting && result.reply_voting !== 'null'){
-    startVoting = true;
-    result.reply = result.reply_voting // 這裡可以決定是否用reply_voting 來當作主持人回應
-  }
   
   let replyText = (result.reply ?? null);
   const nextNode = nextNodeData.nextNode;   // small big stay
@@ -400,27 +395,25 @@ export async function teacher_action_real(stateDiagram, hostMemory){
   }
 
   if(stateDiagram.currentNodeSmall === "null" || stateDiagram.currentNode === "start"){  // 特例，直接轉移節點
-    startVoting = false; // 這種情況下不須開啟進入投票階段
     const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
     if(moveNodeSuccess) {
-      return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+      return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess }
     }
     else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
       actionSuccess = false;
-      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess }
     }
   }
   else if(stateDiagram.voting){ // 如果正在投票，那就看是否通過，沒通過就只需回傳replyMsg等，並回傳startVoting=false
-    startVoting = false; // 這種情況下不須開啟進入投票階段
 
     if(votingPass){
       const { stateDiagram: newStateDiagram, moveNodeSuccess} = await moveNode_action(stateDiagram, nextNode, nextNodeID, summary, why)
       if(moveNodeSuccess) {
-        return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+        return { replyMsg, stateDiagram: newStateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess }
       }
       else {  // 在這種情況下，如果沒轉移成功則必定失敗 (actionSuccess = false)
         actionSuccess = false;
-        return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess, startVoting }
+        return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess }
       }
     }
     else {
@@ -428,15 +421,14 @@ export async function teacher_action_real(stateDiagram, hostMemory){
       // host 再次自我確認是否應該說話
       replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
 
-      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
+      return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false}
     }
   }
   else {  // 沒在投票，不可能轉移節點
 
     // host 再次自我確認是否應該說話
-    if(!startVoting) replyMsg = double_check_text(stateDiagram, hostMemory, replyMsg, replyText, nextNode)
 
     // startVoting = ???; // 唯一可能開啟進入投票階段的情況
-    return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false, startVoting}
+    return { replyMsg, stateDiagram: stateDiagram, nextReplyMsg, actionSuccess, moveNodeSuccess: false}
   }
 }

@@ -34,44 +34,51 @@ async function extractOutline(outline){
   return { nodeArray, success }
 }
 
-async function extractDetail(outline, nodeArray){
-  const prompt = extractDetailPrompt(outline, nodeArray)
-  let _result = await callLLM('gpt-4o', prompt, "[extractDetail()]")
-  _result = _result.replace(/^```json\s*|\s*```$/g, "");
-  let result
+async function extractDetail(outline, nodeArray) {
+  const prompts = extractDetailPrompt(outline, nodeArray);
+
+  let result = {
+    start: "",
+    array: []
+  };
+
   try {
-    result = JSON.parse(_result.trim())
-  }
-  catch(err){
-    console.error("解析失敗:", err, "回傳的json:", _result)
-  }
-  console.log(result)
+    // 取得開場白（第 0 個 prompt）
+    let startResult = await callLLM('gpt-4o', prompts[0], "[extractDetail() start]");
+    result.start = startResult?.trim() || "";
 
-  const detailArray = result.array || []
-  const start = result.start
+    // 逐步取得每個節點細節
+    for (let i = 1; i < prompts.length; i++) {
+      const _result = await callLLM('gpt-4o', prompts[i], `[extractDetail() step ${i}]`);
+      result.array.push(_result?.trim() || "");
+    }
 
-  if (!detailArray) {
-    console.error("找不到陣列格式:", raw)
-    return { nodeArray: [], success: false }
+  } catch (err) {
+    console.error("❌ 解析失敗:", err);
   }
-  
-  let success = true
+
+  console.log("✅ extractDetail 結果:", result);
+
+  let detailArray = result.array || [];
+  const start = result.start;
+  let success = true;
+
   try {
     if (!Array.isArray(detailArray)) {
-      throw new Error("回傳不是陣列")
+      throw new Error("回傳不是陣列");
     }
   } catch (err) {
-    console.error("解析失敗:", err, "原始輸出:", result)
-    detailArray = []
-    success = false
-  }
-  if(detailArray.length !== nodeArray.length){
-    console.error(detailArray.length + " " + nodeArray.length);
-    console.error("細節陣列長度與流程陣列長度不符")
+    console.error("❌ 解析失敗:", err, "原始輸出:", result);
+    detailArray = [];
     success = false;
   }
 
-  return { start, detailArray, success }
+  if (detailArray.length !== nodeArray.length) {
+    console.error(`❌ 細節陣列長度 (${detailArray.length}) 與流程陣列長度 (${nodeArray.length}) 不符`);
+    success = false;
+  }
+
+  return { start, detailArray, success };
 }
 
 export async function spawnDiagram(outline){
