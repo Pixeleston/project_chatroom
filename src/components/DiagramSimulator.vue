@@ -24,6 +24,7 @@ socket.onmessage = (event) => {
     diagramSimulator.voting = data.diagram.voting
     diagramSimulator.voting_array = data.diagram.voting_array
     diagramSimulator.memory = data.diagram.memory
+    diagramSimulator.outline = data.diagram.outline
     diagramSimulator.currentNodeSmall = data.diagram.currentNodeSmall
   }
 }
@@ -93,9 +94,17 @@ async function onFileSelected (event) {
         diagramSimulator.voting = data.voting
         diagramSimulator.memory = data.memory;
         diagramSimulator.hoping = data.hoping;
+        diagramSimulator.outline = data.outline;
         diagramSimulator.currentNodeSmall = data.currentNodeSmall;
         console.log('✅ 匯入成功')
         await diagramSimulator.saveToServer()
+        
+        const res = await fetch('http://localhost:3000/api/restartSimulator', {
+          method: 'POST',
+        })
+        const json = await res.json()
+
+
         alert('✅ 已儲存到伺服器')
       } else {
         alert('❌ 格式錯誤，需包含 nodes 和 edges')

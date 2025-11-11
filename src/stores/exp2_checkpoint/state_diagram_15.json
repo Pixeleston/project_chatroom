@@ -1,0 +1,466 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "dimensions": {
+        "width": 300,
+        "height": 322
+      },
+      "computedPosition": {
+        "x": 50,
+        "y": 50,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "start",
+            "position": "bottom",
+            "x": 146.9998024686194,
+            "y": 318.9995241733862,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "start",
+            "position": "top",
+            "x": 146.9998024686194,
+            "y": -2.999978618832702,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "哈囉大家好，我是這次討論的AI主持人，今天我們要一起探討並創建一個AI排程APP，目標是幫助不太會分配時間的大學生高效管理時間。首先，我們將繪製使用者旅程地圖，找出當前流程中的痛點或低效率之處，並標示出AI可以介入的節點，例如：預測、生成、推薦或自動化等，讓我們一起展開這次有趣且具挑戰性的討論吧！",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "node-1761789249454-6",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 327
+      },
+      "computedPosition": {
+        "x": 49.79661220111723,
+        "y": 400.6777459553507,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "node-1761789249454-6",
+            "position": "bottom",
+            "x": 147.0000737404179,
+            "y": 324.00019868910135,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "node-1761789249454-6",
+            "position": "top",
+            "x": 147.0000737404179,
+            "y": -2.999980959906077,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 49.79661220111723,
+        "y": 400.6777459553507
+      },
+      "data": {
+        "label": "繪製現有使用者旅程地圖",
+        "label_then": "明確了解AI自動化在排程應用中的可行性，繪製完整的使用者旅程地圖，特別針對大學生時間管理中的痛點和低效率問題；標示出AI可介入的節點，並討論各步驟如何通過AI進行預測、生成、推薦或自動化處理，確保每位成員都充分理解重點，避免討論分散。",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 190
+      },
+      "computedPosition": {
+        "x": 49.572682219209355,
+        "y": 771.4850179784299,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "end",
+            "position": "bottom",
+            "x": 147.00000762939453,
+            "y": 187,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "end",
+            "position": "top",
+            "x": 147.00000762939453,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 49.572682219209355,
+        "y": 771.4850179784299
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      },
+      "events": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1761789249454-6",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "events": {},
+      "label": "",
+      "sourceNode": {
+        "id": "start",
+        "type": "start",
+        "dimensions": {
+          "width": 300,
+          "height": 322
+        },
+        "computedPosition": {
+          "x": 50,
+          "y": 50,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "start",
+              "position": "bottom",
+              "x": 146.9998024686194,
+              "y": 318.9995241733862,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "start",
+              "position": "top",
+              "x": 146.9998024686194,
+              "y": -2.999978618832702,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "label": "start",
+          "label_then": "哈囉大家好，我是這次討論的AI主持人，今天我們要一起探討並創建一個AI排程APP，目標是幫助不太會分配時間的大學生高效管理時間。首先，我們將繪製使用者旅程地圖，找出當前流程中的痛點或低效率之處，並標示出AI可以介入的節點，例如：預測、生成、推薦或自動化等，讓我們一起展開這次有趣且具挑戰性的討論吧！",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "targetNode": {
+        "id": "node-1761789249454-6",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 327
+        },
+        "computedPosition": {
+          "x": 49.79661220111723,
+          "y": 400.6777459553507,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "node-1761789249454-6",
+              "position": "bottom",
+              "x": 147.0000737404179,
+              "y": 324.00019868910135,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "node-1761789249454-6",
+              "position": "top",
+              "x": 147.0000737404179,
+              "y": -2.999980959906077,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 49.79661220111723,
+          "y": 400.6777459553507
+        },
+        "data": {
+          "label": "繪製現有使用者旅程地圖",
+          "label_then": "明確了解AI自動化在排程應用中的可行性，繪製完整的使用者旅程地圖，特別針對大學生時間管理中的痛點和低效率問題；標示出AI可介入的節點，並討論各步驟如何通過AI進行預測、生成、推薦或自動化處理，確保每位成員都充分理解重點，避免討論分散。",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "sourceX": 199.9998024686194,
+      "sourceY": 374.9995241733862,
+      "targetX": 199.79668594153512,
+      "targetY": 397.67776499544465
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "node-1761789249454-6",
+      "target": "end",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "events": {},
+      "label": "",
+      "sourceNode": {
+        "id": "node-1761789249454-6",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 327
+        },
+        "computedPosition": {
+          "x": 49.79661220111723,
+          "y": 400.6777459553507,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "node-1761789249454-6",
+              "position": "bottom",
+              "x": 147.0000737404179,
+              "y": 324.00019868910135,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "node-1761789249454-6",
+              "position": "top",
+              "x": 147.0000737404179,
+              "y": -2.999980959906077,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 49.79661220111723,
+          "y": 400.6777459553507
+        },
+        "data": {
+          "label": "繪製現有使用者旅程地圖",
+          "label_then": "明確了解AI自動化在排程應用中的可行性，繪製完整的使用者旅程地圖，特別針對大學生時間管理中的痛點和低效率問題；標示出AI可介入的節點，並討論各步驟如何通過AI進行預測、生成、推薦或自動化處理，確保每位成員都充分理解重點，避免討論分散。",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "targetNode": {
+        "id": "end",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 190
+        },
+        "computedPosition": {
+          "x": 49.572682219209355,
+          "y": 771.4850179784299,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "end",
+              "position": "bottom",
+              "x": 147.00000762939453,
+              "y": 187,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "end",
+              "position": "top",
+              "x": 147.00000762939453,
+              "y": -3,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 49.572682219209355,
+          "y": 771.4850179784299
+        },
+        "data": {
+          "label": "討論結束",
+          "label_then": "討論結束",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "sourceX": 199.79668594153512,
+      "sourceY": 730.677944644452,
+      "targetX": 199.5726898486039,
+      "targetY": 768.4850179784299
+    }
+  ],
+  "currentNode": "end",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": [
+      {
+        "id": "node-1761789249454-6",
+        "label": "繪製現有使用者旅程地圖",
+        "smallNodes": [
+          {
+            "id": "node-1761806787572-0",
+            "theme": "大學生時間管理使用者旅程地圖定義",
+            "target": "在單一共識版本中產出從『接收任務/課表』→『蒐集限制與偏好』→『初步排程』→『衝突與變更處理』→『執行與提醒』→『事後回饋與學習』的完整旅程階段、關鍵行為、接觸點與痛點清單，並以一條主路徑與必要分支呈現，避免多版本分歧",
+            "summary": "目前在小節點中的討論總結如下：\n\n參與者們就「智能預測功能」的風險與可行性進行了討論，其中 b 支持該功能，認為它可以幫助用戶設定初始條件和減輕負擔，並建議先收集用戶資料以設計模型；而 c 表達對風險的擔憂，建議應專注於改善初步排程的自動化處理。a 同意 c 的觀點，認為應該先列出需要優化的排程步驟，再研究自動化的實現方式。最終，成員們達成共識，決定繼續探討初步排程自動化的重要性和具體步驟。",
+            "finish": true
+          },
+          {
+            "id": "node-1761806787572-1",
+            "theme": "痛點與低效率問題歸納與量化",
+            "target": "對每個旅程階段列出前三大痛點與其可量化指標（如衝突率、排程耗時、遲到/漏交比例、變更頻率、分心時長），以單一矩陣排序嚴重度與影響面，形成一致優先級",
+            "summary": "參與者們討論了AI在大學生時間管理中的應用，尤其是針對排程自動化與智能預測功能的可行性和風險。b 建議先從預測和推薦功能入手，認為可以幫助用戶減輕負擔，而 c 和 a 聚焦於排程自動化的重要性，主張應優先改善初步排程步驟。成員們最終達成共識，決定專注探索初步排程自動化的具體步驟，以提升用戶體驗。",
+            "finish": true
+          },
+          {
+            "id": "node-1761806787572-2",
+            "theme": "AI介入節點標註與能力對應",
+            "target": "在旅程圖上以單一版本標註AI可介入節點，並為每節點明確對應一種主要AI能力（預測/生成/推薦/自動化）及其輸入、處理、輸出與責任邊界，避免重疊或遺漏",
+            "summary": "參與者們一致認為自動化功能對於行程規劃階段的優化至關重要，尤其能節省時間。a 和 b 認為通過自動化功能可以根據用戶的過往數據智能生成建議行程，有助於劃分責任邊界並明確數據輸入範疇。最終，他們達成共識，認可初步排程自動化的重要性，並進一步討論其實現細節。",
+            "finish": true
+          },
+          {
+            "id": "node-1761806787572-3",
+            "theme": "AI可行性與資料需求評估",
+            "target": "針對每個AI節點，統一定義所需資料來源（行事曆、課表、任務描述、地點、偏好）、資料品質門檻、模型/規則的可行性等級、隱私與同意要求、離線替代方案，輸出單一可行性等級表",
+            "summary": "參與者們圍繞大學生時間管理中AI自動化應用的可行性展開討論，主要專注於如何優化排程初步步驟和識別可供AI介入的節點。他們對於從學生課表和行事曆中收集數據的隱私問題表示關注，並達成共識認為應探索其他時間管理工具作為數據來源。成員一致同意優化排程自動化的初步步驟至關重要，並就資料隱私和時間管理工具的潛在應用做了進一步深入探討，為後續分析指明了方向。",
+            "finish": true
+          },
+          {
+            "id": "node-1761806787572-4",
+            "theme": "最小可行解（MVP）情境路徑選定",
+            "target": "基於痛點優先級與可行性，鎖定一條端到端MVP使用情境（含觸發條件、AI介入步驟、成功衡量指標），產出唯一MVP路徑與驗證指標集合，作為後續設計與開發依據",
+            "summary": "目前討論的總結如下：參與者們一直把焦點集中在「初步排程自動化」的重要性上，大家一致認為自動化功能能有效優化行程規劃的流程，節省時間。成員們討論如何平衡大學生的課業壓力和社交活動，並提出可以從課業壓力入手，使時間分配更高效。c 建議從大學生日常的痛點出發，尋找最需要優化的地方，而 a 也認為 AI 可以協助平衡不同角色的時間分配。最終，他們達成共識，優先探索初步排程自動化的步驟。",
+            "finish": true
+          }
+        ]
+      }
+    ]
+  },
+  "outline": "軟體設計實驗課Final Project\n\n繪製使用者旅程地圖（User Journey Map）\n  族群是大學生，因為有很多課要讀然後不太會分配時間，所以想設計一個AI的排程APP\n　描繪使用者完成任務的全流程，特別標示 AI 可介入的節點：\n　- 現有流程中的痛點或低效率處；\n　- 哪些步驟可以由 AI 預測、生成、推薦或自動化。\n"
+}

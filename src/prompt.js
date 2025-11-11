@@ -1,7 +1,7 @@
 // npm install node-fetch
 import { LLM_CONFIG } from './config.js'
 import { DEBUG_CONFIG } from './config.js'
-import { SIMULATOR_CONFIG } from './config.js'
+import { SIMULATOR_CONFIG, REAL_CONFIG } from './config.js'
 import { callLLM } from './callLLM.js'
 import fs from 'fs'
 
@@ -317,6 +317,7 @@ export function prompt_decide_small_part(diagram, nextNodeID){  // 依照nextNod
     - ${nextNode.data.label}：${nextNode.data.label_then}
 
     請根據這些情況及教師對於新主題的需求，來決定學生在新主題中具體要討論的「主題」與「討論目標」。
+    生成出來的討論目標們的描述盡量具體，一定要完整闡述${nextNode.data.label_then}的要求。
     生出來的東西是一個明確的討論主題，而不是生成很多討論過程當作主題。
     生成出來的東西盡量少，請確保是必須必須要討論的、沒有這些討論無法進行的，能合併的盡量合併。
     生出來的東西請確保他在實際討論時只會有一個討論結果。
@@ -367,6 +368,8 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
   // console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
   // console.log(student_information_prompt)
   // console.log(history)
+
+  history = history.slice(-(SIMULATOR_CONFIG.HISTORY_MESSAGE_COUNT))
   
   let currentNode = stateDiagram.currentNode;
   let currentSmallNode = stateDiagram.currentNodeSmall;
@@ -381,6 +384,8 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
         len += 1
       }
     }
+
+    
 
     if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
 
@@ -429,40 +434,10 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
     - 主要是由使用者之間進行對話，請不要太頻繁發話
     - 請盡量不要介入使用者之間的對話，除非使用者有很明確的疑問或是詢問主持人
     `
-    
-    // let prompt_voting = ``
-    // let prompt_voting2 = ``
-    // if(stateDiagram.voting){
-    //   // 統計已同意的人數和聊天室人數比例，若同意的人>=一半則直接轉移
-    //   // 如果要更改比例可以從這邊修改
-    //   let student_count = student_profile.length
-    //   let votingPass = false
-    //   if(stateDiagram.voting_array.length >= student_count * SIMULATOR_CONFIG.votingRatio){
-    //     votingPass = true
-    //   }
-    //   if(votingPass){
-    //     prompt_voting += `
-    // - **(重要)** 大多數使用者都已投票同意轉移節點，請轉移節點並總結使用者在此小節點做的事情寫入summary
-    // - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
-    // - **(重要)** 請轉移節點並總結使用者在此小節點做的事情寫入summary
-    //     `
-    //   }
-    //   else {
-    //     prompt_voting += `
-    // - **(重要)** 使用者尚未達成共識同意轉移節點，請不要轉移節點，
-    //     `
-    //   }
-    // }
-    // else {
-    //   prompt_voting += `
-    //   - 若判斷聊天室中的使用者已完成目前的小節點目標，並且超過一半的使用者對於同一個主題都取得共識之後，請詢問使用者是否要進入下一個小節點，並進入投票環節
-    //   - 如果要進入投票環節，則只需要輸出reply_voting、why就好
-    //   `
-    // }
 
     let prompt_moveNode = ``
     let prompt_nextReply = ``
-    let prompt_summary = ``
+    //let prompt_summary = ``
     let prompt_reply_voting = ``
     
     if(mustMove){
@@ -472,11 +447,11 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
         - 請根據以上資訊給出進入下個節點時的開場話作為 "nextReply"，不需要提到目前已完成xx議題，直接提下一個主題就好
       `
       prompt_nextReply = `// 請根據前面提到的資訊填寫此欄位`
-      prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
+    //  prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
     }
     else {
       prompt_nextReply = `// 請留空`
-      prompt_summary = `// 請留空`
+    //  prompt_summary = `// 請留空`
     }
     
     // ** 特判 **
@@ -507,8 +482,7 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
       "reply": "<string 或 null>",  // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
       "reply_voting": "<string 或 null>" ${prompt_reply_voting}
       "nextReply": "<string 或 null>" ${prompt_nextReply}
-      "summary": "<string 或 null>", ${prompt_summary}
-      "why":   "<string>"         // 給出以上回應的理由，或是summary這麼寫的理由
+      "why":   "<string>"         // 給出以上回應的理由
     }
 
     請確保 key 都存在，不要多 key，不要少 key。
@@ -523,6 +497,65 @@ export function prompt_teacher(stateDiagram, targets, history, student_profile, 
     return prompt
 }
 
+export function prompt_teacher_summary(stateDiagram, history){
+
+  let currentNode = stateDiagram.currentNode;
+  let currentSmallNode = stateDiagram.currentNodeSmall;
+  let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
+  let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  history = history.slice(-(SIMULATOR_CONFIG.SUMMARY_MESSAGE_COUNT))
+  if(history) history_string = history.join('\n')
+
+    let len = 0
+    for (const memoryNode of stateDiagram.memory.nodesMemory) {
+      for (const smallNode of memoryNode.smallNodes) {
+        pre_summary += `       -${smallNode.summary} \n`
+        len += 1
+      }
+    }
+
+    if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
+
+    let memory_string = pre_summary
+
+    memory_string += `\n以下是使用者在目前議題節點中的歷史對話：${history_string}\n歷史對話結束，請將使用者在目前議題小節點中的對話總結，請輸出字串：`
+
+    const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
+
+    let diagram_small_node_prompt = ""
+    let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
+    let currentSmallNodes = null
+    if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
+    let currentSmallNodeObj = []
+
+    if(currentSmallNodes){
+      currentSmallNodeObj = currentSmallNodes.find(n => n.id === currentSmallNode)
+
+      diagram_small_node_prompt += `
+      - 目前所在小節點與目標
+      `
+
+      if(currentSmallNode != "null") diagram_small_node_prompt += `  - **(重要)** ${currentSmallNodeObj.target}\n`
+    }
+
+    let prompt = `
+    ${headerPrompt}
+
+    以下是目前所在大節點的描述，以及所在的內部小節點：
+    - 大節點名稱： ${currentNodeObj.data.label}
+    - 大節點ID：  ${currentNode}
+    - 大節點目標：${currentNodeObj.data?.label_then || ""}
+    ${diagram_small_node_prompt}
+
+    ${memory_string}
+
+    `
+    if(DEBUG_CONFIG.consoleLogTeacherPrompt){
+      console.log('teacher summary prompt : ' + prompt)
+    }
+    return prompt
+}
+
 export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData, mustMove){
   const { nextNode, nextNodeID, theme, target } = nextNodeData
   
@@ -532,6 +565,7 @@ export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData
   let currentSmallNode = stateDiagram.currentNodeSmall;
   let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
   let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  history = history.slice(-(REAL_CONFIG.HISTORY_MESSAGE_COUNT))
   if(history) history_string = history.join('\n')
 
     let len = 0
@@ -590,7 +624,7 @@ export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData
 
     let prompt_moveNode = ``
     let prompt_nextReply = ``
-    let prompt_summary = ``
+    //let prompt_summary = ``
     
     if(mustMove){
       prompt_moveNode = `
@@ -599,11 +633,11 @@ export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData
         - 請根據以上資訊給出進入下個節點時的開場話作為 "nextReply"，不需要提到目前已完成xx議題，直接提下一個主題就好
       `
       prompt_nextReply = `// 請根據前面提到的資訊填寫此欄位`
-      prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
+      //prompt_summary = `// 請給出學生在目前完成的小節點所得出的總結`
     }
     else {
       prompt_nextReply = `// 請留空`
-      prompt_summary = `// 請留空`
+      //prompt_summary = `// 請留空`
     }
     
     // ** 特判 **
@@ -619,8 +653,7 @@ export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData
       "reply": "<string 或 null>",  // 要回給聊天室的文字，若不需發話請用 null，如果剛完成了小節點的目標，可以說一些話像是：「看起來你們完成...的討論了，讓我們進入下一個議題討論吧」
       "reply_voting": "<string 或 null> // 請留空"
       "nextReply": "<string 或 null>" ${prompt_nextReply}
-      "summary": "<string 或 null>", ${prompt_summary}
-      "why":   "<string>"         // 給出以上回應的理由，或是summary這麼寫的理由
+      "why":   "<string>"         // 給出以上回應的理由
     }
 
     請確保 key 都存在，不要多 key，不要少 key。
@@ -631,6 +664,65 @@ export function prompt_teacher_real(stateDiagram, targets, history, nextNodeData
   // })
     if(DEBUG_CONFIG.consoleLogTeacherPrompt){
       console.log('prompt : ' + prompt)
+    }
+    return prompt
+}
+
+export function prompt_teacher_summary_real(stateDiagram, history){
+
+  let currentNode = stateDiagram.currentNode;
+  let currentSmallNode = stateDiagram.currentNodeSmall;
+  let pre_summary = `以下是使用者在聊天室目前為止討論的所有總結：\n`
+  let history_string = "(目前聊天室沒有任何歷史紀錄)"
+  history = history.slice(-(REAL_CONFIG.SUMMARY_MESSAGE_COUNT))
+  if(history) history_string = history.join('\n')
+
+    let len = 0
+    for (const memoryNode of stateDiagram.memory.nodesMemory) {
+      for (const smallNode of memoryNode.smallNodes) {
+        pre_summary += `       -${smallNode.summary} \n`
+        len += 1
+      }
+    }
+
+    if(len === 0) pre_summary += '       -（目前學生沒有討論完任何議題）\n'
+
+    let memory_string = pre_summary
+
+    memory_string += `\n以下是使用者在目前議題節點中的歷史對話：${history_string}\n歷史對話結束，請將使用者在目前議題小節點中的對話總結，請輸出字串：`
+
+    const currentNodeObj = stateDiagram.nodes.find(n => n.id === currentNode)
+
+    let diagram_small_node_prompt = ""
+    let currentNodeInMemory = stateDiagram.memory.nodesMemory.find(n => n.id === currentNode)
+    let currentSmallNodes = null
+    if(currentNodeInMemory) currentSmallNodes = currentNodeInMemory.smallNodes
+    let currentSmallNodeObj = []
+
+    if(currentSmallNodes){
+      currentSmallNodeObj = currentSmallNodes.find(n => n.id === currentSmallNode)
+
+      diagram_small_node_prompt += `
+      - 目前所在小節點與目標
+      `
+
+      if(currentSmallNode != "null") diagram_small_node_prompt += `  - **(重要)** ${currentSmallNodeObj.target}\n`
+    }
+
+    let prompt = `
+    ${headerPrompt}
+
+    以下是目前所在大節點的描述，以及所在的內部小節點：
+    - 大節點名稱： ${currentNodeObj.data.label}
+    - 大節點ID：  ${currentNode}
+    - 大節點目標：${currentNodeObj.data?.label_then || ""}
+    ${diagram_small_node_prompt}
+
+    ${memory_string}
+
+    `
+    if(DEBUG_CONFIG.consoleLogTeacherPrompt){
+      console.log('teacher summary real prompt : ' + prompt)
     }
     return prompt
 }
@@ -814,7 +906,35 @@ ${prompt_voting}
   return prompt
 }
 
+export function prompt_spawn_report_summary(stateDiagram, outline) {
+  const summaries = []
 
+  for (const memoryNode of stateDiagram.memory.nodesMemory || []) {
+    for (const smallNode of memoryNode.smallNodes || []) {
+      if (smallNode.summary?.trim()) {
+        summaries.push({
+          theme: smallNode.theme,
+          summary: smallNode.summary
+        })
+      }
+    }
+  }
+
+  const prompt = `
+  你是一位小組討論觀察者，以下是老師提供的討論大綱：
+  
+  ${outline}
+
+  以及每個討論節點中所產出的「討論總結」：
+
+  ${summaries.map((s, i) => `【${i + 1}. ${s.theme}】\n${s.summary}`).join('\n\n')}
+
+  請你根據上述總結，完整統整最終總結，不須輸出日期、名稱等無關的資訊。
+  請以 "=== END ===" 結尾
+  `
+
+  return prompt
+}
 
 export function prompt_spawn_report(stateDiagram) {
   const summaries = []

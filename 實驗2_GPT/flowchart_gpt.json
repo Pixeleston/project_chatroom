@@ -1,0 +1,124 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_detail": "",
+        "label_then": "大家好，我是聊天室的聊天機器人。這是軟體設計實驗課程的Final Project，這堂課學習到的知識有HTML、CSS、JavaScript、react、firebase、git、cocos creater、typescript等，學生需要利用課堂中學習到的知識，配合其他網路資料和自己的創意，創造出一個專案出來。這個專案可以是任何形式，包括網頁、遊戲等。"
+      }
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 18,
+        "y": 1080
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761674806898",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 616.7925494876224,
+        "y": 340.07795619438025
+      },
+      "data": {
+        "label": "內容設計與範疇定義",
+        "label_then": "這個階段要具體描繪出專案的藍圖，並劃定「必須完成」的界線。\n4. 核心功能 (Core Features)\n•\t功能發想： 列出所有「希望」有的功能。\n•\t定義 MVP (Minimum Viable Product - 最小可行產品)：\no\tMust-Have (必要功能)： 缺少了這個，專案就無法運作或失去核心價值的功能。\no\tShould-Have (加分功能)： 非常重要，但萬一時間不夠可以排在後面的功能。\no\tCould-Have (次要功能)： 很酷，但可以留到未來再做的功能。\no\tWon't-Have (本次不做)： 明確列出這次範圍以外的功能，避免範圍無限擴大。\n•\t使用者流程 (User Flow)： 畫出使用者如何從A點到B點（例如：從「註冊」到「成功發布一則貼文」）。\n5. 技術選型 (Technology Stack)\n•\t前端 (Frontend)： 要用 React 還是 Cocos Creator？或是純 HTML/CSS/JS？\n•\t後端/資料庫 (Backend/Database)： 是否需要資料庫？要用 Firebase 嗎？（例如：儲存使用者資料、遊戲排行榜）\n•\t開發語言： 主要用 JavaScript 還是 TypeScript？\n•\t開發平台： 專案是網頁 (Web) 還是遊戲 (Cocos)？\n6. 美術風格與 UI/UX 設計\n•\t視覺風格 (Art Style)： 決定整體的視覺感受（例如：像素風、扁平化設計 (Flat Design)、擬真風...）。\n•\tUI 設計 (User Interface)： 介面長什麼樣子？（建議快速畫出線框圖 Wireframe）\n•\tUX 設計 (User Experience)： 使用者操作起來是否流暢、直觀？\n\n",
+        "label_detail": null
+      }
+    },
+    {
+      "id": "node-1761674807056",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -347.03692520360346,
+        "y": 370.1782670190393
+      },
+      "data": {
+        "label": "主題確立",
+        "label_then": "這個階段的目標是從模糊的想法，收斂到一個具體、有價值且全隊都同意的專案主題。\n1. 主題決選 (Topic Finalization)\n•\t可行性分析： 考量時間（Final Project 的時程）、技術能力和資源，哪個點子最可行？\n•\t明確定義： 用一句話精確描述專案題目。\no\t範例（差）： \"做一個遊戲。\"\no\t範例（好）： \"開發一款結合校園地圖的 2D 平台解謎遊戲。\"\no\t範例（好）： \"建立一個基於 React 和 Firebase 的二手教科書交換平台。\"\n",
+        "label_detail": null
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1761674807056",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 200,
+      "sourceY": 375,
+      "targetX": -197.03692520360346,
+      "targetY": 367.1782670190393
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "node-1761674807056",
+      "target": "node-1761674806898",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": -197.03692520360346,
+      "sourceY": 896.1782059838831,
+      "targetX": 766.7925829598395,
+      "targetY": 337.07793496627335
+    },
+    {
+      "id": "e3",
+      "type": "default",
+      "source": "node-1761674806898",
+      "target": "end",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 766.7925829598395,
+      "sourceY": 1512.0782203254287,
+      "targetX": 167.99999237060547,
+      "targetY": 1077
+    }
+  ],
+  "position": [
+    0,
+    0
+  ],
+  "zoom": 1,
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "currentNode": "start",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": []
+  },
+  "outline": "🚀 軟體設計實驗 Final Project 討論大綱 \n大節點一：主題確立 (The \"What\" & \"Why\")\n這個階段的目標是從模糊的想法，收斂到一個具體、有價值且全隊都同意的專案主題。\n1. 主題決選 (Topic Finalization)\n•\t可行性分析： 考量時間（Final Project 的時程）、技術能力和資源，哪個點子最可行？\n•\t共識決： 投票或討論，選定一個全體成員都願意投入的主題。\n•\t明確定義： 用一句話精確描述專案題目。\no\t範例（差）： \"做一個遊戲。\"\no\t範例（好）： \"開發一款結合校園地圖的 2D 平台解謎遊戲。\"\no\t範例（好）： \"建立一個基於 React 和 Firebase 的二手教科書交換平台。\"\n________________________________________\n大節點二：內容設計與範疇定義 (The \"How\")\n這個階段要具體描繪出專案的藍圖，並劃定「必須完成」的界線。\n4. 核心功能 (Core Features)\n•\t功能發想： 列出所有「希望」有的功能。\n•\t定義 MVP (Minimum Viable Product - 最小可行產品)：\no\tMust-Have (必要功能)： 缺少了這個，專案就無法運作或失去核心價值的功能。\no\tShould-Have (加分功能)： 非常重要，但萬一時間不夠可以排在後面的功能。\no\tCould-Have (次要功能)： 很酷，但可以留到未來再做的功能。\no\tWon't-Have (本次不做)： 明確列出這次範圍以外的功能，避免範圍無限擴大。\n•\t使用者流程 (User Flow)： 畫出使用者如何從A點到B點（例如：從「註冊」到「成功發布一則貼文」）。\n5. 技術選型 (Technology Stack)\n•\t前端 (Frontend)： 要用 React 還是 Cocos Creator？或是純 HTML/CSS/JS？\n•\t後端/資料庫 (Backend/Database)： 是否需要資料庫？要用 Firebase 嗎？（例如：儲存使用者資料、遊戲排行榜）\n•\t開發語言： 主要用 JavaScript 還是 TypeScript？\n•\t開發平台： 專案是網頁 (Web) 還是遊戲 (Cocos)？\n6. 美術風格與 UI/UX 設計\n•\t視覺風格 (Art Style)： 決定整體的視覺感受（例如：像素風、扁平化設計 (Flat Design)、擬真風...）。\n•\tUI 設計 (User Interface)： 介面長什麼樣子？（建議快速畫出線框圖 Wireframe）\n•\tUX 設計 (User Experience)： 使用者操作起來是否流暢、直觀？\n"
+}

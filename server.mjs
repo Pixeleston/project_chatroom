@@ -7,7 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { teacher_action, teacher_action_real } from './teacher.js'
 import { student_action } from './student.js'
-import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_ask_improve, prompt_evaluate, prompt_improve, rebuildRelationshipBeliefFromNames,
+import { prompt_spawn_example, filterHistory, prompt_spawn_student, prompt_spawn_report, prompt_spawn_report_summary, prompt_ask_improve, prompt_evaluate, prompt_improve, rebuildRelationshipBeliefFromNames,
   updateRelationshipBeliefOnNewStudentData, updateBeliefWithLLM, updateRelationshipWithLLM} from './src/prompt.js'
 import { callLLM } from './src/callLLM.js'
 import { spawnDiagram } from './spawnDiagram.js'
@@ -32,6 +32,7 @@ const STUDENT_PROFILE_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulato
 const REPORT_IMPROVE_FILE = path.join(__dirname, 'src/stores/improve/report.json')
 const REPORT_SIMULATOR_FILE = path.join(__dirname, 'src/stores/simulator/report.json')
 const RELATIONSHIP_BELIEF_FILE = path.join(__dirname, 'src/stores/simulator/relationship_belief.json');
+const EXP2_DIR_FILE = path.join(__dirname, 'src/stores/exp2/');
 
 const INITIAL_SIMULATOR_TOPICS = ['AI應用', '資料庫設計', '前端框架', '專案時程', '使用者體驗', '商業模式'];
 
@@ -69,6 +70,9 @@ app.get('/api/state', (req, res) => {
     currentDiagram = req.body
     history = []
     saveHistory("chatroom")
+
+    broadcastDiagramClear("chatroom")
+
     fs.writeFile(STATE_DIAGRAM_FILE, JSON.stringify(req.body, null, 2), err => {
       if (err) return res.status(500).json({ error: 'state_diagram 寫入失敗' })
       res.json({ message: 'state_diagram 已儲存' })
@@ -499,6 +503,141 @@ app.get('/api/state', (req, res) => {
     }
   });
 
+  app.post('/api/voting', (req, res) => {
+  const { name } = req.body; // 從 body 中解構出 name
+  if (!name) {
+    return res.status(400).json({ success: false, error: '缺少使用者名稱' });
+  }
+  votingQueue.push({ user: name });
+  console.log(`[投票] ${name} 已投票`);
+  res.json({ success: true });
+});
+
+let isRunning = false;
+function waitUntilFalse(variableGetter, interval = 100) {
+  return new Promise(resolve => {
+    const timer = setInterval(() => {
+      if (!variableGetter()) { // 一旦變成 false
+        clearInterval(timer);
+        resolve();
+      }
+    }, interval);
+  });
+}
+  
+  app.get('/api/evaluate_many_times', async (req, res) => {
+    // let report = []
+    // for(let ii = 1; ii <= 20; ii ++){
+    //   const evaluate_json = loadJson(EXP2_DIR_FILE + "result_" + ii + ".json", {})
+    //   const diagram_json = loadJson(EXP2_DIR_FILE + "state_diagram_" + ii + ".json", {})
+
+    //   const prompt = prompt_spawn_report_summary(diagram_json)
+    //   const llmReply = await callLLM('gpt-5', prompt, "[/api/spawnReportSummary]")
+    //   report.push({
+    //     "evaluate": evaluate_json[0],
+    //     "summary": llmReply
+    //   })
+    // }
+    // fs.writeFileSync(EXP2_DIR_FILE + "report.json", JSON.stringify(report, null, 2), 'utf8');
+    
+    for(let ii = 1; ii <= 20; ii ++){
+      try {
+
+        currentDiagramSimulator = loadJson(FLOW_FILE, {})
+
+      historySimulator = [];
+      saveHistory("Simulator");
+    //  currentDiagramSimulator = loadJson(STATE_DIAGRAM_SIMULATOR_FILE, {})
+      if (currentDiagramSimulator) {
+          currentDiagramSimulator.currentNodeSmall = "null";
+          currentDiagramSimulator.currentNode = "start";
+          currentDiagramSimulator.memory = {
+            "currentMemory": "",
+            "nodesMemory": []
+          }
+          currentDiagramSimulator.voting = false;
+          currentDiagramSimulator.voting_array = []
+          saveDiagram(currentDiagramSimulator, "simulator");
+      }
+      console.log('[Restart Simulator] Re-initializing relationship and clearing belief data...');
+
+      // 從硬碟重新讀取最新的學生檔案，確保拿到最新名單
+      const current_student_profile = JSON.parse(fs.readFileSync(STUDENT_PROFILE_SIMULATOR_FILE, 'utf8') || '[]');
+      student_profile = current_student_profile; // 同步更新記憶體中的變數
+      
+      const studentNames = current_student_profile.map(s => s.name);
+
+      if (studentNames.length > 0) {
+          const reinitializedData = rebuildRelationshipBeliefFromNames(
+              studentNames,
+              {
+                  seed: Date.now(),
+                  symmetric: false,
+                  relMin: -1.0,
+                  relMax: 1.0,
+                  // ★★★ 關鍵修改：傳入空陣列，這樣 belief.ideas 就會是空的 {} ★★★
+                  initialIdeas: [] 
+              }
+          );
+          
+          // 覆寫舊檔案
+          ensureDirFor(RELATIONSHIP_BELIEF_FILE);
+          fs.writeFileSync(RELATIONSHIP_BELIEF_FILE, JSON.stringify(reinitializedData, null, 2), 'utf8');
+          console.log(`[Restart Simulator] Successfully re-initialized relationships and cleared beliefs for ${studentNames.length} students.`);
+      } else {
+          // 如果沒有學生，一樣寫入空的檔案
+          fs.writeFileSync(RELATIONSHIP_BELIEF_FILE, JSON.stringify({ members: [] }, null, 2), 'utf8');
+          console.log('[Restart Simulator] No students found. Wrote empty relationship_belief.json.');
+      }
+        
+        // ===== 開始模擬 =====
+        let settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+        settings.RUN_TOGGLE_SIMULATOR = true
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+
+        isRunning = true;
+
+        await waitUntilFalse(() => isRunning);
+
+        fs.writeFileSync(EXP2_DIR_FILE + "state_diagram_" + ii + ".json", JSON.stringify(currentDiagramSimulator, null, 2))
+
+        // evaluate
+        let promptArray = prompt_evaluate(
+          currentDiagramSimulator,
+          currentDiagramSimulator.outline,
+          historySimulator,
+          currentDiagramSimulator.hoping
+        )
+        let resultArray = []
+        for(const prompt of promptArray){
+          let result = await callLLM('gpt-5', prompt, "[/api/evaluate]")
+          result = result.replace(/^```json\s*|\s*```$/g, "");
+          result = JSON.parse(result.trim())
+          console.log("prompt : " + prompt)
+          console.log("result : " + result)
+          resultArray.push(result)
+        }
+        // 存到 REPORT_SIMULATOR_FILE
+        if (!resultArray) {
+          throw new Error("LLM 無回應")
+        }
+
+        fs.writeFileSync(EXP2_DIR_FILE + "result_" + ii + ".json", JSON.stringify(resultArray, null, 2))
+
+        fs.writeFileSync(EXP2_DIR_FILE + "history_" + ii + ".json", JSON.stringify(historySimulator, null, 2), 'utf8');
+
+        settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+        settings.RUN_TOGGLE_SIMULATOR = false
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2))
+
+      }
+      catch (err) {
+        console.log("/api/evaluate 失敗", err)
+        res.status(500).json({ error: '評估失敗' })
+      }
+    }
+  })
+
 const httpServer = app.listen(PORT, () => {
   console.log(`HTTP API listening on http://localhost:${PORT}`)
 })
@@ -598,7 +737,7 @@ const writeJson = (file, data) => {
 }
 
 // ... (後續 WebSocket 邏輯維持原樣，此處省略以保持簡潔) ...
-function broadcastDiagramUpdate(newDiagram, chatroom_type) {
+  function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     const message = JSON.stringify({
       type: 'diagramUpdated',
       chatroom_type: chatroom_type,
@@ -611,6 +750,19 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
       }
     })
   }
+
+function broadcastDiagramClear(chatroom_type){
+  const message = JSON.stringify({
+      type: 'diagramClear',
+      chatroom_type: chatroom_type,
+    })
+  
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message)
+      }
+    })
+}
   
   function saveHistory(chatroom_type) {
     if (chatroom_type === "chatroom") writeJson(HISTORY_FILE, history)
@@ -667,11 +819,26 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   
   async function tick_chatroom() {
     const { LLM_TOGGLE } = (JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')))
+    currentDiagram.voting = true;
     if (LLM_TOGGLE) {
       try {
+
+        if(LLM_TOGGLE && currentDiagram.currentNode === 'end'){  // 關掉並說討論結束
+          let temper_setting = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+          temper_setting.LLM_TOGGLE = false
+          fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
+          let replyMsg = { role: 'host', user: 'Host', text: "討論結束" };
+          sendMessage(currentDiagram, replyMsg, "chatroom")
+          return;
+        }
+
+        let temper_setting = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+        temper_setting.LLM_TOGGLE = false
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
+
         let currentHistory = filterHistory(currentDiagram, history).map(msg => `${msg.user}: ${msg.text}`)
         console.log(currentHistory)
-        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg:nextReply, actionSuccess, moveNodeSuccess} = await teacher_action_real(currentDiagram, currentHistory.slice(-15))
+        const { replyMsg, stateDiagram: newStateDiagram, moveNode, nextReplyMsg:nextReply, actionSuccess, moveNodeSuccess} = await teacher_action_real(currentDiagram, currentHistory)
         
         // if(actionSuccess){
         //   if (replyMsg && replyMsg.text && replyMsg.text !== 'null') {
@@ -703,6 +870,9 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
           }
           saveDiagram(newStateDiagram, "chatroom")
         }
+
+        temper_setting.LLM_TOGGLE = true
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
       } catch (err) {
         console.error('tick_chatroom() failed:', err)
       }
@@ -803,6 +973,7 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
   let lastReplyTime = 0
   let simulatorMessageQueue = []
   let simulatorVotingQueue = []
+  let votingQueue = []
   
   async function sendMessageFromQueue(){
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
@@ -879,16 +1050,61 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
     }
   }
 
+  function updateRealVotingFromQueue(){
+    const { LLM_TOGGLE } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+    if(!LLM_TOGGLE) {
+      votingQueue = []
+      return;
+    }
+    let updateSuccess = false;
+    while(votingQueue.length > 0){
+      updateSuccess = true
+      let voted = false
+      for(const voting of currentDiagram.voting_array){
+        if(voting.user === votingQueue[0].user){
+          voted = true;
+        }
+      }
+      if(!voted) {
+        currentDiagram.voting_array.push(votingQueue[0])
+      }
+      votingQueue.shift()
+    }
+    if(updateSuccess){
+    //  console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+      console.log(currentDiagram.voting_array)
+
+      saveDiagram(currentDiagram, "chatroom")
+    }
+  }
+
   function clearQueue(){
     simulatorMessageQueue = []
   }
   
   setInterval(sendMessageFromQueue, SIMULATOR_CONFIG.processQueueInterval)
   setInterval(updateVotingFromQueue, 1000)
+  setInterval(updateRealVotingFromQueue, 1000)
   
   async function tick_simulator() {
     const { RUN_TOGGLE_SIMULATOR } = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+
+    if(RUN_TOGGLE_SIMULATOR && currentDiagramSimulator.currentNode === 'end'){  // 關掉並說討論結束
+      let temper_setting = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+      temper_setting.RUN_TOGGLE_SIMULATOR = false
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
+      let replyMsg = { role: 'host', user: 'Host', text: "討論結束" };
+      sendMessage(currentDiagramSimulator, replyMsg, "simulator")
+      isRunning = false;
+      return;
+    }
+
     if (RUN_TOGGLE_SIMULATOR && currentDiagramSimulator.currentNode !== 'end') {
+
+      let temper_setting = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+      temper_setting.RUN_TOGGLE_SIMULATOR = false
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
+
       console.log("????????????????????????????")
       console.log(currentDiagramSimulator.currentNode)
       let currentHistory = filterHistory(currentDiagramSimulator, historySimulator).map(msg => `${msg.user}: ${msg.text}`)
@@ -971,6 +1187,11 @@ function broadcastDiagramUpdate(newDiagram, chatroom_type) {
         );
         await Promise.all(studentTasks);
       }
+
+
+      temper_setting.RUN_TOGGLE_SIMULATOR = true
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(temper_setting, null, 2))
+
     }
   }
   

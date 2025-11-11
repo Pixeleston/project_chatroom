@@ -10,7 +10,7 @@ export const useFlowStore  = defineStore('flow', () => {
   const voting_array = ref([])
   const hoping = ref("")
   const selectedNode = ref(null)
-  const memory = ref([])
+  const memory = ref({ currentMemory: "", nodesMemory: [] })
   const outline = ref("")
 
   function setNodes(newNodes) {
@@ -55,7 +55,7 @@ export const useFlowStore  = defineStore('flow', () => {
     voting.value = json.voting || false
     voting_array.value = json.voting_array || []
     hoping.value = json.hoping || ""
-    memory.value = json.memory
+    memory.value = json.memory || { currentMemory: "", nodesMemory: [] }
     outline.value = json.outline
 
     // 若沒有 currentNode，設定並回寫

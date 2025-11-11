@@ -20,9 +20,6 @@
       </div>
       <div v-if="username!=='admin'" class="main-area">
         <div class="main-area">
-          <div class="diagram">
-            <Diagram ref="diagramRef" />
-          </div>
           <div class="chat-area">
             <Chatroom :username="username" />
           </div>

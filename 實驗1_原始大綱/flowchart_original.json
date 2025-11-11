@@ -1,0 +1,124 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "哈囉大家好，我是聊天室的聊天機器人，我們要討論的是如何創造一個Final Project，目標是打造一個融入我們在課堂上學習到的技術的創新專案。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761669305908-0",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -150,
+        "y": 360
+      },
+      "data": {
+        "label": "確認主題",
+        "label_then": "需要討論出具體專案要做甚麼，明確定義出一個題目ex.音樂遊戲，並達成共識。這裡只需要討論主題，不需要討論主題以外的內容。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761669305908-1",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 250,
+        "y": 360
+      },
+      "data": {
+        "label": "討論專案內容",
+        "label_then": "需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 660
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1761669305908-0",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 200,
+      "sourceY": 277,
+      "targetX": 0,
+      "targetY": 357
+    },
+    {
+      "id": "e-2",
+      "type": "default",
+      "source": "node-1761669305908-0",
+      "target": "node-1761669305908-1",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 0,
+      "sourceY": 611,
+      "targetX": 400,
+      "targetY": 357
+    },
+    {
+      "id": "e-3",
+      "type": "default",
+      "source": "node-1761669305908-1",
+      "target": "end",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 400,
+      "sourceY": 611,
+      "targetX": 200,
+      "targetY": 657
+    }
+  ],
+  "position": [
+    199.8541677886418,
+    -10.883607159618663
+  ],
+  "zoom": 0.8705505632961241,
+  "viewport": {
+    "x": 199.8541677886418,
+    "y": -10.883607159618663,
+    "zoom": 0.8705505632961241
+  },
+  "currentNode": "start",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": []
+  },
+  "outline": "整體任務:\n\t這是軟體設計實驗課程的Final Project，這堂課學習到的知識有HTML、CSS、JavaScript、react、firebase、git、cocos creater、typescript等，學生需要利用課堂中學習到的知識，配合其他網路資料和自己的創意，創造出一個專案出來。這個專案可以是任何形式，包括網頁、遊戲等。\n\n必要討論內容(大節點):\n\t分成兩個大節點 討論主題和專案內容\n(1)\t討論主題\n學生需要討論出具體專案要做甚麼，明確定義出一個題目，並達成共識。Ex. 如果要做遊戲，可能就要討論出要做音樂遊戲或其他主題。\n(2)\t專案內容\n學生需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。\nnote: 只要生成討論主題和專案內容兩個大節點就好 不要有其他的"
+}

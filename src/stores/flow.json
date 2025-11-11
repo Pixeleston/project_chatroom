@@ -3,218 +3,72 @@
     {
       "id": "start",
       "type": "start",
-      "dimensions": {
-        "width": 300,
-        "height": 283
-      },
-      "computedPosition": {
-        "x": 50,
-        "y": 50,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "start",
-            "position": "bottom",
-            "x": 147,
-            "y": 280,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "start",
-            "position": "top",
-            "x": 147,
-            "y": -3,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
       "initialized": false,
-      "isParent": false,
       "position": {
         "x": 50,
         "y": 50
       },
       "data": {
         "label": "start",
-        "label_then": "哈囉大家好，我是這次討論的AI主持人，我們將一起進行學生群組的專案討論。今天，我們的目標是詳細探討每個流程步驟，確保大家對於專案的討論方向有明確的了解。希望大家踴躍發言，共同創造一個富有成效的討論氛圍。讓我們開始吧！",
+        "label_then": "哈囉大家好，我是聊天室的AI主持人。在今天的討論中，我們的目標是共同打造一個終於期末的軟體或應用程式。首先，我們會討論出究竟要製作什麼樣的軟體或應用程式；接著，我們會深入討論根據這個主題開發所需的細項；最後，我們將分配各個工作給不同的組員。希望透過這次的協作，我們能創造出一個有趣且實用的產品。讓我們開始討論吧！",
         "label_detail": ""
-      },
-      "events": {}
+      }
     },
     {
-      "id": "node-1761678697110-0",
+      "id": "node-1761846214111-0",
       "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 209
-      },
-      "computedPosition": {
-        "x": -150,
-        "y": 360,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "node-1761678697110-0",
-            "position": "bottom",
-            "x": 147.00002758781588,
-            "y": 205.99996628715022,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "node-1761678697110-0",
-            "position": "top",
-            "x": 147.00002758781588,
-            "y": -3.000025107014319,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
       "initialized": false,
-      "isParent": false,
       "position": {
         "x": -150,
         "y": 360
       },
       "data": {
-        "label": "確認專案主題",
-        "label_then": "確認專案主題，明確定義題目並達成共識。",
+        "label": "討論軟體或應用程式主題",
+        "label_then": "討論出要做甚麼軟體或應用程式，確保每個成員都參與並提出想法，避免討論分散。",
         "label_detail": ""
-      },
-      "events": {}
+      }
     },
     {
-      "id": "node-1761678697110-3",
+      "id": "node-1761846214111-1",
       "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 268
-      },
-      "computedPosition": {
-        "x": 278,
-        "y": 362,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "node-1761678697110-3",
-            "position": "bottom",
-            "x": 147.0000738438115,
-            "y": 264.9999049864846,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "node-1761678697110-3",
-            "position": "top",
-            "x": 147.0000738438115,
-            "y": -2.9999788510187133,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
       "initialized": false,
-      "isParent": false,
       "position": {
-        "x": 278,
-        "y": 362
+        "x": 250,
+        "y": 360
       },
       "data": {
-        "label": "討論專案內容",
-        "label_then": "討論專案內容，學生需要討論在實作專案中的必要內容，並達成共識，可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。",
+        "label": "決定開發所需的細項",
+        "label_then": "決定開發所需的細項。",
         "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761846214111-2",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -150,
+        "y": 660
       },
-      "events": {}
+      "data": {
+        "label": "分配工作給組員",
+        "label_then": "分配工作給組員。",
+        "label_detail": ""
+      }
     },
     {
       "id": "end",
       "type": "direct",
-      "dimensions": {
-        "width": 300,
-        "height": 190
-      },
-      "computedPosition": {
-        "x": 36,
-        "y": 704.0000000000002,
-        "z": 0
-      },
-      "handleBounds": {
-        "source": [
-          {
-            "id": null,
-            "type": "source",
-            "nodeId": "end",
-            "position": "bottom",
-            "x": 147,
-            "y": 187,
-            "width": 6,
-            "height": 6
-          }
-        ],
-        "target": [
-          {
-            "id": null,
-            "type": "target",
-            "nodeId": "end",
-            "position": "top",
-            "x": 147,
-            "y": -3,
-            "width": 6,
-            "height": 6
-          }
-        ]
-      },
-      "selected": false,
-      "dragging": false,
-      "resizing": false,
       "initialized": false,
-      "isParent": false,
       "position": {
-        "x": 36,
-        "y": 704.0000000000002
+        "x": 50,
+        "y": 960
       },
       "data": {
         "label": "討論結束",
         "label_then": "討論結束",
         "label_detail": ""
-      },
-      "events": {}
+      }
     }
   ],
   "edges": [
@@ -222,370 +76,41 @@
       "id": "e-1",
       "type": "default",
       "source": "start",
-      "target": "node-1761678697110-0",
+      "target": "node-1761846214111-0",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "events": {},
-      "label": "",
-      "sourceNode": {
-        "id": "start",
-        "type": "start",
-        "dimensions": {
-          "width": 300,
-          "height": 283
-        },
-        "computedPosition": {
-          "x": 50,
-          "y": 50,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "start",
-              "position": "bottom",
-              "x": 147,
-              "y": 280,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "start",
-              "position": "top",
-              "x": 147,
-              "y": -3,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": 50,
-          "y": 50
-        },
-        "data": {
-          "label": "start",
-          "label_then": "哈囉大家好，我是這次討論的AI主持人，我們將一起進行學生群組的專案討論。今天，我們的目標是詳細探討每個流程步驟，確保大家對於專案的討論方向有明確的了解。希望大家踴躍發言，共同創造一個富有成效的討論氛圍。讓我們開始吧！",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "targetNode": {
-        "id": "node-1761678697110-0",
-        "type": "direct",
-        "dimensions": {
-          "width": 300,
-          "height": 209
-        },
-        "computedPosition": {
-          "x": -150,
-          "y": 360,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "node-1761678697110-0",
-              "position": "bottom",
-              "x": 147.00002758781588,
-              "y": 205.99996628715022,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "node-1761678697110-0",
-              "position": "top",
-              "x": 147.00002758781588,
-              "y": -3.000025107014319,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": -150,
-          "y": 360
-        },
-        "data": {
-          "label": "確認專案主題",
-          "label_then": "確認專案主題，明確定義題目並達成共識。",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "sourceX": 200,
-      "sourceY": 336,
-      "targetX": 0.000027587815878860056,
-      "targetY": 356.9999748929857
+      "label": ""
     },
     {
-      "id": "e2",
+      "id": "e-2",
       "type": "default",
-      "source": "node-1761678697110-0",
-      "target": "node-1761678697110-3",
+      "source": "node-1761846214111-0",
+      "target": "node-1761846214111-1",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "events": {},
-      "label": "",
-      "sourceNode": {
-        "id": "node-1761678697110-0",
-        "type": "direct",
-        "dimensions": {
-          "width": 300,
-          "height": 209
-        },
-        "computedPosition": {
-          "x": -150,
-          "y": 360,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "node-1761678697110-0",
-              "position": "bottom",
-              "x": 147.00002758781588,
-              "y": 205.99996628715022,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "node-1761678697110-0",
-              "position": "top",
-              "x": 147.00002758781588,
-              "y": -3.000025107014319,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": -150,
-          "y": 360
-        },
-        "data": {
-          "label": "確認專案主題",
-          "label_then": "確認專案主題，明確定義題目並達成共識。",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "targetNode": {
-        "id": "node-1761678697110-3",
-        "type": "direct",
-        "dimensions": {
-          "width": 300,
-          "height": 268
-        },
-        "computedPosition": {
-          "x": 278,
-          "y": 362,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "node-1761678697110-3",
-              "position": "bottom",
-              "x": 147.0000738438115,
-              "y": 264.9999049864846,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "node-1761678697110-3",
-              "position": "top",
-              "x": 147.0000738438115,
-              "y": -2.9999788510187133,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": 278,
-          "y": 362
-        },
-        "data": {
-          "label": "討論專案內容",
-          "label_then": "討論專案內容，學生需要討論在實作專案中的必要內容，並達成共識，可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "sourceX": 0.000027587815878860056,
-      "sourceY": 571.9999662871502,
-      "targetX": 428.0000738438115,
-      "targetY": 359.00002114898126
+      "label": ""
     },
     {
-      "id": "e3",
+      "id": "e-3",
       "type": "default",
-      "source": "node-1761678697110-3",
+      "source": "node-1761846214111-1",
+      "target": "node-1761846214111-2",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": ""
+    },
+    {
+      "id": "e-4",
+      "type": "default",
+      "source": "node-1761846214111-2",
       "target": "end",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "events": {},
-      "label": "",
-      "sourceNode": {
-        "id": "node-1761678697110-3",
-        "type": "direct",
-        "dimensions": {
-          "width": 300,
-          "height": 268
-        },
-        "computedPosition": {
-          "x": 278,
-          "y": 362,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "node-1761678697110-3",
-              "position": "bottom",
-              "x": 147.0000738438115,
-              "y": 264.9999049864846,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "node-1761678697110-3",
-              "position": "top",
-              "x": 147.0000738438115,
-              "y": -2.9999788510187133,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": 278,
-          "y": 362
-        },
-        "data": {
-          "label": "討論專案內容",
-          "label_then": "討論專案內容，學生需要討論在實作專案中的必要內容，並達成共識，可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "targetNode": {
-        "id": "end",
-        "type": "direct",
-        "dimensions": {
-          "width": 300,
-          "height": 190
-        },
-        "computedPosition": {
-          "x": 36,
-          "y": 704.0000000000002,
-          "z": 0
-        },
-        "handleBounds": {
-          "source": [
-            {
-              "id": null,
-              "type": "source",
-              "nodeId": "end",
-              "position": "bottom",
-              "x": 147,
-              "y": 187,
-              "width": 6,
-              "height": 6
-            }
-          ],
-          "target": [
-            {
-              "id": null,
-              "type": "target",
-              "nodeId": "end",
-              "position": "top",
-              "x": 147,
-              "y": -3,
-              "width": 6,
-              "height": 6
-            }
-          ]
-        },
-        "selected": false,
-        "dragging": false,
-        "resizing": false,
-        "initialized": false,
-        "isParent": false,
-        "position": {
-          "x": 36,
-          "y": 704.0000000000002
-        },
-        "data": {
-          "label": "討論結束",
-          "label_then": "討論結束",
-          "label_detail": ""
-        },
-        "events": {}
-      },
-      "sourceX": 428.0000738438115,
-      "sourceY": 632.9999049864846,
-      "targetX": 186,
-      "targetY": 701.0000000000002
+      "label": ""
     }
   ],
   "currentNode": "start",
@@ -593,5 +118,9 @@
   "voting": false,
   "voting_array": [],
   "hoping": "",
-  "outline": "整體任務:\n\t這是軟體設計實驗課程的Final Project，這堂課學習到的知識有HTML、CSS、JavaScript、react、firebase、git、cocos creater、typescript等，學生需要利用課堂中學習到的知識，配合其他網路資料和自己的創意，創造出一個專案出來。這個專案可以是任何形式，包括網頁、遊戲等。\n\n必要討論內容(大節點):\n\t分成兩個大節點 討論主題和專案內容\n(1)\t討論主題\n學生需要討論出具體專案要做甚麼，明確定義出一個題目，並達成共識。Ex. 如果要做遊戲，可能就要討論出要做音樂遊戲或其他主題。\n(2)\t專案內容\n學生需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。"
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": []
+  },
+  "outline": "期末Final Project，打造一個軟體供使用者使用\n\n討論主題\n討論出要做甚麼軟體或應用程式\n\n細項討論\n根據之前決定好的主題決定開發所需的細項\n\n分工討論\n將所有工作分給各個組員"
 }

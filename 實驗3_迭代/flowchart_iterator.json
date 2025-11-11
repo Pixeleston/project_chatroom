@@ -1,0 +1,124 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "initialized": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "哈囉大家好，我是聊天室的聊天機器人，這是軟體設計實驗課程的Final Project，學生需要利用課堂中學習到的知識，配合其他網路資料和自己的創意，創造出一個專案出來。這個專案可以是任何形式，包括網頁、遊戲等。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761669305908-0",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -150,
+        "y": 360
+      },
+      "data": {
+        "label": "確認主題",
+        "label_then": "學生需要討論出具體專案要做甚麼，明確定義出一個題目，並達成共識。需輸出一行題目敘述，並明確列出創新要素優先級（Must/Should/Could），以利在主題層完成取捨與範圍邊界。Ex. 如果要做遊戲，可能就要討論出要做音樂遊戲或其他主題。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761669305908-1",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": 250,
+        "y": 360
+      },
+      "data": {
+        "label": "討論專案內容",
+        "label_then": "學生需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。需：1) 定義使用者輪廓與核心使用情境（年齡層、平台/裝置、遊玩時長、可接受難度與互動方式）。2) 明確非功能需求的最小量化集合（如延遲上限、FPS/掉幀率、載入時間、錯誤率、可用性目標）與決策收斂機制。3) 周邊功能的MVP最小清單範例（如設定頁含按鍵映射、判定校正、音量；資料保存含成績、譜面進度、偏好），以避免討論分歧與遺漏。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -14.327107879833946,
+        "y": 794.397707534653
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1761669305908-0",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 200,
+      "sourceY": 316,
+      "targetX": -0.00001866817970608281,
+      "targetY": 357.00002114898126
+    },
+    {
+      "id": "e-2",
+      "type": "default",
+      "source": "node-1761669305908-0",
+      "target": "node-1761669305908-1",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": -0.00001866817970608281,
+      "sourceY": 690.0000287098013,
+      "targetX": 399.9999813318203,
+      "targetY": 357.00002114898126
+    },
+    {
+      "id": "e-3",
+      "type": "default",
+      "source": "node-1761669305908-1",
+      "target": "end",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": "",
+      "sourceX": 399.9999813318203,
+      "sourceY": 807.000036507452,
+      "targetX": 135.6728997495606,
+      "targetY": 791.397707534653
+    }
+  ],
+  "position": [
+    197,
+    -124
+  ],
+  "zoom": 1,
+  "viewport": {
+    "x": 197,
+    "y": -124,
+    "zoom": 1
+  },
+  "currentNode": "start",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": []
+  },
+  "outline": "整體任務:\n這是軟體設計實驗課程的Final Project，這堂課學習到的知識有HTML、CSS、JavaScript、react、firebase、git、cocos creater、typescript等，學生需要利用課堂中學習到的知識，配合其他網路資料和自己的創意，創造出一個專案出來。這個專案可以是任何形式，包括網頁、遊戲等。\n必要討論內容(大節點):\n分成兩個大節點 討論主題和專案內容\n(1) 討論主題\n學生需要討論出具體專案要做甚麼，明確定義出一個題目，並達成共識。需輸出一行題目敘述，並明確列出創新要素優先級（Must/Should/Could），以利在主題層完成取捨與範圍邊界。Ex. 如果要做遊戲，可能就要討論出要做音樂遊戲或其他主題。\n(2) 專案內容\n\n學生需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。需：1) 定義使用者輪廓與核心使用情境（年齡層、平台/裝置、遊玩時長、可接受難度與互動方式）。2) 明確非功能需求的最小量化集合（如延遲上限、FPS/掉幀率、載入時間、錯誤率、可用性目標）與決策收斂機制。3) 周邊功能的MVP最小清單範例（如設定頁含按鍵映射、判定校正、音量；資料保存含成績、譜面進度、偏好），以避免討論分歧與遺漏。"
+}

@@ -10,12 +10,12 @@
       },
       "data": {
         "label": "start",
-        "label_then": "哈囉大家好，我是聊天室的聊天機器人，我們要討論的是如何創造一個Final Project，目標是打造一個融入我們在課堂上學習到的技術的創新專案。",
+        "label_then": "哈囉大家好，我是聊天室的AI主持人。在今天的討論中，我們的目標是共同打造一個終於期末的軟體或應用程式。首先，我們會討論出究竟要製作什麼樣的軟體或應用程式；接著，我們會深入討論根據這個主題開發所需的細項；最後，我們將分配各個工作給不同的組員。希望透過這次的協作，我們能創造出一個有趣且實用的產品。讓我們開始討論吧！",
         "label_detail": ""
       }
     },
     {
-      "id": "node-1761669305908-0",
+      "id": "node-1761846214111-0",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -23,13 +23,13 @@
         "y": 360
       },
       "data": {
-        "label": "確認主題",
-        "label_then": "需要討論出具體專案要做甚麼，明確定義出一個題目ex.音樂遊戲，並達成共識。這裡只需要討論主題，不需要討論主題以外的內容。",
+        "label": "討論軟體或應用程式主題",
+        "label_then": "討論出要做甚麼軟體或應用程式，確保每個成員都參與並提出想法，避免討論分散。",
         "label_detail": ""
       }
     },
     {
-      "id": "node-1761669305908-1",
+      "id": "node-1761846214111-1",
       "type": "direct",
       "initialized": false,
       "position": {
@@ -37,8 +37,22 @@
         "y": 360
       },
       "data": {
-        "label": "討論專案內容",
-        "label_then": "需要討論在實作專案中的必要內容，並達成共識。可能會包括但不限於美術風格、功能、UI設計、開發平台、使用者族群等。",
+        "label": "決定開發所需的細項",
+        "label_then": "決定開發所需的細項。",
+        "label_detail": ""
+      }
+    },
+    {
+      "id": "node-1761846214111-2",
+      "type": "direct",
+      "initialized": false,
+      "position": {
+        "x": -150,
+        "y": 660
+      },
+      "data": {
+        "label": "分配工作給組員",
+        "label_then": "分配工作給組員。",
         "label_detail": ""
       }
     },
@@ -48,7 +62,7 @@
       "initialized": false,
       "position": {
         "x": 50,
-        "y": 660
+        "y": 960
       },
       "data": {
         "label": "討論結束",
@@ -62,46 +76,45 @@
       "id": "e-1",
       "type": "default",
       "source": "start",
-      "target": "node-1761669305908-0",
+      "target": "node-1761846214111-0",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "label": "",
-      "sourceX": 200,
-      "sourceY": 277,
-      "targetX": 0,
-      "targetY": 357
+      "label": ""
     },
     {
       "id": "e-2",
       "type": "default",
-      "source": "node-1761669305908-0",
-      "target": "node-1761669305908-1",
+      "source": "node-1761846214111-0",
+      "target": "node-1761846214111-1",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "label": "",
-      "sourceX": 0,
-      "sourceY": 611,
-      "targetX": 400,
-      "targetY": 357
+      "label": ""
     },
     {
       "id": "e-3",
       "type": "default",
-      "source": "node-1761669305908-1",
+      "source": "node-1761846214111-1",
+      "target": "node-1761846214111-2",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "label": ""
+    },
+    {
+      "id": "e-4",
+      "type": "default",
+      "source": "node-1761846214111-2",
       "target": "end",
       "sourceHandle": null,
       "targetHandle": null,
       "data": {},
-      "label": "",
-      "sourceX": 400,
-      "sourceY": 611,
-      "targetX": 200,
-      "targetY": 657
+      "label": ""
     }
   ],
-  "currentNode": "node-1761669305908-0",
+  "currentNode": "node-1761846214111-0",
+  "currentNodeSmall": "node-1761879488143-0",
   "voting": false,
   "voting_array": [],
   "hoping": "",
@@ -109,13 +122,34 @@
     "currentMemory": "",
     "nodesMemory": [
       {
-        "id": "node-1761669305908-0",
-        "label": "確認主題",
+        "id": "node-1761846214111-0",
+        "label": "討論軟體或應用程式主題",
         "smallNodes": [
           {
-            "id": "node-1761679443131-0",
-            "theme": "專案主題定義",
-            "target": "在單一會議中決議並命名一個具體專案題目（例如：節奏判定式音樂遊戲），避免多案並行",
+            "id": "node-1761879488143-0",
+            "theme": "AI結合應用主題",
+            "target": "討論出要打造甚麼AI應用程式",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761879488143-1",
+            "theme": "使用者完成任務的痛點與效率問題",
+            "target": "找出現有流程中的痛點或低效率處(因為發現現實中常常遇到甚麼問題，所以要打造這個應用)",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761879488143-2",
+            "theme": "任務全流程",
+            "target": "描繪使用者完成任務的全流程(使用者使用應用的過程)",
+            "summary": "",
+            "finish": false
+          },
+          {
+            "id": "node-1761879488143-3",
+            "theme": "標示 AI 可介入的節點",
+            "target": "討論出哪些步驟可以由 AI 預測、生成、推薦或自動化(AI如何介入)",
             "summary": "",
             "finish": false
           }
@@ -123,5 +157,5 @@
       }
     ]
   },
-  "currentNodeSmall": "node-1761679443131-0"
+  "outline": "期末Final Project，打造一個軟體供使用者使用\n\n討論主題\n討論出要做甚麼軟體或應用程式\n\n細項討論\n根據之前決定好的主題決定開發所需的細項\n\n分工討論\n將所有工作分給各個組員"
 }

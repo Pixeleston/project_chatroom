@@ -12,17 +12,21 @@ export const SIMULATOR_CONFIG = {
   replyIntervalMin: 4000,
   replyIntervalMax: 8000,
   processQueueInterval: 1000,
-  votingRatio: 0.5 // this means ">=" 
+  votingRatio: 0.5, // this means ">="
+  HISTORY_MESSAGE_COUNT: 5,  // 每輪教師看幾則歷史訊息當prompt
+  SUMMARY_MESSAGE_COUNT: 100  // 總結時教師看幾則歷史訊息
 }
 
 export const REAL_CONFIG = {
-  votingRatio: 1.0
+  votingRatio: 1.0,
+  HISTORY_MESSAGE_COUNT: 5,  // 每輪教師看幾則歷史訊息當prompt
+  SUMMARY_MESSAGE_COUNT: 100  // 總結時教師看幾則歷史訊息
 }
 
 export const DEBUG_CONFIG = {
   consoleLogRelationship: false,   // 所有 [relationship] 開頭的 console.log() console.error() console.warn() 都由這個顯示
   consoleLogStudentPrompt: false,  // 所有 [student-prompt] 開頭的 console.log() console.error() console.warn() 都由這個顯示
-  consoleLogTeacherPrompt: true,   // prompt_teacher() 中的 console.log() console.error() console.warn() 由這個顯示
+  consoleLogTeacherPrompt: false,   // prompt_teacher() 中的 console.log() console.error() console.warn() 由這個顯示
   consoleLogBelief: false,         // 所有 [belief] 開頭的 console.log() console.error() console.warn() 都由這個顯示
   consoleLogBELIEF: false           // 若有任何一個belief出錯，都會由這邊統一報錯，而不會有很多行的錯誤訊息
 }
@@ -32,10 +36,10 @@ export const TOKEN_CONFIG = {
 }
 
 export const ADDRESS_CONFIG = {
-  //ADDRESS_3000:"https://add8ee5a4396.ngrok-free.app",
-  //WEBSOCKET_3000:"wss://add8ee5a4396.ngrok-free.app"
-  ADDRESS_3000:"http://localhost:3000",
-  WEBSOCKET_3000:"ws://localhost:3000"//,
+  ADDRESS_3000:"https://5f9801ffd66c.ngrok-free.app",
+  WEBSOCKET_3000:"wss://5f9801ffd66c.ngrok-free.app"
+  //ADDRESS_3000:"http://localhost:3000",
+  //WEBSOCKET_3000:"ws://localhost:3000"//,
   //ADDRESS_ngrok:"f33b8741a866.ngrok-free.app"
 }
 

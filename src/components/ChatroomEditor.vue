@@ -53,18 +53,19 @@
           class="message"
         />
       </div>
-      <div class="textarea-box">
+      <!--div class="textarea-box">
         <h3>請輸入你希望的討論過程願景</h3>
         <textarea v-model="hopeText" 
           placeholder=""
           class="message"
         />
-      </div>
+      </div-->
     </div>
     <button @click="spawnDiagram">生成狀態圖</button>
     <button @click="startSimulate">開始模擬</button>
     <button @click="spawnReport">生成報告</button>
     <button @click="improve">LLM改進</button>
+    <button @click="manySimulate">模擬多次</button>
     <div>
     {{ finishedRatio }} %
     </div>
@@ -73,7 +74,7 @@
         <h3>評估結果</h3>
         <textarea v-model="result" 
           placeholder=""
-          style="height: 450px;"
+          style="height: 250px;"
           class="message"
         />
       </div>
@@ -340,6 +341,14 @@ async function startSimulate() {
   })
 }
 
+async function manySimulate(){
+  const importRes = await fetch('http://localhost:3000/api/evaluate_many_times', {
+    method: 'GET'
+  })
+  const importData = await importRes.json()
+  console.log("Import result:", importData)
+}
+
 /*
 {
   "score": <integer>  // 請打分數 [0, 100]
@@ -520,6 +529,9 @@ async function spawnDiagram(){
   gap: 10px;
 }
 
+.textarea-container:first-child { flex: 10; }
+.textarea-container:last-child { flex: 2; }
+
 .textarea-container {
   display: flex;
   gap: 20px;
@@ -533,7 +545,7 @@ async function spawnDiagram(){
 
 textarea.message {
   width: 100%;
-  height: 100px;
+  height: 300px;
   resize: vertical;
   box-sizing: border-box;
 }

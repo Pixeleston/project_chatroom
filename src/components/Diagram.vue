@@ -89,8 +89,10 @@ async function onFileSelected (event) {
         diagram.edges = data.edges
         diagram.currentNode = data.currentNode
         diagram.voting = data.voting;
+        diagram.voting_array = data.voting_array;
         diagram.memory = data.memory;
         diagram.currentNodeSmall = data.currentNodeSmall;
+        diagram.outline = data.outline;
         console.log('✅ 匯入成功')
         await diagram.saveToServer()
         alert('✅ 已儲存到伺服器')

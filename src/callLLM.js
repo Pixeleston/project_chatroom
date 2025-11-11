@@ -51,7 +51,8 @@ export async function callGPT5(model, prompt, Class) {
   const body = {
     model,
     messages: [{ role: 'user', content: prompt }],
-    reasoning_effort: "minimal"
+    reasoning_effort: "minimal",
+    store: false
   }
 
   // if (stop) {
@@ -129,7 +130,7 @@ export async function callGPT(model, prompt, Class) {
     messages: [{ role: 'user', content: prompt }],
     max_tokens: LLM_CONFIG.maxOutputTokens,
     stream: false,
-    store: true,
+    store: false,
   }
 
   // if (stop) {

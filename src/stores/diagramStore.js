@@ -9,6 +9,9 @@ export const useDiagramStore  = defineStore('diagram', () => {
   const currentNodeSmall = ref(null)
   const currentNode = ref('start')
   const voting_array = ref([])
+  const voting = ref(true)
+  const hoping = ref('')
+  const outline = ref('')
 
   async function loadFromServer() {
   try {
@@ -17,6 +20,11 @@ export const useDiagramStore  = defineStore('diagram', () => {
     nodes.value = json.nodes || []
     edges.value = json.edges || []
     currentNode.value = json.currentNode || 'start'
+
+    voting_array.value = json.voting_array || 'start'
+    voting.value = true
+    hoping.value = json.hoping || ''
+    outline.value = json.outline || ''
 
     memory.value = json.memory || { currentMemory: "", nodesMemory: [] }
     currentNodeSmall.value = json.currentNodeSmall || null
@@ -41,6 +49,10 @@ export const useDiagramStore  = defineStore('diagram', () => {
         nodes: nodes.value,
         edges: edges.value,
         currentNode: currentNode.value,
+        voting_array: voting_array.value,
+        voting: true,
+        hoping: hoping.value,
+        outline: outline.value,
         memory: memory.value,
         currentNodeSmall: currentNodeSmall.value,
         }, null, 2)
@@ -57,6 +69,9 @@ export const useDiagramStore  = defineStore('diagram', () => {
   edges,
   currentNode,
   voting_array,
+  voting,
+  hoping,
+  outline,
   currentNodeSmall,
   memory,
   loadFromServer,

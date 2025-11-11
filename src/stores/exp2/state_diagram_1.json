@@ -1,0 +1,459 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "dimensions": {
+        "width": 300,
+        "height": 342
+      },
+      "computedPosition": {
+        "x": 50,
+        "y": 50,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "start",
+            "position": "bottom",
+            "x": 147,
+            "y": 339,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "start",
+            "position": "top",
+            "x": 147,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "label": "start",
+        "label_then": "哈囉大家好，我是本次討論的AI主持人。我們今天要討論的是如何設計和AI結合的應用程式。我們將會繪製使用者旅程地圖，分析使用者完成任務的全流程，特別標示出AI可以介入的節點。我們的目標是找出現有流程中的痛點或低效率之處，並思考哪些步驟可以讓AI來預測、生成、推薦或自動化。讓我們開始探索如何提升使用者體驗，並創造更智能的應用程式吧！",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "node-1761835003251-1",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 248
+      },
+      "computedPosition": {
+        "x": 49.60560711829589,
+        "y": 403.0483969741379,
+        "z": 1000
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "node-1761835003251-1",
+            "position": "bottom",
+            "x": 146.99998474121094,
+            "y": 245,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "node-1761835003251-1",
+            "position": "top",
+            "x": 146.99998474121094,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": true,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 49.60560711829589,
+        "y": 403.0483969741379
+      },
+      "data": {
+        "label": "繪製使用者旅程地圖",
+        "label_then": "打造和AI結合的應用程式。找出現有流程中的痛點或低效率之處，並思考哪些步驟可以讓AI來預測、生成、推薦或自動化。",
+        "label_detail": ""
+      },
+      "events": {}
+    },
+    {
+      "id": "end",
+      "type": "direct",
+      "dimensions": {
+        "width": 300,
+        "height": 190
+      },
+      "computedPosition": {
+        "x": 50.00000000000006,
+        "y": 664.2597914868263,
+        "z": 0
+      },
+      "handleBounds": {
+        "source": [
+          {
+            "id": null,
+            "type": "source",
+            "nodeId": "end",
+            "position": "bottom",
+            "x": 147,
+            "y": 187,
+            "width": 6,
+            "height": 6
+          }
+        ],
+        "target": [
+          {
+            "id": null,
+            "type": "target",
+            "nodeId": "end",
+            "position": "top",
+            "x": 147,
+            "y": -3,
+            "width": 6,
+            "height": 6
+          }
+        ]
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false,
+      "initialized": false,
+      "isParent": false,
+      "position": {
+        "x": 50.00000000000006,
+        "y": 664.2597914868263
+      },
+      "data": {
+        "label": "討論結束",
+        "label_then": "討論結束",
+        "label_detail": ""
+      },
+      "events": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "type": "default",
+      "source": "start",
+      "target": "node-1761835003251-1",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "events": {},
+      "label": "",
+      "sourceNode": {
+        "id": "start",
+        "type": "start",
+        "dimensions": {
+          "width": 300,
+          "height": 342
+        },
+        "computedPosition": {
+          "x": 50,
+          "y": 50,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "start",
+              "position": "bottom",
+              "x": 147,
+              "y": 339,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "start",
+              "position": "top",
+              "x": 147,
+              "y": -3,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "label": "start",
+          "label_then": "哈囉大家好，我是本次討論的AI主持人。我們今天要討論的是如何設計和AI結合的應用程式。我們將會繪製使用者旅程地圖，分析使用者完成任務的全流程，特別標示出AI可以介入的節點。我們的目標是找出現有流程中的痛點或低效率之處，並思考哪些步驟可以讓AI來預測、生成、推薦或自動化。讓我們開始探索如何提升使用者體驗，並創造更智能的應用程式吧！",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "targetNode": {
+        "id": "node-1761835003251-1",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 248
+        },
+        "computedPosition": {
+          "x": 49.60560711829589,
+          "y": 403.0483969741379,
+          "z": 1000
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "node-1761835003251-1",
+              "position": "bottom",
+              "x": 146.99998474121094,
+              "y": 245,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "node-1761835003251-1",
+              "position": "top",
+              "x": 146.99998474121094,
+              "y": -3,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": true,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 49.60560711829589,
+          "y": 403.0483969741379
+        },
+        "data": {
+          "label": "繪製使用者旅程地圖",
+          "label_then": "打造和AI結合的應用程式。找出現有流程中的痛點或低效率之處，並思考哪些步驟可以讓AI來預測、生成、推薦或自動化。",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "sourceX": 200,
+      "sourceY": 395,
+      "targetX": 199.60559185950683,
+      "targetY": 400.0483969741379
+    },
+    {
+      "id": "e2",
+      "type": "default",
+      "source": "node-1761835003251-1",
+      "target": "end",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {},
+      "events": {},
+      "label": "",
+      "sourceNode": {
+        "id": "node-1761835003251-1",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 248
+        },
+        "computedPosition": {
+          "x": 49.60560711829589,
+          "y": 403.0483969741379,
+          "z": 1000
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "node-1761835003251-1",
+              "position": "bottom",
+              "x": 146.99998474121094,
+              "y": 245,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "node-1761835003251-1",
+              "position": "top",
+              "x": 146.99998474121094,
+              "y": -3,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": true,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 49.60560711829589,
+          "y": 403.0483969741379
+        },
+        "data": {
+          "label": "繪製使用者旅程地圖",
+          "label_then": "打造和AI結合的應用程式。找出現有流程中的痛點或低效率之處，並思考哪些步驟可以讓AI來預測、生成、推薦或自動化。",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "targetNode": {
+        "id": "end",
+        "type": "direct",
+        "dimensions": {
+          "width": 300,
+          "height": 190
+        },
+        "computedPosition": {
+          "x": 50.00000000000006,
+          "y": 664.2597914868263,
+          "z": 0
+        },
+        "handleBounds": {
+          "source": [
+            {
+              "id": null,
+              "type": "source",
+              "nodeId": "end",
+              "position": "bottom",
+              "x": 147,
+              "y": 187,
+              "width": 6,
+              "height": 6
+            }
+          ],
+          "target": [
+            {
+              "id": null,
+              "type": "target",
+              "nodeId": "end",
+              "position": "top",
+              "x": 147,
+              "y": -3,
+              "width": 6,
+              "height": 6
+            }
+          ]
+        },
+        "selected": false,
+        "dragging": false,
+        "resizing": false,
+        "initialized": false,
+        "isParent": false,
+        "position": {
+          "x": 50.00000000000006,
+          "y": 664.2597914868263
+        },
+        "data": {
+          "label": "討論結束",
+          "label_then": "討論結束",
+          "label_detail": ""
+        },
+        "events": {}
+      },
+      "sourceX": 199.60559185950683,
+      "sourceY": 654.0483969741379,
+      "targetX": 200.00000000000006,
+      "targetY": 661.2597914868263
+    }
+  ],
+  "currentNode": "end",
+  "currentNodeSmall": "null",
+  "voting": false,
+  "voting_array": [],
+  "hoping": "",
+  "memory": {
+    "currentMemory": "",
+    "nodesMemory": [
+      {
+        "id": "node-1761835003251-1",
+        "label": "繪製使用者旅程地圖",
+        "smallNodes": [
+          {
+            "id": "node-1761836569191-0",
+            "theme": "AI結合應用主題",
+            "target": "討論出要打造甚麼AI應用程式",
+            "summary": "在討論中，各成員針對AI應用程式的方向展開探討。主要意見集中在智能客服和自動化推薦系統的結合，很多參與者認為這是一個有潛力提升用戶體驗的方向。同時，也有成員提出了設計AI學習輔助工具的想法，並強調其發展潛力。整體上看，大部分成員似乎傾向於探索智能客服和自動化推薦系統的結合，但學習輔助工具的創意也被認真考慮。Host建議大家投票決定是否進入下一個議題。",
+            "finish": true
+          },
+          {
+            "id": "node-1761836569191-1",
+            "theme": "使用者完成任務的痛點與效率問題",
+            "target": "找出現有流程中的痛點或低效率處(因為發現現實中常常遇到甚麼問題，所以要打造這個應用)",
+            "summary": "在討論中，成員們圍繞如何提升使用者體驗進行了討論。大家一致認為使用者反饋和公司內部資料可幫助找出現有流程中的痛點，並借助AI提升效率。具體提出的優化方向包括從AI系統中找出不如預期的部分進行改善、利用AI優化用戶反饋中常抱怨的流程和不常使用的功能、以及簡化登錄和付款流程。最終，成員們對簡化登錄和付款流程以提升用戶體驗的提議達成了共識，並準備投票決定是否進入下一個議題探討。",
+            "finish": true
+          },
+          {
+            "id": "node-1761836569191-2",
+            "theme": "任務全流程",
+            "target": "描繪使用者完成任務的全流程(使用者使用應用的過程)",
+            "summary": "在討論中，成員們主要聚焦於透過AI優化用戶的搜尋、推薦和支付流程，以提升使用者體驗。成員b 建議列出用戶會經歷的主要步驟，如註冊、搜尋、選擇產品到結帳，然後分析哪些步驟可用AI优化。隨後，成員a 同意並特別指出搜索和支付環節具自動化分析潛力。整體上，大家對於簡化搜尋、推薦和支付流程的提議達成共識，並正準備投票決定是否進入下一個議題。成員c 提出在繪製使用者旅程地圖時應該包含從用戶註冊到完成任務的所有步驟，並特別標示AI優化的過程。",
+            "finish": true
+          },
+          {
+            "id": "node-1761836569191-3",
+            "theme": "標示 AI 可介入的節點",
+            "target": "討論出哪些步驟可以由 AI 預測、生成、推薦或自動化(AI如何介入)",
+            "summary": "在用戶旅程討論中，成員一致認為AI能夠在搜尋、預測、推薦和支付流程中介入以提高效率。具體建議包括AI在搜尋過程中預測用戶喜好以提供個性化產品推薦，並在支付環節提供自動結帳選項。也提到AI可以通過自動化生成更合適的廣告內容或推送通知來吸引用戶興趣。整體成員對這些AI介入步驟的討論達成共識，並準備投票決定是否進入下一個議題。",
+            "finish": true
+          }
+        ]
+      }
+    ]
+  },
+  "outline": "軟體設計實驗課Final Project\n\n繪製使用者旅程地圖（User Journey Map）\n　描繪使用者完成任務的全流程，特別標示 AI 可介入的節點：\n  - 要打造甚麼樣和AI結合的應用程式\n　- 現有流程中的痛點或低效率處；(因為發現現實中常常遇到甚麼問題，所以要打造這個應用)\n　- 哪些步驟可以由 AI 預測、生成、推薦或自動化。"
+}

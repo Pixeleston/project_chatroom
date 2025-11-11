@@ -1,6 +1,17 @@
 <template>
   <div class="chat-area">
     <h3>Welcome, {{ username }}</h3>
+    <div class="vote-results-panel">
+      <h3>投票結果</h3>
+      <ul v-if="diagram?.voting_array?.length > 0">
+        <li v-for="(vote, index) in diagram.voting_array" :key="index">
+          學生 {{ vote.user }} 已投票
+        </li>
+      </ul>
+      <p v-else>
+        目前非投票階段。
+      </p>
+    </div>
     <div class="messages">
       <div v-for="(msg, index) in allMessages" :key="index"
         :class="['message', msg.user === username ? 'me' : (msg.role === 'host' ? 'host' : '')]">
@@ -10,6 +21,7 @@
     <div class="input-area">
       <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
       <button @click="sendMessage">Send</button>
+      <button @click="voting">同意</button>
     </div>
   </div>
 </template>
@@ -18,6 +30,10 @@
 import { ref, onMounted } from 'vue'
 import { ADDRESS_CONFIG } from '../config.js'
 const props = defineProps(['username'])
+
+import { useDiagramStore }  from '@/stores/diagramStore.js'
+
+const diagram = useDiagramStore()
 
 const messages = ref([])
 const newMessage = ref('')
@@ -36,8 +52,22 @@ onMounted(() => {
     socket.addEventListener('error', (err) => {
       console.error('❌ WebSocket error', err)
     })
-
     
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.type === 'diagramUpdated' && data.chatroom_type === 'chatroom') {
+        diagram.nodes = data.diagram.nodes
+        diagram.edges = data.diagram.edges
+        diagram.currentNode = data.diagram.currentNode
+        diagram.voting = data.diagram.voting
+        diagram.memory = data.diagram.memory
+        diagram.currentNodeSmall = data.diagram.currentNodeSmall
+        diagram.voting_array = data.diagram.voting_array
+      }
+      else if(data.type === 'diagramClear'){
+        allMessages.value = []
+      }
+    }
 
     socket.addEventListener('message', (e) => {
       try {
@@ -82,4 +112,56 @@ function sendMessage() {
     newMessage.value = ''
   }
 }
+
+async function voting() {
+  try {
+    const res = await fetch(ADDRESS_CONFIG.ADDRESS_3000 + '/api/voting', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: props.username })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('✅ 投票成功');
+    } else {
+      console.error('❌ 投票失敗', data.error);
+    }
+  } catch (err) {
+    console.error('⚠️ 投票請求錯誤:', err);
+  }
+}
+
 </script>
+
+<style scoped>
+
+.vote-results-panel {
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  padding: 16px;
+  background-color: #f0f0f5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.vote-results-panel h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+.vote-results-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.vote-results-panel li {
+  padding: 4px 0;
+  border-bottom: 1px dashed #ddd;
+}
+.vote-results-panel li:last-child {
+  border-bottom: none;
+}
+
+</style>
